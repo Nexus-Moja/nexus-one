@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: nexus-one
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: ADMIN_KEY
+        generateValue: true
+    disk:
+      name: nexus-data
+      mountPath: /app/data
+      sizeGB: 1
