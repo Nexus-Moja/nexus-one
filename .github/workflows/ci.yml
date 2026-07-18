@@ -1,7 +1,11 @@
 name: NEXUS ONE CI
+
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -12,5 +16,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npm run verify
       - run: docker build -t nexus-one:${{ github.sha }} .
