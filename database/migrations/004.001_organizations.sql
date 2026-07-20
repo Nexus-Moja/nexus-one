@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 -- Ensure all required organizations columns exist (in case table was created without them)
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS name text UNIQUE;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slug text;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS display_name text;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS active boolean;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS created_at timestamptz;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS updated_at timestamptz;
@@ -21,10 +22,11 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS updated_at timestamptz;
 UPDATE organizations SET active = COALESCE(active, true) WHERE active IS NULL;
 UPDATE organizations SET created_at = COALESCE(created_at, now()) WHERE created_at IS NULL;
 UPDATE organizations SET updated_at = COALESCE(updated_at, now()) WHERE updated_at IS NULL;
+UPDATE organizations SET display_name = COALESCE(display_name, 'Default Organization') WHERE display_name IS NULL;
 
 -- Create a default organization for development (idempotent)
-INSERT INTO organizations (name, slug, active, created_at, updated_at)
-VALUES ('Nexus Medical Transit', 'nexus-default', true, now(), now())
+INSERT INTO organizations (name, slug, display_name, active, created_at, updated_at)
+VALUES ('Nexus Medical Transit', 'nexus-default', 'Nexus Medical Transit', true, now(), now())
 ON CONFLICT (name) DO NOTHING;
 
 -- Add organization_id column to users if it doesn't exist
