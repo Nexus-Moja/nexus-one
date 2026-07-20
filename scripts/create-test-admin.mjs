@@ -8,10 +8,15 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const email = String(process.env.NEXUS_ADMIN_EMAIL || 'admin@nexusmt.com').trim().toLowerCase();
-const password = String(process.env.NEXUS_ADMIN_PASSWORD || 'NexusAdmin042!');
+const email = String(process.env.NEXUS_ADMIN_EMAIL || '').trim().toLowerCase();
+const password = String(process.env.NEXUS_ADMIN_PASSWORD || '');
 const displayName = String(process.env.NEXUS_ADMIN_NAME || 'Nexus Test Administrator').trim();
 const identitySubject = crypto.randomUUID();
+
+if (!email || !password) {
+  console.error('Set NEXUS_ADMIN_EMAIL and NEXUS_ADMIN_PASSWORD before creating a test administrator.');
+  process.exit(1);
+}
 
 if (password.length < 12) {
   console.error('NEXUS_ADMIN_PASSWORD must contain at least 12 characters.');
@@ -86,8 +91,6 @@ try {
 
   await client.query('COMMIT');
   console.log('Admin test account is ready.');
-  console.log(`Email: ${email}`);
-  console.log(`Password: ${password}`);
   console.log('Sign in through Livecare using Dispatch sign in, then open /admin.html.');
 } catch (error) {
   await client.query('ROLLBACK').catch(() => {});
