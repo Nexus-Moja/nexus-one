@@ -18,12 +18,16 @@ if (password.length < 12) {
   process.exit(1);
 }
 
+console.log(`[ADMIN] Creating/updating admin user: ${email}`);
+
 const pool = new Pool({
   connectionString,
   ssl: /localhost|127\.0\.0\.1/.test(connectionString) ? false : { rejectUnauthorized: false }
 });
 
 const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+console.log(`[ADMIN] Password hash (first 16 chars): ${passwordHash.substring(0, 16)}...`);
+
 const client = await pool.connect();
 try {
   await client.query('BEGIN');
@@ -35,6 +39,8 @@ try {
     WHERE table_schema='public' AND table_name='users'
   `);
   const columns = new Set(columnResult.rows.map(row => row.column_name));
+  console.log(`[ADMIN] Users table columns: ${Array.from(columns).join(', ')}`);
+  
   for (const required of ['email', 'display_name', 'password_hash', 'role', 'active']) {
     if (!columns.has(required)) throw new Error(`The users table is missing required column: ${required}`);
   }
@@ -48,9 +54,11 @@ try {
       `SELECT id FROM organizations WHERE name = 'Nexus Medical Transit' LIMIT 1`
     );
     organizationId = orgResult.rows[0]?.id;
+    console.log(`[ADMIN] Organization ID: ${organizationId ? organizationId.substring(0, 8) + '...' : 'NOT FOUND'}`);
   }
   
   if (existing.rows[0]) {
+    console.log(`[ADMIN] User exists with ID: ${existing.rows[0].id.substring(0, 8)}... - updating...`);
     const updateParts = ['display_name=$2', 'password_hash=$3', "role='ADMIN'", 'active=true'];
     const updateValues = [existing.rows[0].id, displayName, passwordHash];
     
@@ -70,28 +78,32 @@ try {
       updateValues.push(organizationId);
     }
     
-    await client.query(
-      `UPDATE users SET ${updateParts.join(',')} WHERE id=$1`,
+    const result = await client.query(
+      `UPDATE users SET ${updateParts.join(',')} WHERE id=$1 RETURNING id, email, role, active`,
       updateValues
     );
+    console.log(`[ADMIN] User updated: ${result.rows[0]?.email}, role=${result.rows[0]?.role}, active=${result.rows[0]?.active}`);
   } else {
+    console.log(`[ADMIN] User does not exist - creating...`);
     const names = ['email', 'display_name', 'password_hash', 'role', 'active'];
     const values = [email, displayName, passwordHash, 'ADMIN', true];
     if (columns.has('identity_subject')) { names.push('identity_subject'); values.push(identitySubject); }
     if (columns.has('scope_id')) { names.push('scope_id'); values.push(null); }
     if (columns.has('organization_id')) { names.push('organization_id'); values.push(organizationId); }
+    
     const placeholders = values.map((_, index) => `$${index + 1}`).join(',');
-    await client.query(`INSERT INTO users(${names.join(',')}) VALUES(${placeholders})`, values);
+    const result = await client.query(`INSERT INTO users(${names.join(',')}) VALUES(${placeholders}) RETURNING id, email, role, active`, values);
+    console.log(`[ADMIN] User created: ${result.rows[0]?.email}, role=${result.rows[0]?.role}, active=${result.rows[0]?.active}`);
   }
 
   await client.query('COMMIT');
-  console.log('Admin test account is ready.');
-  console.log(`Email: ${email}`);
-  console.log(`Password: ${password}`);
-  console.log('Sign in through Livecare using Dispatch sign in, then open /admin.html.');
+  console.log('[ADMIN] Admin test account is ready.');
+  console.log(`[ADMIN] Email: ${email}`);
+  console.log(`[ADMIN] Password: ${password}`);
+  console.log('[ADMIN] Sign in through Livecare using Dispatch sign in, then open /admin.html.');
 } catch (error) {
   await client.query('ROLLBACK').catch(() => {});
-  console.error(error.message);
+  console.error('[ADMIN] Error:', error.message);
   process.exitCode = 1;
 } finally {
   client.release();

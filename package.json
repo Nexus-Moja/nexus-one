@@ -12,7 +12,8 @@
     "db:check": "node scripts/db-check.mjs",
     "verify": "node scripts/verify-build042.mjs",
     "start": "netlify dev --dir dist",
-    "admin:create-test": "node scripts/create-test-admin.mjs"
+    "admin:create-test": "node scripts/create-test-admin.mjs",
+    "debug:admin": "node scripts/debug-admin.mjs"
   },
   "dependencies": {
     "pg": "8.16.3"
