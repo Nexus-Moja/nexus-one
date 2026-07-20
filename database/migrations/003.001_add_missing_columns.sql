@@ -3,6 +3,7 @@ BEGIN;
 -- Ensure all required users columns exist
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS identity_subject text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role text DEFAULT 'USER';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS scope_id text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
@@ -47,6 +48,9 @@ ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS status_label text;
 ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS note text;
 ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS actor text;
 ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+
+-- Populate identity_subject for any existing users who don't have one
+UPDATE users SET identity_subject = gen_random_uuid()::text WHERE identity_subject IS NULL OR identity_subject = '';
 
 INSERT INTO schema_migrations(version,description) VALUES('003.001','Add missing columns to existing tables for schema completeness') ON CONFLICT(version) DO NOTHING;
 

@@ -11,6 +11,7 @@ if (!connectionString) {
 const email = String(process.env.NEXUS_ADMIN_EMAIL || 'admin@nexusmt.com').trim().toLowerCase();
 const password = String(process.env.NEXUS_ADMIN_PASSWORD || 'NexusAdmin042!');
 const displayName = String(process.env.NEXUS_ADMIN_NAME || 'Nexus Test Administrator').trim();
+const identitySubject = crypto.randomUUID();
 
 if (password.length < 12) {
   console.error('NEXUS_ADMIN_PASSWORD must contain at least 12 characters.');
@@ -53,8 +54,14 @@ try {
     const updateParts = ['display_name=$2', 'password_hash=$3', "role='ADMIN'", 'active=true'];
     const updateValues = [existing.rows[0].id, displayName, passwordHash];
     
+    if (columns.has('identity_subject')) {
+      const paramIndex = updateValues.length + 1;
+      updateParts.push(`identity_subject=$${paramIndex}`);
+      updateValues.push(identitySubject);
+    }
     if (columns.has('scope_id')) {
-      updateParts.push('scope_id=$4');
+      const paramIndex = updateValues.length + 1;
+      updateParts.push(`scope_id=$${paramIndex}`);
       updateValues.push(null);
     }
     if (columns.has('organization_id')) {
@@ -70,6 +77,7 @@ try {
   } else {
     const names = ['email', 'display_name', 'password_hash', 'role', 'active'];
     const values = [email, displayName, passwordHash, 'ADMIN', true];
+    if (columns.has('identity_subject')) { names.push('identity_subject'); values.push(identitySubject); }
     if (columns.has('scope_id')) { names.push('scope_id'); values.push(null); }
     if (columns.has('organization_id')) { names.push('organization_id'); values.push(organizationId); }
     const placeholders = values.map((_, index) => `$${index + 1}`).join(',');
