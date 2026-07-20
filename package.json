@@ -1,15 +1,18 @@
 {
-  "name": "nexus-one-build-041",
-  "version": "0.41.0",
+  "name": "nexus-one-build-042",
+  "version": "0.42.0",
   "private": true,
-  "description": "Nexus ONE production data layer integration",
-  "engines": {"node": ">=20.20.0"},
+  "description": "Nexus ONE unified booking and real-time integrations",
+  "engines": {
+    "node": ">=20.20.0"
+  },
   "scripts": {
-    "start": "netlify dev",
     "build": "node scripts/build-static.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:check": "node scripts/db-check.mjs",
-    "verify": "node scripts/verify-build041.mjs"
+    "verify": "node scripts/verify-build042.mjs",
+    "start": "netlify dev --dir dist",
+    "admin:create-test": "node scripts/create-test-admin.mjs"
   },
   "dependencies": {
     "pg": "8.16.3"

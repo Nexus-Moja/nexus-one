@@ -643,3 +643,7 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 .livecareMapPanel .verticalStatusPanel[data-drag-ready="true"] .statusDragHandle *{
   pointer-events:none!important;
 }
+/* Build 042 unified booking */
+.nexusAddressInput{background-image:linear-gradient(transparent,transparent);padding-right:2.5rem!important}
+.pac-container{z-index:2147483647!important;border-radius:14px;border:1px solid #cbd5e1;box-shadow:0 18px 45px rgba(8,47,73,.18);font-family:inherit}
+.pac-item{padding:10px 12px;cursor:pointer;font-size:14px}.pac-item:hover{background:#eef6fb}.pac-icon{margin-top:4px}
