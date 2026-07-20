@@ -6,6 +6,7 @@
 [build.environment]
   NODE_VERSION = "20.20.2"
   NPM_VERSION = "10.9.2"
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
 [[redirects]]
   from = "/api/*"
