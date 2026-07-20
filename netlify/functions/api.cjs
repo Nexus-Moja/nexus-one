@@ -162,6 +162,48 @@ async function handler(event){
   if(p[0]==='fleet'&&p[1]==='live'&&method==='GET'){
    let u=null;try{if(bearer(event))u=await requireUser(bearer(event))}catch{}const r=await query(`SELECT unit_number,vehicle_type,status,latitude,longitude,heading,speed_mph,last_seen_at FROM vehicles WHERE last_seen_at IS NULL OR last_seen_at>now()-interval '24 hours' ORDER BY unit_number`);return json(200,{generatedAt:new Date().toISOString(),role:u?.role||'PUBLIC',vehicles:r.rows.map(v=>({id:v.unit_number,unit:v.unit_number,type:v.vehicle_type,status:v.status,lat:Number(v.latitude),lng:Number(v.longitude),heading:Number(v.heading||0),speed:Number(v.speed_mph||0),lastSeen:v.last_seen_at}))});
   }
+  // Admin: list users
+  if(p[0]==='admin'&&p[1]==='users'&&method==='GET'){
+   await requireUser(bearer(event),['ADMIN']);
+   const r=await query(`SELECT id,email,display_name,role,active,created_at,organization_id FROM users ORDER BY created_at DESC LIMIT 200`);
+   return json(200,{users:r.rows.map(u=>({id:String(u.id),email:u.email,name:u.display_name,role:u.role,active:u.active,createdAt:u.created_at}))});
+  }
+  // Admin: create user
+  if(p[0]==='admin'&&p[1]==='users'&&method==='POST'){
+   const me=await requireUser(bearer(event),['ADMIN']);
+   const b=parseBody(event);required(b,['email','name','role','password']);
+   const validRoles=['ADMIN','DISPATCHER','FACILITY','DRIVER','BILLING','QA','EXECUTIVE','PATIENT'];
+   if(!validRoles.includes(String(b.role).toUpperCase()))return json(400,{error:'Invalid role'});
+   if(String(b.password).length<8)return json(400,{error:'Password must be at least 8 characters'});
+   const existing=await query('SELECT id FROM users WHERE lower(email)=lower($1)',[b.email]);
+   if(existing.rows[0])return json(409,{error:'A user with that email already exists'});
+   const passwordHash=crypto.createHash('sha256').update(String(b.password)).digest('hex');
+   const userId=crypto.randomUUID();
+   await query(`INSERT INTO users(id,email,display_name,role,password_hash,active,created_at,updated_at) VALUES($1,$2,$3,$4,$5,true,now(),now())`,[userId,clean(b.email).toLowerCase(),clean(b.name),String(b.role).toUpperCase(),passwordHash]);
+   await audit('USER',userId,'CREATED',{role:b.role,by:me.email});
+   return json(201,{user:{id:userId,email:b.email,name:b.name,role:b.role,active:true}});
+  }
+  // Admin: toggle user active/inactive
+  if(p[0]==='admin'&&p[1]==='users'&&p[2]&&method==='PATCH'){
+   const me=await requireUser(bearer(event),['ADMIN']);
+   const b=parseBody(event);const userId=decodeURIComponent(p[2]);
+   if(typeof b.active!=='boolean')return json(400,{error:'active (boolean) is required'});
+   const r=await query('UPDATE users SET active=$2,updated_at=now() WHERE id=$1 RETURNING id,email,role,active',[userId,b.active]);
+   if(!r.rows[0])return json(404,{error:'User not found'});
+   await audit('USER',userId,b.active?'ACTIVATED':'DEACTIVATED',{by:me.email});
+   return json(200,{user:r.rows[0]});
+  }
+  // Admin: audit log
+  if(p[0]==='admin'&&p[1]==='audit-log'&&method==='GET'){
+   await requireUser(bearer(event),['ADMIN']);
+   const limit=Math.min(Number(event.queryStringParameters?.limit)||100,500);
+   const since=event.queryStringParameters?.since;
+   let sql='SELECT * FROM audit_log',params=[];
+   if(since){sql+=' WHERE created_at>=$1';params=[since]}
+   sql+=` ORDER BY created_at DESC LIMIT ${limit}`;
+   const r=await query(sql,params);
+   return json(200,{entries:r.rows.map(e=>({id:String(e.id||''),entityType:e.entity_type,entityId:String(e.entity_id||''),action:e.action,changes:e.changes,createdAt:e.created_at}))});
+  }
   if(p[0]==='facilities'&&method==='GET'){const u=await requireUser(bearer(event),['ADMIN','DISPATCHER','FACILITY']);const r=await query(u.role==='FACILITY'?'SELECT * FROM facilities WHERE facility_code=$1':'SELECT * FROM facilities ORDER BY name',[...(u.role==='FACILITY'?[u.scope_id]:[])]);return json(200,{facilities:r.rows})}
   if(p[0]==='patients'&&method==='GET'){const u=await requireUser(bearer(event),['ADMIN','DISPATCHER','FACILITY']);const r=await query(u.role==='FACILITY'?'SELECT * FROM patients WHERE facility_code=$1 AND active=true ORDER BY display_name':'SELECT * FROM patients WHERE active=true ORDER BY display_name',[...(u.role==='FACILITY'?[u.scope_id]:[])]);return json(200,{patients:r.rows})}
   if(p[0]==='ready'&&method==='GET'){const r=await query("SELECT version FROM schema_migrations WHERE version IN ('040.001','041.001','042.001') ORDER BY version");return json(r.rowCount===3?200:503,{ready:r.rowCount===3,migrations:r.rows.map(x=>x.version)})}
