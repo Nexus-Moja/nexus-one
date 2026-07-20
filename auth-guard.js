@@ -23,6 +23,7 @@
  console.log('[AUTH-GUARD] Protecting:', location.pathname);
  
  // STEP 1: Block rendering immediately
+ if(document.documentElement) document.documentElement.style.visibility='hidden';
  if(document.body) document.body.style.visibility='hidden';
  
  const token=sessionStorage.getItem('nexusAccessToken');
@@ -80,7 +81,8 @@
    window.NexusAuthorizedUser=j.user;
    sessionStorage.setItem('nexusUser',JSON.stringify(j.user));
    
-   // Show the page content now
+   // Show the page content now - SHOW BOTH HTML AND BODY
+   if(document.documentElement) document.documentElement.style.visibility='visible';
    if(document.body) document.body.style.visibility='visible';
    
    // Add session bar
@@ -119,8 +121,9 @@
  
  // Show page if token was already verified (to prevent blank pages on second load)
  setTimeout(()=>{
-   if(document.body && document.body.style.visibility==='hidden'){
+   if(document.documentElement && document.documentElement.style.visibility==='hidden'){
      console.log('[AUTH-GUARD] Auth timeout - showing page anyway');
+     document.documentElement.style.visibility='visible';
      document.body.style.visibility='visible';
    }
  }, 3000);
