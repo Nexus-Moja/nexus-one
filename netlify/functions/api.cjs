@@ -135,7 +135,22 @@ async function handler(event){
    }
   }
   if(p[0]==='portal'&&p[1]==='trips'&&method==='GET'){
-   const u=await requireUser(bearer(event));let sql='SELECT * FROM bookings',params=[];if(u.role==='FACILITY'){sql+=' WHERE facility_id=$1';params=[u.scope_id]}else if(u.role==='DRIVER'){sql+=' WHERE driver_scope_id=$1';params=[u.scope_id]}else if(u.role==='PATIENT'){sql+=' WHERE lower(email)=lower($1)';params=[u.email]}else if(!['ADMIN','DISPATCHER','EXECUTIVE','BILLING','QA'].includes(u.role))return json(403,{error:'Insufficient permission'});sql+=' ORDER BY trip_date DESC, trip_time DESC LIMIT 250';const r=await query(sql,params);return json(200,{trips:r.rows.map(mapBooking)});
+   try{
+     const u=await requireUser(bearer(event));
+     let sql='SELECT * FROM bookings',params=[];
+     if(u.role==='FACILITY'){sql+=' WHERE facility_id=$1';params=[u.scope_id]}
+     else if(u.role==='DRIVER'){sql+=' WHERE driver_scope_id=$1';params=[u.scope_id]}
+     else if(u.role==='PATIENT'){sql+=' WHERE lower(email)=lower($1)';params=[u.email]}
+     else if(!['ADMIN','DISPATCHER','EXECUTIVE','BILLING','QA'].includes(u.role))return json(403,{error:'Insufficient permission'});
+     sql+=' ORDER BY trip_date DESC, trip_time DESC LIMIT 250';
+     console.log('[TRIPS] Query:', sql, 'Params:', params, 'Role:', u.role);
+     const r=await query(sql,params);
+     console.log('[TRIPS] Found', r.rowCount, 'trips');
+     return json(200,{trips:r.rows.map(mapBooking)});
+   }catch(err){
+     console.error('[TRIPS] Error:', err.message, err.stack);
+     throw err;
+   }
   }
   if(p[0]==='admin'&&p[1]==='bookings'&&method==='GET'){await requireUser(bearer(event),['ADMIN','DISPATCHER','EXECUTIVE','BILLING','QA']);const r=await query('SELECT * FROM bookings ORDER BY trip_date DESC,trip_time DESC LIMIT 500');return json(200,{bookings:r.rows.map(mapBooking)})}
   if(p[0]==='admin'&&p[1]==='bookings'&&p[2]&&method==='PATCH'){
