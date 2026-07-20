@@ -1,11 +1,17 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20.20.2"
   NPM_VERSION = "10.9.2"
-  NPM_FLAGS = "--registry=https://registry.npmjs.org/"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"

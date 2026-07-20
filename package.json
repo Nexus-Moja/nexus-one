@@ -1,8 +1,17 @@
 {
-  "name": "nexus-one",
-  "version": "1.0.0",
+  "name": "nexus-one-build-041",
+  "version": "0.41.0",
   "private": true,
+  "description": "Nexus ONE production data layer integration",
+  "engines": {"node": ">=20.20.0"},
   "scripts": {
-    "build": "node scripts/build-static.mjs"
+    "start": "netlify dev",
+    "build": "node scripts/build-static.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:check": "node scripts/db-check.mjs",
+    "verify": "node scripts/verify-build041.mjs"
+  },
+  "dependencies": {
+    "pg": "8.16.3"
   }
 }
