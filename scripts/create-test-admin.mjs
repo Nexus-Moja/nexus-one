@@ -39,15 +39,39 @@ try {
   }
 
   const existing = await client.query('SELECT id FROM users WHERE lower(email)=lower($1) LIMIT 1', [email]);
+  
+  // Get or create default organization for organization_id column
+  let organizationId = null;
+  if (columns.has('organization_id')) {
+    const orgResult = await client.query(
+      `SELECT id FROM organizations WHERE name = 'Nexus Medical Transit' LIMIT 1`
+    );
+    organizationId = orgResult.rows[0]?.id;
+  }
+  
   if (existing.rows[0]) {
+    const updateParts = ['display_name=$2', 'password_hash=$3', "role='ADMIN'", 'active=true'];
+    const updateValues = [existing.rows[0].id, displayName, passwordHash];
+    
+    if (columns.has('scope_id')) {
+      updateParts.push('scope_id=$4');
+      updateValues.push(null);
+    }
+    if (columns.has('organization_id')) {
+      const paramIndex = updateValues.length + 1;
+      updateParts.push(`organization_id=$${paramIndex}`);
+      updateValues.push(organizationId);
+    }
+    
     await client.query(
-      `UPDATE users SET display_name=$2,password_hash=$3,role='ADMIN',active=true${columns.has('scope_id') ? ',scope_id=NULL' : ''} WHERE id=$1`,
-      [existing.rows[0].id, displayName, passwordHash]
+      `UPDATE users SET ${updateParts.join(',')} WHERE id=$1`,
+      updateValues
     );
   } else {
     const names = ['email', 'display_name', 'password_hash', 'role', 'active'];
     const values = [email, displayName, passwordHash, 'ADMIN', true];
     if (columns.has('scope_id')) { names.push('scope_id'); values.push(null); }
+    if (columns.has('organization_id')) { names.push('organization_id'); values.push(organizationId); }
     const placeholders = values.map((_, index) => `$${index + 1}`).join(',');
     await client.query(`INSERT INTO users(${names.join(',')}) VALUES(${placeholders})`, values);
   }
