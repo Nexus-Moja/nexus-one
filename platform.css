@@ -173,6 +173,8 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 .livecareRoleButtons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .livecareRoleButton{min-width:0;text-align:left;border:1px solid rgba(151,210,239,.28);background:rgba(255,255,255,.075);color:#fff;border-radius:13px;padding:11px 12px;transition:.2s}
 .livecareRoleButton:hover,.livecareRoleButton:focus-visible{background:rgba(255,255,255,.15);border-color:#70d8ef;transform:translateY(-1px)}
+.livecareRoleButton.selected{background:rgba(255,255,255,.22);border-color:#72e6f4;box-shadow:0 0 0 3px rgba(114,230,244,.28),0 4px 16px rgba(0,0,0,.18);transform:translateY(-1px)}
+.livecareRoleButton.selected b{color:#72e6f4}
 .livecareRoleButton b,.livecareRoleButton small{display:block}
 .livecareRoleButton b{font-size:14px}
 .livecareRoleButton small{font-size:11px;color:#bcd6e6;margin-top:2px}
