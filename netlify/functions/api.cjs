@@ -41,6 +41,32 @@ async function handler(event){
    const r=await query('SELECT now() AS now, current_database() AS database');
    return json(200,{status:'ok',database:'connected',environment:process.env.CONTEXT||process.env.APP_ENV||'unknown',checkedAt:r.rows[0].now,build:'042'});
   }
+  if(p[0]==='debug'&&p[1]==='admin'&&method==='GET'){
+   const r=await query(`SELECT id, email, display_name, role, active, password_hash, organization_id, created_at FROM users WHERE lower(email)=lower('admin@nexusmt.com') LIMIT 1`);
+   if(!r.rows[0]) return json(404,{error:'Admin user not found'});
+   const user=r.rows[0];
+   const testPass='NexusAdmin042!';
+   const testHash=crypto.createHash('sha256').update(testPass).digest('hex');
+   return json(200,{
+     user:{
+       id:String(user.id),
+       email:user.email,
+       displayName:user.display_name,
+       role:user.role,
+       active:user.active,
+       organizationId:String(user.organization_id||'null'),
+       createdAt:user.created_at
+     },
+     passwordDebug:{
+       storedHash:user.password_hash?user.password_hash.substring(0,16)+'...':'NULL',
+       storedHashLength:user.password_hash?user.password_hash.length:'NULL',
+       testPassword:testPass,
+       testHash:testHash.substring(0,16)+'...',
+       testHashLength:testHash.length,
+       hashesMatch:user.password_hash===testHash
+     }
+   });
+  }
   if(p.join('/')==='integrations/config'&&method==='GET')return json(200,{build:'042',googleMapsEnabled:envEnabled('GOOGLE_MAPS_BROWSER_KEY'),googleMapsBrowserKey:process.env.GOOGLE_MAPS_BROWSER_KEY||'',stripeEnabled:envEnabled('STRIPE_PUBLISHABLE_KEY'),stripePublishableKey:process.env.STRIPE_PUBLISHABLE_KEY||''});
   if(p.join('/')==='integrations/health'&&method==='GET')return json(200,{googleMaps:envEnabled('GOOGLE_MAPS_BROWSER_KEY')?'configured':'not-configured',twilio:envEnabled('TWILIO_ACCOUNT_SID')&&envEnabled('TWILIO_AUTH_TOKEN')&&envEnabled('TWILIO_PHONE_NUMBER')?'configured':'not-configured',sendGrid:envEnabled('SENDGRID_API_KEY')&&envEnabled('SENDGRID_FROM_EMAIL')?'configured':'not-configured',stripe:envEnabled('STRIPE_SECRET_KEY')&&envEnabled('STRIPE_PUBLISHABLE_KEY')?'configured':'not-configured',gps:'enabled',checkedAt:new Date().toISOString()});
   if(p.join('/')==='locations/search'&&method==='GET'){
@@ -78,9 +104,35 @@ async function handler(event){
   if(p[0]==='auth'&&p[1]==='me'&&method==='GET'){const u=await requireUser(bearer(event));return json(200,{user:safeUser(u)})}
   if(p[0]==='auth'&&p[1]==='logout'&&method==='POST'){const token=bearer(event);if(token)await query('UPDATE sessions SET revoked_at=now() WHERE token_digest=$1',[digest(token)]);return json(200,{ok:true})}
   if(p[0]==='auth'&&p[1]==='login'&&method==='POST'){
-   const b=parseBody(event),r=await query('SELECT * FROM users WHERE lower(email)=lower($1) AND active=true',[b.email||'']);const u=r.rows[0];if(!u)return json(401,{error:'Invalid credentials'});
-   const supplied=crypto.createHash('sha256').update(String(b.password||'')).digest('hex');if(String(u.password_hash).length!==supplied.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(String(u.password_hash))))return json(401,{error:'Invalid credentials'});
-   const token=crypto.randomBytes(32).toString('base64url');await query(`INSERT INTO sessions(token_digest,user_id,expires_at,ip_address,user_agent) VALUES($1,$2,now()+interval '8 hours',$3,$4)`,[digest(token),u.id,event.headers['x-forwarded-for']||null,event.headers['user-agent']||null]);await audit('USER',String(u.id),'LOGIN',{role:u.role});return json(200,{token,user:safeUser(u)});
+   try{
+     const b=parseBody(event);
+     console.log('[LOGIN] Email:', b.email?.substring(0,10)+'...');
+     const r=await query('SELECT * FROM users WHERE lower(email)=lower($1) AND active=true',[b.email||'']);
+     const u=r.rows[0];
+     if(!u){console.log('[LOGIN] User not found or inactive'); return json(401,{error:'Invalid credentials'});}
+     console.log('[LOGIN] User found:', u.email, 'role:', u.role);
+     
+     const supplied=crypto.createHash('sha256').update(String(b.password||'')).digest('hex');
+     console.log('[LOGIN] Hash length supplied:', supplied.length, 'stored:', String(u.password_hash).length);
+     
+     if(String(u.password_hash).length!==supplied.length){console.log('[LOGIN] Hash length mismatch'); return json(401,{error:'Invalid credentials'});}
+     
+     const suppliedBuf=Buffer.from(supplied,'hex');
+     const storedBuf=Buffer.from(String(u.password_hash),'hex');
+     if(!crypto.timingSafeEqual(suppliedBuf,storedBuf)){console.log('[LOGIN] Password mismatch'); return json(401,{error:'Invalid credentials'});}
+     console.log('[LOGIN] Password verified');
+     
+     const token=crypto.randomBytes(32).toString('base64url');
+     await query(`INSERT INTO sessions(token_digest,user_id,expires_at,ip_address,user_agent) VALUES($1,$2,now()+interval '8 hours',$3,$4)`,[digest(token),u.id,event.headers['x-forwarded-for']||null,event.headers['user-agent']||null]);
+     console.log('[LOGIN] Session created');
+     
+     await audit('USER',String(u.id),'LOGIN',{role:u.role});
+     console.log('[LOGIN] Audit logged');
+     return json(200,{token,user:safeUser(u)});
+   }catch(err){
+     console.error('[LOGIN] Error:', err.message, err.stack);
+     throw err;
+   }
   }
   if(p[0]==='portal'&&p[1]==='trips'&&method==='GET'){
    const u=await requireUser(bearer(event));let sql='SELECT * FROM bookings',params=[];if(u.role==='FACILITY'){sql+=' WHERE facility_id=$1';params=[u.scope_id]}else if(u.role==='DRIVER'){sql+=' WHERE driver_scope_id=$1';params=[u.scope_id]}else if(u.role==='PATIENT'){sql+=' WHERE lower(email)=lower($1)';params=[u.email]}else if(!['ADMIN','DISPATCHER','EXECUTIVE','BILLING','QA'].includes(u.role))return json(403,{error:'Insufficient permission'});sql+=' ORDER BY trip_date DESC, trip_time DESC LIMIT 250';const r=await query(sql,params);return json(200,{trips:r.rows.map(mapBooking)});
