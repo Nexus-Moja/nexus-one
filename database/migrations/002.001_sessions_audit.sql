@@ -11,6 +11,15 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Ensure all required sessions columns exist (idempotent for pre-existing tables)
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS token_digest text;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS revoked_at timestamptz;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address text;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_agent text;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+
 CREATE INDEX IF NOT EXISTS idx_sessions_token_digest ON sessions(token_digest);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at) WHERE revoked_at IS NULL;
@@ -26,6 +35,15 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Ensure all required audit_log columns exist (idempotent for pre-existing tables)
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS entity_type text;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS entity_id text;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS action text;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS actor_id uuid;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS actor_role text;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS changes jsonb;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+
 CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor_id, created_at DESC);
 
@@ -38,6 +56,14 @@ CREATE TABLE IF NOT EXISTS trip_status_history (
   actor text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Ensure all required trip_status_history columns exist (idempotent for pre-existing tables)
+ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS booking_reference text;
+ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS status text;
+ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS status_label text;
+ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS note text;
+ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS actor text;
+ALTER TABLE trip_status_history ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS idx_trip_status_history_booking ON trip_status_history(booking_reference, created_at DESC);
 

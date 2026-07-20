@@ -1,5 +1,12 @@
 BEGIN;
 
+-- Ensure schema_migrations table exists to track applied migrations
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version text PRIMARY KEY,
+  description text,
+  applied_at timestamptz DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text UNIQUE NOT NULL,
@@ -11,6 +18,15 @@ CREATE TABLE IF NOT EXISTS users (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Ensure all required columns exist (idempotent for pre-existing tables)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role text DEFAULT 'USER';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS scope_id text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(lower(email));
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role) WHERE active = true;
@@ -29,6 +45,19 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Ensure all required bookings columns exist (idempotent for pre-existing tables)
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reference text;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS patient_code text;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS vehicle_id bigint;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS status text DEFAULT 'PENDING';
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS service_type text;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS pickup_time timestamptz;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS dropoff_time timestamptz;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS pickup_location text;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS dropoff_location text;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS idx_bookings_reference ON bookings(reference);
 CREATE INDEX IF NOT EXISTS idx_bookings_status_time ON bookings(status, created_at DESC);
