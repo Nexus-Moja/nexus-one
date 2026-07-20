@@ -22,7 +22,6 @@
     </div>
     <div class="livecareStoryActions"><button id="switchLivecareUser" class="button lightButton" type="button">Sign in or switch user</button><button id="livecareLogout" class="button outlineLight" type="button" hidden>Sign out</button><a class="button outlineLight" href="tel:+18887604990">Call support</a></div>
   </div>
-  <div class="privacyStory"><strong>Privacy-aware sharing</strong><p id="rideBoardScope">Before sign-in, vehicle movement is anonymized. After secure access, the map automatically changes to the ride information permitted for that user.</p></div>
 </div>
 <aside class="livecareMapPanel" aria-labelledby="liveRideTitle">
   <div class="mapTopBar"><div><span id="fleetMapStatus" class="mapLiveBadge">Connecting…</span><small id="fleetUpdated">Preparing map</small></div><button id="refreshRideBoard" type="button" class="mapRefresh">Refresh</button></div>
@@ -38,6 +37,7 @@
   <div id="liveRideBoard" hidden></div>
 </aside>
 </div></section>
+<div class="privacyBanner" role="note" aria-label="Privacy information"><div class="shell"><span class="privacyBannerIcon" aria-hidden="true">🔒</span><div><strong>Privacy-aware sharing</strong><p id="rideBoardScope">Before sign-in, vehicle movement is anonymized. After secure access, the map automatically changes to the ride information permitted for that user — patient, facility, dispatcher or driver.</p></div></div></div>
 <main id="main" class="shell moduleMain" tabindex="-1"><section class="accessGateway" aria-labelledby="accessTitle"><div class="sectionHeading"><span class="eyebrow darkEyebrow">Choose secure access</span><h2 id="accessTitle">How are you using Livecare?</h2><p>Use the access method assigned to you. Never share a password, facility account or patient verification details.</p></div><div class="grid cols4 roleCards">
 <article class="card roleCard patientRole"><div class="roleIcon" aria-hidden="true">P</div><h3>Patient or caregiver</h3><p>Track one ride using the confirmation reference and phone number used when booking.</p><button class="button" data-open="patientAccess">Track my ride</button><small>No account or password required.</small></article>
 <article class="card roleCard"><div class="roleIcon" aria-hidden="true">F</div><h3>Facility administrator</h3><p>Use your facility account number and password to view only your organization’s rides.</p><button class="button secondary" data-open="staffAccess" data-role="FACILITY">Facility sign in</button><small>Facility-scoped records only.</small></article>
