@@ -203,7 +203,7 @@
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
-    manageForm.style.cssText='display:none;width:100%;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden;box-sizing:border-box';
+    manageForm.style.cssText='display:none;width:100%;max-width:none;padding:0;margin:0 -1000px 16px -1000px;padding:0 1000px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden;box-sizing:border-box';
     
 
     // Create content container
