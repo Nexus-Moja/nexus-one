@@ -203,7 +203,7 @@
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
-    manageForm.style.cssText='display:none;width:100%;max-width:none;padding:0;margin:0 -1000px 16px -1000px;padding:0 1000px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden;box-sizing:border-box';
+    manageForm.style.cssText='display:none;width:100%;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:visible;box-sizing:border-box';
     
 
     // Create content container
@@ -217,7 +217,7 @@
         <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
       <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
       <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
-      <div class="nexusManageActions" style="display:none;margin-top:12px;margin-left:-16px;margin-right:-16px;width:calc(100% + 32px);padding:0 16px"></div>`;
+      <div class="nexusManageActions" style="display:none;margin-top:12px"></div>`;
     manageForm.appendChild(content);
     
     // Create "Manage Trip" button to show the manage form (replaces manage tab)
