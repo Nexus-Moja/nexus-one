@@ -26,6 +26,15 @@ for (const file of files) {
       console.log(`✓ Fixed broken patch syntax in ${path.basename(file)}`);
     }
 
+    // Add empty-key guard so Maps won't try to load (and show error popup) when no key configured
+    const guardedFd = '_ud_promise};var dd;async function fd(){await _fetchGoogleMapsKey();if(!ud)return Promise.reject(new Error("Google Maps API key not configured"));return window.google?.maps?Promise.resolve(window.google.maps):dd||';
+    const ungardedFd = '_ud_promise};var dd;async function fd(){await _fetchGoogleMapsKey();return window.google?.maps?Promise.resolve(window.google.maps):dd||';
+    if (content.includes(ungardedFd)) {
+      content = content.replace(ungardedFd, guardedFd);
+      changed = true;
+      console.log(`✓ Added empty-key guard to fd() in ${path.basename(file)}`);
+    }
+
     // Fix fresh placeholder (should not exist after first build, but handle just in case)
     if (content.includes('var ud=`REDACTED_GOOGLE_API_KEY`')) {
       content = content.replace(/var ud=`REDACTED_GOOGLE_API_KEY`/g, 'var ud=""');
