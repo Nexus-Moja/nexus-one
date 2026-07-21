@@ -8,16 +8,13 @@ if (!connectionString) {
   process.exit(0);
 }
 
-const testPassword = process.env.NEXUS_TEST_PASSWORD || 'NexusTest042!';
-const passwordHash = crypto.createHash('sha256').update(testPassword).digest('hex');
-
 const testUsers = [
-  { email: 'dispatcher@nexusmt.com', name: 'Test Dispatcher', role: 'DISPATCHER' },
-  { email: 'driver@nexusmt.com',     name: 'Test Driver',     role: 'DRIVER'      },
-  { email: 'facility@nexusmt.com',   name: 'Test Facility',   role: 'FACILITY'    },
-  { email: 'billing@nexusmt.com',    name: 'Test Billing',    role: 'BILLING'     },
-  { email: 'qa@nexusmt.com',         name: 'Test QA',         role: 'QA'          },
-  { email: 'executive@nexusmt.com',  name: 'Test Executive',  role: 'EXECUTIVE'   },
+  { email: 'dispatcher@nexusmt.com', name: 'Test Dispatcher', role: 'DISPATCHER', password: 'Dispatch2026!' },
+  { email: 'driver@nexusmt.com',     name: 'Test Driver',     role: 'DRIVER',      password: 'Driver2026!'   },
+  { email: 'facility@nexusmt.com',   name: 'Test Facility',   role: 'FACILITY',    password: 'Facility2026!' },
+  { email: 'billing@nexusmt.com',    name: 'Test Billing',    role: 'BILLING',     password: 'Billing2026!'  },
+  { email: 'qa@nexusmt.com',         name: 'Test QA',         role: 'QA',          password: 'Quality2026!'  },
+  { email: 'executive@nexusmt.com',  name: 'Test Executive',  role: 'EXECUTIVE',   password: 'Exec2026!'     },
 ];
 
 const pool = new Pool({
@@ -34,6 +31,7 @@ try {
   }
 
   for (const u of testUsers) {
+    const passwordHash = crypto.createHash('sha256').update(u.password).digest('hex');
     const existing = await pool.query('SELECT id FROM users WHERE lower(email)=lower($1)', [u.email]);
     if (existing.rows[0]) {
       await pool.query(
@@ -49,7 +47,7 @@ try {
       console.log(`[TEST-USERS] Created: ${u.email} (${u.role})`);
     }
   }
-  console.log(`[TEST-USERS] Done. Test password: ${testPassword.substring(0,4)}...`);
+  console.log(`[TEST-USERS] Done. Each account has a role-specific password.`);
 } catch (err) {
   console.error('[TEST-USERS] Error:', err.message);
 } finally {
