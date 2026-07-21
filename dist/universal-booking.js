@@ -203,12 +203,12 @@
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
-    manageForm.style.cssText='display:none;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden';
+    manageForm.style.cssText='display:none;width:100%;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden;box-sizing:border-box';
     
 
     // Create content container
     const content=document.createElement('div');
-    content.style.cssText='padding:16px;background:#fff';
+    content.style.cssText='width:100%;padding:16px;background:#fff;box-sizing:border-box';
     content.innerHTML=`
       <p style="font-size:13px;color:#62758a;margin:0 0 12px 0">Enter your trip reference number or name and phone to reschedule or cancel.</p>
       <label style="display:block;margin-bottom:8px"><span style="font-size:13px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
