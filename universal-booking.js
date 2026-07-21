@@ -347,15 +347,120 @@
               </div>
             </div>
           </div>
+          <!-- Edit fields -->
+          <div style="padding:14px;background:#f8fafc">
+            <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Edit Details</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Name</span><br>
+                <input type="text" data-field="name" value="${booking.name}" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Service</span><br>
+                <input type="text" data-field="service" value="${booking.service}" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            </div>
+            <label style="display:block;margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:#62758a">Pickup</span><br>
+              <input type="text" data-field="pickup" data-nexus-autocomplete="true" value="${booking.pickup}" placeholder="Pickup address" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            <label style="display:block;margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:#62758a">Destination</span><br>
+              <input type="text" data-field="destination" data-nexus-autocomplete="true" value="${booking.destination}" placeholder="Destination address" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Email</span><br>
+                <input type="email" data-field="email" value="${booking.email||''}" placeholder="name@example.com" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Alt Phone</span><br>
+                <input type="tel" data-field="alternatePhone" value="${booking.alternatePhone||''}" placeholder="(555) 123-4567" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            </div>
+            <label style="display:block;margin-bottom:4px"><span style="font-size:11px;font-weight:600;color:#62758a">Alt Email</span><br>
+              <input type="email" data-field="alternateEmail" value="${booking.alternateEmail||''}" placeholder="alternate@example.com" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+          </div>
           <!-- Action buttons -->
-          <div style="display:flex;gap:0;border-top:1px solid #f0f4f8">
-            <button type="button" data-nexus-action="cancel" style="flex:1;padding:12px;background:#e11d48;color:#fff;border:none;font-weight:600;cursor:pointer;font-size:13px;transition:background .15s">Cancel Trip</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid #f0f4f8">
+            <button type="button" data-nexus-action="update" style="padding:11px 6px;background:#0369a1;color:#fff;border:none;border-right:1px solid rgba(255,255,255,.2);font-weight:600;cursor:pointer;font-size:12px;transition:background .15s">Save</button>
+            <button type="button" data-nexus-action="reschedule" style="padding:11px 6px;background:#0369a1;color:#fff;border:none;border-right:1px solid rgba(255,255,255,.2);font-weight:600;cursor:pointer;font-size:12px;transition:background .15s">Reschedule</button>
+            <button type="button" data-nexus-action="cancel" style="padding:11px 6px;background:#e11d48;color:#fff;border:none;font-weight:600;cursor:pointer;font-size:12px;transition:background .15s">Cancel Trip</button>
           </div>
         </div>
         <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
       
+      const pickupInput=actions.querySelector('[data-field="pickup"]');
+      const destInput=actions.querySelector('[data-field="destination"]');
+      await facilitySuggestions(pickupInput);
+      await facilitySuggestions(destInput);
+      
+      const cfg=await config();
+      if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+        try{
+          await loadMaps(cfg.googleMapsBrowserKey);
+          const acPickup=new google.maps.places.Autocomplete(pickupInput,{fields:['formatted_address','geometry','place_id','name'],componentRestrictions:{country:'us'},types:['geocode','establishment']});
+          const acDest=new google.maps.places.Autocomplete(destInput,{fields:['formatted_address','geometry','place_id','name'],componentRestrictions:{country:'us'},types:['geocode','establishment']});
+          acPickup.addListener('place_changed',()=>{const p=acPickup.getPlace();if(p?.geometry){pickupInput.value=p.formatted_address||p.name||pickupInput.value;pickupInput.dataset.lat=p.geometry.location.lat();pickupInput.dataset.lng=p.geometry.location.lng();calculateRoute();}});
+          acDest.addListener('place_changed',()=>{const p=acDest.getPlace();if(p?.geometry){destInput.value=p.formatted_address||p.name||destInput.value;destInput.dataset.lat=p.geometry.location.lat();destInput.dataset.lng=p.geometry.location.lng();calculateRoute();}});
+        }catch(e){console.warn('[Nexus] Google autocomplete unavailable',e);}
+      }
+      
+      const updateRouteCard=()=>{
+        actions.querySelector('[data-summary="pickup"]').textContent=pickupInput.value||booking.pickup;
+        actions.querySelector('[data-summary="destination"]').textContent=destInput.value||booking.destination;
+        actions.querySelector('[data-summary="service"]').textContent=actions.querySelector('[data-field="service"]').value||booking.service||'—';
+        calculateRoute();
+      };
+      pickupInput.addEventListener('change',updateRouteCard);
+      destInput.addEventListener('change',updateRouteCard);
+      actions.querySelector('[data-field="service"]').addEventListener('input',updateRouteCard);
+      
+      async function calculateRoute(){
+        const pickup=pickupInput.value.trim();
+        const dest=destInput.value.trim();
+        if(!pickup||!dest)return;
+        const distEl=actions.querySelector('[data-summary="distance"]');
+        const fareEl=actions.querySelector('[data-summary="fare"]');
+        distEl.textContent='…';fareEl.textContent='…';
+        try{
+          const c=await config();
+          if(!c.googleMapsEnabled)return;
+          await loadMaps(c.googleMapsBrowserKey);
+          const svc=new google.maps.DistanceMatrixService();
+          const result=await svc.getDistanceMatrix({origins:[pickup],destinations:[dest],travelMode:'DRIVING',unitSystem:google.maps.UnitSystem.IMPERIAL});
+          if(result.rows[0]?.elements[0]?.status==='OK'){
+            const miles=result.rows[0].elements[0].distance.value/1609.34;
+            distEl.textContent=miles.toFixed(1)+' mi';
+            fareEl.textContent='$'+(5+(miles*2.5)).toFixed(2);
+          }
+        }catch(e){distEl.textContent='N/A';fareEl.textContent='N/A';}
+      }
+      calculateRoute();
+      
       actions.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>doCancel(ref,phone,actions));
+      actions.querySelector('[data-nexus-action="reschedule"]').addEventListener('click',()=>doReschedule(ref,phone,actions));
+      actions.querySelector('[data-nexus-action="update"]').addEventListener('click',()=>doUpdate(ref,phone,actions));
+    }
+    
+    function doUpdate(ref,phone,actions){
+      const result=actions.querySelector('.nexusManageResult');
+      const name=actions.querySelector('[data-field="name"]').value.trim();
+      const service=actions.querySelector('[data-field="service"]').value.trim();
+      const pickup=actions.querySelector('[data-field="pickup"]').value.trim();
+      const destination=actions.querySelector('[data-field="destination"]').value.trim();
+      const email=actions.querySelector('[data-field="email"]').value.trim();
+      const alternatePhone=actions.querySelector('[data-field="alternatePhone"]').value.trim();
+      const alternateEmail=actions.querySelector('[data-field="alternateEmail"]').value.trim();
+      
+      if(!name||!service||!pickup||!destination){showManageMsg('Please fill in all required fields.',false);return;}
+      
+      const updateBtn=actions.querySelector('[data-nexus-action="update"]');
+      updateBtn.disabled=true;updateBtn.textContent='Updating...';
+      
+      fetch(`/api/bookings/${encodeURIComponent(ref)}/update`,{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({phone,name,service,pickup,destination,email,alternatePhone,alternateEmail})
+      }).then(r=>r.json()).then(data=>{
+        if(!data.booking)throw new Error(data.error||'Update failed');
+        showManageMsg('✓ Trip details updated successfully. Confirmation sent via text and email.',true);
+        updateBtn.textContent='Update Details';
+        updateBtn.disabled=false;
+      }).catch(e=>{
+        showManageMsg(e.message,false);
+        updateBtn.textContent='Update Details';
+        updateBtn.disabled=false;
+      });
     }
     
     function doCancel(ref,phone,actions){
@@ -375,6 +480,32 @@
           showManageMsg('✓ Trip cancelled. Confirmation sent via text and email.',true);
           actions.style.display='none';
         }catch(e){const msg=result.querySelector('.nexusMsg')||document.createElement('div');msg.textContent=e.message;msg.style.cssText='padding:8px;background:#fff1f2;color:#e11d48;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:600';result.insertBefore(msg,result.firstChild);btn.disabled=false;btn.textContent='Confirm Cancellation';}
+      });
+    }
+    
+    function doReschedule(ref,phone,actions){
+      const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+      const minDate=tomorrow.toISOString().slice(0,10);
+      const result=actions.querySelector('.nexusManageResult');
+      result.innerHTML=`<label style="display:block;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#082f49">New Date</span><br>
+        <input type="date" name="date" min="${minDate}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+        <label style="display:block;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#082f49">New Time</span><br>
+        <input type="time" name="time" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+        <button type="button" data-nexus-do-reschedule style="width:100%;padding:8px;background:#0369a1;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Confirm Reschedule</button>`;
+      result.style.display='block';
+      result.querySelector('[data-nexus-do-reschedule]').addEventListener('click',async()=>{
+        const date=result.querySelector('[name="date"]').value;
+        const time=result.querySelector('[name="time"]').value;
+        if(!date||!time){const msg=document.createElement('div');msg.textContent='Please fill in date and time.';msg.style.cssText='padding:8px;background:#fff1f2;color:#e11d48;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:600';result.insertBefore(msg,result.firstChild);return;}
+        const btn=result.querySelector('[data-nexus-do-reschedule]');
+        btn.disabled=true;btn.textContent='Rescheduling...';
+        try{
+          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/reschedule`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone,date,time})});
+          const data=await r.json();
+          if(!r.ok)throw new Error(data.error||'Reschedule failed');
+          showManageMsg(`✓ Trip rescheduled to ${date} at ${time}. Confirmation sent via text and email.`,true);
+          actions.style.display='none';
+        }catch(e){const msg=result.querySelector('.nexusMsg')||document.createElement('div');msg.textContent=e.message;msg.style.cssText='padding:8px;background:#fff1f2;color:#e11d48;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:600';result.insertBefore(msg,result.firstChild);btn.disabled=false;btn.textContent='Confirm Reschedule';}
       });
     }
   }
