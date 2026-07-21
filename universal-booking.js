@@ -273,56 +273,87 @@
     
     async function showManageActions(booking,ref,phone){
       const actions=manageForm.querySelector('.nexusManageActions');
+      const statusColor=booking.status==='cancelled'?'#e11d48':booking.status==='completed'?'#059669':'#0369a1';
+      const statusBg=booking.status==='cancelled'?'#fff1f2':booking.status==='completed'?'#d1fae5':'#dbeafe';
+      const statusLabel=(booking.status||'confirmed').replace(/^\w/,c=>c.toUpperCase());
+      const tripDate=booking.date?new Date(booking.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
+      const initDist=booking.distanceMiles?booking.distanceMiles.toFixed(1)+' mi':'—';
+      const initFare=booking.estimatedFare?'$'+Number(booking.estimatedFare).toFixed(2):'—';
       actions.innerHTML=`
-        <div style="background:#f3f8fb;padding:16px;border-radius:8px;border:1px solid #dce6ee;margin-bottom:16px">
-          <p style="margin:0 0 12px 0;font-size:13px;font-weight:600;color:#082f49">Trip Details (Edit as needed)</p>
-          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Name</span><br>
-            <input type="text" data-field="name" value="${booking.name}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Service Type</span><br>
-            <input type="text" data-field="service" value="${booking.service}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Pickup Location</span><br>
-            <input type="text" data-field="pickup" data-nexus-autocomplete="true" value="${booking.pickup}" placeholder="Pickup address" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Destination</span><br>
-            <input type="text" data-field="destination" data-nexus-autocomplete="true" value="${booking.destination}" placeholder="Destination address" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Email</span><br>
-            <input type="email" data-field="email" value="${booking.email||''}" placeholder="name@example.com" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Alternate Phone (optional)</span><br>
-            <input type="tel" data-field="alternatePhone" value="${booking.alternatePhone||''}" placeholder="(555) 123-4567" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-          <label style="display:block;margin-bottom:12px"><span style="font-size:12px;font-weight:600;color:#62758a">Alternate Email (optional)</span><br>
-            <input type="email" data-field="alternateEmail" value="${booking.alternateEmail||''}" placeholder="alternate@example.com" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-        </div>
-        <div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #dce6ee;margin-bottom:16px">
-          <p style="margin:0 0 12px 0;font-size:13px;font-weight:600;color:#082f49">Trip Summary</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div><span style="font-size:11px;color:#62758a">Passenger</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="name">${booking.name}</span></div>
-            <div><span style="font-size:11px;color:#62758a">Phone</span><br><span style="font-size:13px;font-weight:600;color:#082f49">${phone}</span></div>
-            <div><span style="font-size:11px;color:#62758a">Service</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="service">${booking.service}</span></div>
-            <div><span style="font-size:11px;color:#62758a">Email</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="email">${booking.email||'N/A'}</span></div>
-          </div>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb">
-            <div style="margin-bottom:8px"><span style="font-size:11px;color:#62758a">Pickup</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="pickup">${booking.pickup}</span></div>
-            <div style="margin-bottom:8px"><span style="font-size:11px;color:#62758a">Destination</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="destination">${booking.destination}</span></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div><span style="font-size:11px;color:#62758a">Distance</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="distance">${booking.distanceMiles?booking.distanceMiles.toFixed(1)+' mi':'Calculating...'}</span></div>
-              <div><span style="font-size:11px;color:#62758a">Estimated Fare</span><br><span style="font-size:13px;font-weight:600;color:#0369a1" data-summary="fare">${booking.estimatedFare?'$'+booking.estimatedFare.toFixed(2):'Calculating...'}</span></div>
+        <div style="background:#f8fafc;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;margin-bottom:2px">
+          <!-- Trip header strip -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border-bottom:1px solid #f0f4f8">
+            <span style="font-size:11px;font-weight:700;color:#082f49;letter-spacing:.5px">${ref}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${tripDate?`<span style="font-size:11px;color:#62758a">${tripDate}${booking.time?' · '+booking.time:''}</span>`:''}
+              <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${statusBg};color:${statusColor}">${statusLabel}</span>
             </div>
           </div>
+          <!-- Route card -->
+          <div style="padding:12px 14px;background:#fff;border-bottom:1px solid #f0f4f8">
+            <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+              <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px;gap:2px;flex-shrink:0">
+                <span style="width:10px;height:10px;border-radius:50%;background:#0369a1;display:block"></span>
+                <span style="width:2px;height:18px;background:#dce6ee;display:block"></span>
+                <span style="width:10px;height:10px;border-radius:50%;background:#e11d48;display:block"></span>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:600;color:#082f49;margin-bottom:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-summary="pickup">${booking.pickup}</div>
+                <div style="font-size:12px;font-weight:600;color:#082f49;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-summary="destination">${booking.destination}</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:#f0f6ff;border-radius:8px;overflow:hidden;border:1px solid #dbeafe">
+              <div style="padding:8px 10px;text-align:center;border-right:1px solid #dbeafe">
+                <div style="font-size:10px;color:#62758a;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Distance</div>
+                <div style="font-size:13px;font-weight:700;color:#082f49;margin-top:2px" data-summary="distance">${initDist}</div>
+              </div>
+              <div style="padding:8px 10px;text-align:center;border-right:1px solid #dbeafe">
+                <div style="font-size:10px;color:#62758a;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Est. Fare</div>
+                <div style="font-size:13px;font-weight:700;color:#0369a1;margin-top:2px" data-summary="fare">${initFare}</div>
+              </div>
+              <div style="padding:8px 10px;text-align:center">
+                <div style="font-size:10px;color:#62758a;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Service</div>
+                <div style="font-size:12px;font-weight:700;color:#082f49;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" data-summary="service">${booking.service||'—'}</div>
+              </div>
+            </div>
+          </div>
+          <!-- Edit fields -->
+          <div style="padding:14px;background:#f8fafc">
+            <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Edit Details</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Name</span><br>
+                <input type="text" data-field="name" value="${booking.name}" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Service</span><br>
+                <input type="text" data-field="service" value="${booking.service}" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            </div>
+            <label style="display:block;margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:#62758a">Pickup</span><br>
+              <input type="text" data-field="pickup" data-nexus-autocomplete="true" value="${booking.pickup}" placeholder="Pickup address" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            <label style="display:block;margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:#62758a">Destination</span><br>
+              <input type="text" data-field="destination" data-nexus-autocomplete="true" value="${booking.destination}" placeholder="Destination address" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Email</span><br>
+                <input type="email" data-field="email" value="${booking.email||''}" placeholder="name@example.com" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+              <label><span style="font-size:11px;font-weight:600;color:#62758a">Alt Phone</span><br>
+                <input type="tel" data-field="alternatePhone" value="${booking.alternatePhone||''}" placeholder="(555) 123-4567" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+            </div>
+            <label style="display:block;margin-bottom:4px"><span style="font-size:11px;font-weight:600;color:#62758a">Alt Email</span><br>
+              <input type="email" data-field="alternateEmail" value="${booking.alternateEmail||''}" placeholder="alternate@example.com" style="width:100%;padding:7px 10px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px;background:#fff"></label>
+          </div>
+          <!-- Action buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid #f0f4f8">
+            <button type="button" data-nexus-action="update" style="padding:11px 6px;background:#0369a1;color:#fff;border:none;border-right:1px solid rgba(255,255,255,.2);font-weight:600;cursor:pointer;font-size:12px;transition:background .15s">Save</button>
+            <button type="button" data-nexus-action="reschedule" style="padding:11px 6px;background:#0369a1;color:#fff;border:none;border-right:1px solid rgba(255,255,255,.2);font-weight:600;cursor:pointer;font-size:12px;transition:background .15s">Reschedule</button>
+            <button type="button" data-nexus-action="cancel" style="padding:11px 6px;background:#e11d48;color:#fff;border:none;font-weight:600;cursor:pointer;font-size:12px;transition:background .15s">Cancel Trip</button>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button type="button" data-nexus-action="update" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Update Details</button>
-          <button type="button" data-nexus-action="reschedule" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>
-          <button type="button" data-nexus-action="cancel" style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>
-        </div>
-        <div class="nexusManageResult" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
+        <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
       
-      // Setup autocomplete for pickup and destination
       const pickupInput=actions.querySelector('[data-field="pickup"]');
       const destInput=actions.querySelector('[data-field="destination"]');
       await facilitySuggestions(pickupInput);
       await facilitySuggestions(destInput);
       
-      // Setup Google Maps autocomplete if available
       const cfg=await config();
       if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
         try{
@@ -331,57 +362,39 @@
           const acDest=new google.maps.places.Autocomplete(destInput,{fields:['formatted_address','geometry','place_id','name'],componentRestrictions:{country:'us'},types:['geocode','establishment']});
           acPickup.addListener('place_changed',()=>{const p=acPickup.getPlace();if(p?.geometry){pickupInput.value=p.formatted_address||p.name||pickupInput.value;pickupInput.dataset.lat=p.geometry.location.lat();pickupInput.dataset.lng=p.geometry.location.lng();calculateRoute();}});
           acDest.addListener('place_changed',()=>{const p=acDest.getPlace();if(p?.geometry){destInput.value=p.formatted_address||p.name||destInput.value;destInput.dataset.lat=p.geometry.location.lat();destInput.dataset.lng=p.geometry.location.lng();calculateRoute();}});
-        }catch(e){console.warn('[Nexus] Google autocomplete unavailable for manage trip',e);}
+        }catch(e){console.warn('[Nexus] Google autocomplete unavailable',e);}
       }
       
-      // Live update of summary and calculate route
-      const updateSummary=()=>{
-        actions.querySelector('[data-summary="name"]').textContent=actions.querySelector('[data-field="name"]').value||booking.name;
-        actions.querySelector('[data-summary="service"]').textContent=actions.querySelector('[data-field="service"]').value||booking.service;
-        actions.querySelector('[data-summary="email"]').textContent=actions.querySelector('[data-field="email"]').value||booking.email||'N/A';
+      const updateRouteCard=()=>{
         actions.querySelector('[data-summary="pickup"]').textContent=pickupInput.value||booking.pickup;
         actions.querySelector('[data-summary="destination"]').textContent=destInput.value||booking.destination;
+        actions.querySelector('[data-summary="service"]').textContent=actions.querySelector('[data-field="service"]').value||booking.service||'—';
         calculateRoute();
       };
-      
-      pickupInput.addEventListener('change',updateSummary);
-      destInput.addEventListener('change',updateSummary);
-      actions.querySelector('[data-field="name"]').addEventListener('input',updateSummary);
-      actions.querySelector('[data-field="service"]').addEventListener('input',updateSummary);
-      actions.querySelector('[data-field="email"]').addEventListener('input',updateSummary);
+      pickupInput.addEventListener('change',updateRouteCard);
+      destInput.addEventListener('change',updateRouteCard);
+      actions.querySelector('[data-field="service"]').addEventListener('input',updateRouteCard);
       
       async function calculateRoute(){
         const pickup=pickupInput.value.trim();
         const dest=destInput.value.trim();
         if(!pickup||!dest)return;
-        
-        const distanceSummary=actions.querySelector('[data-summary="distance"]');
-        const fareSummary=actions.querySelector('[data-summary="fare"]');
-        distanceSummary.textContent='Calculating...';
-        fareSummary.textContent='Calculating...';
-        
+        const distEl=actions.querySelector('[data-summary="distance"]');
+        const fareEl=actions.querySelector('[data-summary="fare"]');
+        distEl.textContent='…';fareEl.textContent='…';
         try{
-          const cfg=await config();
-          if(!cfg.googleMapsEnabled)return;
-          await loadMaps(cfg.googleMapsBrowserKey);
-          const service=new google.maps.DistanceMatrixService();
-          const result=await service.getDistanceMatrix({origins:[pickup],destinations:[dest],travelMode:'DRIVING',unitSystem:google.maps.UnitSystem.IMPERIAL});
+          const c=await config();
+          if(!c.googleMapsEnabled)return;
+          await loadMaps(c.googleMapsBrowserKey);
+          const svc=new google.maps.DistanceMatrixService();
+          const result=await svc.getDistanceMatrix({origins:[pickup],destinations:[dest],travelMode:'DRIVING',unitSystem:google.maps.UnitSystem.IMPERIAL});
           if(result.rows[0]?.elements[0]?.status==='OK'){
-            const distance=result.rows[0].elements[0].distance.value/1609.34;
-            const distanceText=distance.toFixed(1);
-            distanceSummary.textContent=distanceText+' mi';
-            const baseFare=5.00;
-            const perMileFare=2.50;
-            const estimatedFare=baseFare+(distance*perMileFare);
-            fareSummary.textContent='$'+estimatedFare.toFixed(2);
+            const miles=result.rows[0].elements[0].distance.value/1609.34;
+            distEl.textContent=miles.toFixed(1)+' mi';
+            fareEl.textContent='$'+(5+(miles*2.5)).toFixed(2);
           }
-        }catch(e){
-          console.warn('[Nexus] Route calculation failed',e);
-          distanceSummary.textContent='N/A';
-          fareSummary.textContent='N/A';
-        }
+        }catch(e){distEl.textContent='N/A';fareEl.textContent='N/A';}
       }
-      
       calculateRoute();
       
       actions.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>doCancel(ref,phone,actions));
