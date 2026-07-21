@@ -39,6 +39,18 @@
       history.replaceState(null,'',window.location.pathname);
     }
     
+    // Error tracking for debugging
+    window.__nexusErrors = [];
+    window.addEventListener('error', (e) => {
+      window.__nexusErrors.push({type: 'error', message: e.message, source: e.filename, line: e.lineno});
+      console.error('[Nexus] Error:', e.message, 'at', e.filename, ':', e.lineno);
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      window.__nexusErrors.push({type: 'unhandledRejection', reason: e.reason});
+      console.error('[Nexus] Unhandled rejection:', e.reason);
+    });
+    console.log('[Nexus] Error monitoring initialized');
+    
     /* Initialize Google Maps configuration before React loads */
     (function(){
       'use strict';
