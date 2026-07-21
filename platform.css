@@ -186,22 +186,21 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 
 /* ── Nexus Booking Sheet (Premium Landscape Design) ────────────────── */
 @keyframes nbkSlideIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-#nexusBookingSheet{width:100vw;height:100dvh;max-height:100dvh;border:0;padding:0;background:transparent;box-shadow:none;animation:nbkSlideIn .5s cubic-bezier(.34,.69,.36,1)}
+#nexusBookingSheet{width:100vw;height:100dvh;border:0;padding:0;background:transparent;box-shadow:none;animation:nbkSlideIn .5s cubic-bezier(.34,.69,.36,1)}
 #nexusBookingSheet::backdrop{background:rgba(4,18,34,.4);backdrop-filter:blur(12px);animation:fadeIn .5s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-.nbkLandscapeLayout{display:grid;grid-template-columns:440px 1fr;height:100dvh;overflow:hidden;border-radius:20px}
+.nbkLandscapeLayout{display:grid;grid-template-columns:440px 1fr;height:100%;width:100%;overflow:hidden;border-radius:20px}
 
 /* Form Panel - Left Side */
-.nbkFormPanel{display:grid;grid-template-rows:auto 1fr auto;background:#fff;overflow:hidden;box-shadow:0 20px 60px rgba(4,18,34,.18)}
-.nbkFormHeader{display:flex;justify-content:space-between;align-items:center;padding:28px 32px 20px;border-bottom:1px solid #f0f4f8;background:linear-gradient(180deg,#fafbfc 0%,#ffffff 100%)}
+.nbkFormPanel{display:flex;flex-direction:column;background:#fff;overflow:hidden;box-shadow:0 20px 60px rgba(4,18,34,.18)}
+.nbkFormHeader{display:flex;justify-content:space-between;align-items:center;padding:28px 32px 20px;border-bottom:1px solid #f0f4f8;background:linear-gradient(180deg,#fafbfc 0%,#ffffff 100%);flex-shrink:0}
 .nbkFormHeader h2{margin:0;font-size:26px;font-family:Manrope,sans-serif;font-weight:800;color:#082f49;letter-spacing:-.02em}
-.nbkCloseButton{width:36px;height:36px;background:transparent;border:1px solid #e0e8f0;border-radius:10px;color:#52677c;font-size:24px;cursor:pointer;display:grid;place-items:center;transition:all .2s ease;line-height:1}
+.nbkCloseButton{width:36px;height:36px;background:transparent;border:1px solid #e0e8f0;border-radius:10px;color:#52677c;font-size:24px;cursor:pointer;display:grid;place-items:center;transition:all .2s ease;line-height:1;padding:0}
 .nbkCloseButton:hover{background:#f8fafc;border-color:#cbd8e2;color:#0f2744}
 
-.nbkFormScroll{overflow-y:auto;padding:0;flex:1}
-.nbkForm{display:grid;grid-template-rows:1fr auto;height:100%;padding:0;gap:0}
-.nbkFormScroll{padding:24px 28px;display:grid;gap:20px}
+.nbkForm{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.nbkFormScroll{overflow-y:auto;padding:24px 28px;display:grid;gap:20px;flex:1}
 
 .nbkFormSection{display:grid;gap:12px}
 .nbkLabel{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#52677c}
