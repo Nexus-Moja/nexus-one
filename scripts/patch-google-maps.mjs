@@ -29,28 +29,22 @@ for (const file of files) {
       } else {
         // Configure dynamic loading: replace the key variable initialization
         // so it fetches from the config endpoint instead
-        const dynamicLoader = `var ud='',_ud_promise;async function _fetchGoogleMapsKey(){if(ud)return ud;if(!_ud_promise)_ud_promise=fetch('/api/integrations/config').then(r=>r.json()).then(c=>{ud=c.googleMapsBrowserKey||'';return ud}).catch(e=>{console.warn('[Nexus] Failed to load Google Maps key:',e);return ''});return _ud_promise}`;
+        // The replacement must include complete function definition with proper variable scoping
+        const dynamicLoaderDef = `var ud='',_ud_promise;async function _fetchGoogleMapsKey(){if(ud)return ud;if(!_ud_promise)_ud_promise=fetch('/api/integrations/config').then(r=>r.json()).then(c=>{ud=c.googleMapsBrowserKey||'';return ud}).catch(e=>{console.warn('[Nexus] Failed to load Google Maps key:',e);return ''});return _ud_promise},dd;async function fd(){await _fetchGoogleMapsKey();return window.google?.maps`;
         
-        // Replace the variable initialization
+        // Replace both the variable AND the fd() function in one operation to avoid syntax errors
         if (hasRedacted) {
           content = content.replace(
-            /var ud=`REDACTED_GOOGLE_API_KEY`/g,
-            dynamicLoader
+            /var ud=`REDACTED_GOOGLE_API_KEY`,dd;function fd\(\){return window\.google\?\.maps/g,
+            dynamicLoaderDef + `?Promise.resolve(window.google.maps):dd||(dd=new Promise`
           );
         }
         if (hasPlaceholder) {
           content = content.replace(
-            /var ud=`YOUR_GOOGLE_MAPS_API_KEY_HERE`/g,
-            dynamicLoader
+            /var ud=`YOUR_GOOGLE_MAPS_API_KEY_HERE`,dd;function fd\(\){return window\.google\?\.maps/g,
+            dynamicLoaderDef + `?Promise.resolve(window.google.maps):dd||(dd=new Promise`
           );
         }
-        
-        // Now replace the fd() function to call our fetcher
-        // Look for the function that uses `ud` and make it async + call our fetcher
-        content = content.replace(
-          /function fd\(\)\{return window\.google\?\.maps/g,
-          `async function fd(){await _fetchGoogleMapsKey();return window.google?.maps`
-        );
         
         console.log(`✓ Configured dynamic API key loading for ${path.basename(file)}`);
       }
