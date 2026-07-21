@@ -205,14 +205,7 @@
     manageForm.className='nexusManagedTrip';
     manageForm.style.cssText='display:none;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden';
     
-    // Create header with back button and title
-    const header=document.createElement('div');
-    header.style.cssText='display:flex;align-items:center;gap:12px;padding:16px;background:#f3f8fb;border-bottom:1px solid #dce6ee';
-    header.innerHTML=`
-      <button type="button" data-nexus-back style="background:none;border:none;cursor:pointer;font-size:20px;color:#0369a1;padding:4px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;transition:all 0.2s" title="Back to Book a Ride">←</button>
-      <h3 style="margin:0;font-size:16px;font-weight:700;color:#082f49;flex:1">Manage Existing Trip</h3>`;
-    manageForm.appendChild(header);
-    
+
     // Create content container
     const content=document.createElement('div');
     content.style.cssText='padding:16px;background:#fff';
@@ -258,12 +251,11 @@
       });
     });
     
-    // Back button in header
-    header.querySelector('[data-nexus-back]').addEventListener('click',()=>{
+    // Back to booking form: add click handler to restore heading when manage form closes
+    function restoreBookingForm(){
       manageForm.style.display='none';
       manageButton.style.display='block';
-      console.log('[Nexus] Back button clicked - restoring heading to:',originalHeadingText);
-      // Restore form heading
+      console.log('[Nexus] Back clicked - restoring heading to:',originalHeadingText);
       if(formHeading&&originalHeadingText){
         formHeading.textContent=originalHeadingText;
       }else{
@@ -276,7 +268,15 @@
       // Clear lookup fields
       content.querySelector('input[type="text"]').value='';
       content.querySelector('input[type="tel"]').value='';
-    });
+      manageForm.querySelector('.nexusLookupMsg').style.display='none';
+      manageForm.querySelector('.nexusManageActions').style.display='none';
+    }
+    
+    // Restore booking form when heading is clicked (back arrow interaction)
+    if(formHeading){
+      formHeading.style.cursor='pointer';
+      formHeading.addEventListener('click',restoreBookingForm);
+    }
     
     // Lookup trip
     manageForm.querySelector('[data-nexus-lookup]').addEventListener('click',async()=>{
