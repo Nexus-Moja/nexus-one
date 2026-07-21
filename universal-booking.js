@@ -245,9 +245,19 @@
       }else{
         console.log('[Nexus] WARNING: formHeading is null or undefined');
       }
-      // Hide original form inputs
+      // Hide original form inputs and sections
       Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
         if(!el.closest('.nexusManagedTrip')){el.style.display='none';}
+      });
+      // Hide sections containing route/fare estimate text
+      Array.from(formContainer.querySelectorAll('*')).forEach(el=>{
+        if(el.textContent?.includes('Trip route and fare estimate')||el.textContent?.includes('route will appear')||el.textContent?.includes('Calculate route')){
+          if(!el.closest('.nexusManagedTrip')){el.style.display='none';}
+        }
+      });
+      // Hide labels and divs that are form sections
+      Array.from(formContainer.querySelectorAll('label,fieldset,[role="group"],[class*="form"],[class*="section"]')).forEach(el=>{
+        if(!el.closest('.nexusManagedTrip')&&el.parentElement===formContainer){el.style.display='none';}
       });
     });
     
@@ -261,11 +271,11 @@
       }else{
         console.log('[Nexus] WARNING: Cannot restore - formHeading:',!!formHeading,'originalHeadingText:',originalHeadingText);
       }
-      // Show original form inputs
-      Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
+      // Show all original form inputs and sections
+      Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"],label,fieldset,[role="group"],[class*="form"],[class*="section"]')).forEach(el=>{
         if(!el.closest('.nexusManagedTrip')){el.style.display='';}
       });
-      // Clear lookup fields
+      // Clear manage lookup fields
       content.querySelector('input[type="text"]').value='';
       content.querySelector('input[type="tel"]').value='';
       manageForm.querySelector('.nexusLookupMsg').style.display='none';
