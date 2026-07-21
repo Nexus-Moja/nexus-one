@@ -272,18 +272,64 @@
     function showManageActions(booking,ref,phone){
       const actions=manageForm.querySelector('.nexusManageActions');
       actions.innerHTML=`
-        <div style="padding:12px;background:#fff;border-radius:8px;border:1px solid #dce6ee;margin-bottom:12px">
-          <p style="margin:0 0 8px 0;font-size:13px;color:#62758a"><strong>${booking.service}</strong> on ${booking.date} at ${booking.time}</p>
-          <p style="margin:0;font-size:12px;color:#62758a">${booking.pickup} → ${booking.destination}</p>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button type="button" data-nexus-action="reschedule" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>
-          <button type="button" data-nexus-action="cancel" style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>
+        <div style="background:#f3f8fb;padding:16px;border-radius:8px;border:1px solid #dce6ee;margin-bottom:16px">
+          <p style="margin:0 0 12px 0;font-size:13px;font-weight:600;color:#082f49">Trip Details (Edit as needed)</p>
+          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Name</span><br>
+            <input type="text" data-field="name" value="${booking.name}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Service Type</span><br>
+            <input type="text" data-field="service" value="${booking.service}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Pickup Location</span><br>
+            <input type="text" data-field="pickup" value="${booking.pickup}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Destination</span><br>
+            <input type="text" data-field="destination" value="${booking.destination}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Email</span><br>
+            <input type="email" data-field="email" value="${booking.email||''}" placeholder="name@example.com" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+          <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Alternate Phone (optional)</span><br>
+            <input type="tel" data-field="alternatePhone" value="${booking.alternatePhone||''}" placeholder="(555) 123-4567" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+          <label style="display:block;margin-bottom:12px"><span style="font-size:12px;font-weight:600;color:#62758a">Alternate Email (optional)</span><br>
+            <input type="email" data-field="alternateEmail" value="${booking.alternateEmail||''}" placeholder="alternate@example.com" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button type="button" data-nexus-action="update" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Update Details</button>
+            <button type="button" data-nexus-action="reschedule" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>
+            <button type="button" data-nexus-action="cancel" style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>
+          </div>
         </div>
         <div class="nexusManageResult" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
       actions.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>doCancel(ref,phone,actions));
       actions.querySelector('[data-nexus-action="reschedule"]').addEventListener('click',()=>doReschedule(ref,phone,actions));
+      actions.querySelector('[data-nexus-action="update"]').addEventListener('click',()=>doUpdate(ref,phone,actions));
+    }
+    
+    function doUpdate(ref,phone,actions){
+      const result=actions.querySelector('.nexusManageResult');
+      const name=actions.querySelector('[data-field="name"]').value.trim();
+      const service=actions.querySelector('[data-field="service"]').value.trim();
+      const pickup=actions.querySelector('[data-field="pickup"]').value.trim();
+      const destination=actions.querySelector('[data-field="destination"]').value.trim();
+      const email=actions.querySelector('[data-field="email"]').value.trim();
+      const alternatePhone=actions.querySelector('[data-field="alternatePhone"]').value.trim();
+      const alternateEmail=actions.querySelector('[data-field="alternateEmail"]').value.trim();
+      
+      if(!name||!service||!pickup||!destination){showManageMsg('Please fill in all required fields.',false);return;}
+      
+      const updateBtn=actions.querySelector('[data-nexus-action="update"]');
+      updateBtn.disabled=true;updateBtn.textContent='Updating...';
+      
+      fetch(`/api/bookings/${encodeURIComponent(ref)}/update`,{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({phone,name,service,pickup,destination,email,alternatePhone,alternateEmail})
+      }).then(r=>r.json()).then(data=>{
+        if(!data.booking)throw new Error(data.error||'Update failed');
+        showManageMsg('✓ Trip details updated successfully. Confirmation sent via text and email.',true);
+        updateBtn.textContent='Update Details';
+        updateBtn.disabled=false;
+      }).catch(e=>{
+        showManageMsg(e.message,false);
+        updateBtn.textContent='Update Details';
+        updateBtn.disabled=false;
+      });
     }
     
     function doCancel(ref,phone,actions){

@@ -254,9 +254,27 @@ async function handler(event){
   }
   if(p[0]==='facilities'&&method==='GET'){const u=await requireUser(bearer(event),['ADMIN','DISPATCHER','FACILITY']);const r=await query(u.role==='FACILITY'?'SELECT * FROM facilities WHERE facility_code=$1':'SELECT * FROM facilities ORDER BY name',[...(u.role==='FACILITY'?[u.scope_id]:[])]);return json(200,{facilities:r.rows})}
   if(p[0]==='patients'&&method==='GET'){const u=await requireUser(bearer(event),['ADMIN','DISPATCHER','FACILITY']);const r=await query(u.role==='FACILITY'?'SELECT * FROM patients WHERE facility_code=$1 AND active=true ORDER BY display_name':'SELECT * FROM patients WHERE active=true ORDER BY display_name',[...(u.role==='FACILITY'?[u.scope_id]:[])]);return json(200,{patients:r.rows})}
-  if(p[0]==='ready'&&method==='GET'){const r=await query("SELECT version FROM schema_migrations WHERE version IN ('040.001','041.001','042.001') ORDER BY version");return json(r.rowCount===3?200:503,{ready:r.rowCount===3,migrations:r.rows.map(x=>x.version)})}
+  // Update trip details (name, service, pickup, destination, email, alternate contacts)
+  if(p[0]==='bookings'&&p[1]&&p[2]==='update'&&method==='POST'){
+   const b=parseBody(event);const phone=clean(b.phone);if(!phone)return json(400,{error:'Phone number is required to update'});
+   const ref=decodeURIComponent(p[1]);
+   const r=await query('SELECT * FROM bookings WHERE reference=$1 AND regexp_replace(phone,\'\\D\',\'\',\'g\')=regexp_replace($2,\'\\D\',\'\',\'g\')',[ref,phone]);
+   if(!r.rows[0])return json(404,{error:'Booking not found or phone number does not match'});
+   if(['CANCELLED','COMPLETED','IN_TRANSIT','ARRIVED'].includes(r.rows[0].status))return json(400,{error:`Cannot update a booking with status: ${r.rows[0].status}`});
+   // Validate email if provided
+   if(b.email){const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;if(!emailPattern.test(b.email.trim()))return json(400,{error:'Please enter a valid email address'});}
+   if(b.alternateEmail){const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;if(!emailPattern.test(b.alternateEmail.trim()))return json(400,{error:'Please enter a valid alternate email address'});}
+   // Validate alternate phone if provided
+   if(b.alternatePhone){const phoneDigits=String(b.alternatePhone||'').replace(/\D/g,'');if(phoneDigits.length!==10)return json(400,{error:'Alternate phone number must be 10 digits'});}
+   const updated=await query('UPDATE bookings SET name=$2,service=$3,pickup=$4,destination=$5,email=$6,alternate_phone=$7,alternate_email=$8,last_updated_by=\'passenger\',last_updated_at=now(),updated_at=now() WHERE reference=$1 RETURNING *',[ref,clean(b.name)||r.rows[0].name,clean(b.service)||r.rows[0].service,clean(b.pickup)||r.rows[0].pickup,clean(b.destination)||r.rows[0].destination,clean(b.email)||r.rows[0].email,clean(b.alternatePhone)||r.rows[0].alternate_phone||null,clean(b.alternateEmail)||r.rows[0].alternate_email||null]);
+   await query('INSERT INTO trip_status_history(booking_reference,status,status_label,note,actor) VALUES($1,$2,$3,$4,$5)',[ref,r.rows[0].status,statusLabel(r.rows[0].status),'Trip details updated by passenger','PASSENGER']);
+   await audit('BOOKING',ref,'DETAILS_UPDATED',{updatedFields:Object.keys(b).filter(k=>['name','service','pickup','destination','email','alternatePhone','alternateEmail'].includes(k))});
+   const booking=mapBooking(updated.rows[0]);
+   return json(200,{booking,message:'Trip details updated successfully'});
+  }
+  if(p[0]==='ready'&&method==='GET'){const r=await query("SELECT version FROM schema_migrations WHERE version IN ('040.001','041.001','042.001','043.001') ORDER BY version");return json(r.rowCount===4?200:503,{ready:r.rowCount===4,migrations:r.rows.map(x=>x.version)})}
   return json(404,{error:'Route not found'});
  }catch(err){console.error(err);return json(err.statusCode||500,{error:err.statusCode?err.message:'Internal server error',requestId:crypto.randomUUID()})}
 }
-function mapBooking(b){return {id:b.reference,reference:b.reference,name:b.name,phone:b.phone,email:b.email,service:b.service,pickup:b.pickup,destination:b.destination,date:b.trip_date,time:String(b.trip_time||'').slice(0,5),status:statusLabel(b.status),statusLabel:statusLabel(b.status).replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()),driver:b.driver_name,driverName:b.driver_name,vehicle:b.vehicle_unit,vehicleUnit:b.vehicle_unit,facilityId:b.facility_id,distanceMiles:b.distance_miles?Number(b.distance_miles):null,estimatedDuration:b.estimated_duration,estimatedFare:b.estimated_fare?Number(b.estimated_fare):null,paymentStatus:b.payment_status||'UNPAID'} }
+function mapBooking(b){return {id:b.reference,reference:b.reference,name:b.name,phone:b.phone,email:b.email,alternatePhone:b.alternate_phone,alternateEmail:b.alternate_email,service:b.service,pickup:b.pickup,destination:b.destination,date:b.trip_date,time:String(b.trip_time||'').slice(0,5),status:statusLabel(b.status),statusLabel:statusLabel(b.status).replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()),driver:b.driver_name,driverName:b.driver_name,vehicle:b.vehicle_unit,vehicleUnit:b.vehicle_unit,facilityId:b.facility_id,distanceMiles:b.distance_miles?Number(b.distance_miles):null,estimatedDuration:b.estimated_duration,estimatedFare:b.estimated_fare?Number(b.estimated_fare):null,paymentStatus:b.payment_status||'UNPAID',lastUpdatedBy:b.last_updated_by,lastUpdatedAt:b.last_updated_at} }
 exports.handler=handler;
