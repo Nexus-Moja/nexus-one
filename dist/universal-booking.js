@@ -163,20 +163,35 @@
     const frame=document.createElement('iframe');
     frame.src='/?book=1';
     frame.title='Book a Ride';
+    // sandbox: allow scripts, forms, popups (for payment), same-origin for postMessage
+    frame.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox');
     Object.assign(frame.style,{width:'min(780px,100%)',height:'min(92vh,780px)',border:'none',borderRadius:'18px',background:'#fff',boxShadow:'0 32px 80px rgba(8,47,73,0.35)'});
     const close=document.createElement('button');
     close.setAttribute('aria-label','Close booking form');
     Object.assign(close.style,{position:'absolute',top:'16px',right:'20px',background:'none',border:'none',color:'#fff',fontSize:'28px',cursor:'pointer',lineHeight:'1',padding:'4px 8px'});
     close.textContent='\u00d7';
-    close.onclick=()=>document.body.removeChild(overlay);
+    const closeOverlay=()=>{if(overlay.parentNode)overlay.parentNode.removeChild(overlay);};
+    close.onclick=closeOverlay;
     overlay.appendChild(close);
     overlay.appendChild(frame);
-    overlay.addEventListener('click',ev=>{if(ev.target===overlay)document.body.removeChild(overlay);});
-    document.addEventListener('keydown',function esc(ev){if(ev.key==='Escape'){document.body.removeChild(overlay);document.removeEventListener('keydown',esc);}});
+    overlay.addEventListener('click',ev=>{if(ev.target===overlay)closeOverlay();});
+    document.addEventListener('keydown',function esc(ev){if(ev.key==='Escape'){closeOverlay();document.removeEventListener('keydown',esc);}});
     document.body.appendChild(overlay);
-    // Ask the iframe to open the dialog once React has mounted
+    // Auto-close when booking succeeds: watch iframe DOM for .success element
     frame.addEventListener('load',()=>{
-      try{frame.contentWindow.postMessage({type:'nexus:openBooking'},'*');}catch{}
+      try{
+        frame.contentWindow.postMessage({type:'nexus:openBooking'},'*');
+        // Watch for booking success div appearing inside the iframe
+        const iDoc=frame.contentDocument||frame.contentWindow.document;
+        const successObserver=new MutationObserver(()=>{
+          if(iDoc.querySelector('.success[role="status"]')){
+            successObserver.disconnect();
+            // Brief delay so user sees the confirmation, then close
+            setTimeout(closeOverlay, 4000);
+          }
+        });
+        successObserver.observe(iDoc.body||iDoc.documentElement,{childList:true,subtree:true});
+      }catch{}
     });
   }
 
