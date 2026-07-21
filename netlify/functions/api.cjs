@@ -76,6 +76,11 @@ async function handler(event){
   }
   if(p[0]==='bookings'&&method==='POST'&&p.length===1){
    const b=parseBody(event);required(b,['name','phone','service','pickup','destination','date','time']);
+   // Validate phone format: XXX-XXX-XXXX or 10 digits
+   const phoneDigits=String(b.phone||'').replace(/\D/g,'');
+   if(phoneDigits.length!==10)return json(400,{error:'Phone number must be 10 digits'});
+   // Validate email if provided
+   if(b.email){const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;if(!emailPattern.test(b.email.trim()))return json(400,{error:'Please enter a valid email address'});}
    const ref=reference();
    const r=await query(`INSERT INTO bookings(reference,name,phone,email,service,pickup,destination,trip_date,trip_time,status,notes,pickup_lat,pickup_lng,destination_lat,destination_lng,distance_miles,estimated_duration,estimated_fare,created_at,updated_at)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'SUBMITTED',$10,$11,$12,$13,$14,$15,$16,$17,now(),now()) RETURNING *`,[ref,clean(b.name),clean(b.phone),clean(b.email)||null,clean(b.service),clean(b.pickup),clean(b.destination),b.date,b.time,clean(b.notes)||null,b.pickupLat||null,b.pickupLng||null,b.destinationLat||null,b.destinationLng||null,b.distanceMiles||null,clean(b.estimatedDuration)||null,b.estimatedFare||null]);

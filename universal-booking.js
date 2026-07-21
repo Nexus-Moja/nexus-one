@@ -1,9 +1,11 @@
 (function(){
   'use strict';
   const SELECTOR='input[name="pickup"],input[name="destination"],input[placeholder*="pickup"],input[placeholder*="Pickup"],input[placeholder*="destination"],input[placeholder*="Destination"],input[placeholder*="address"],input[placeholder*="Address"]';
+  const PHONE_PATTERN=/^\d{3}-\d{3}-\d{4}$/;
+  const EMAIL_PATTERN=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const NOMINATIM='https://nominatim.openstreetmap.org/search';
   let configPromise, mapsPromise;
-  const state={enhanced:new WeakSet(), facilities:[], timers:{}};
+  const state={enhanced:new WeakSet(), facilities:[], timers:{}, phoneFields:new WeakSet(), emailFields:new WeakSet()};
 
   function api(path, options){return fetch('/api'+path, options).then(async r=>{const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Request failed');return data;});}
   function config(){return configPromise||(configPromise=api('/integrations/config').catch(()=>({googleMapsEnabled:false})));}
@@ -108,7 +110,46 @@
     });
   }
   function normalizeBookLinks(){document.querySelectorAll('a[href*="book=1"],button[data-book-ride]').forEach(el=>el.dataset.nexusUnifiedBooking='true');}
-  function scan(){normalizeBookLinks();document.querySelectorAll(SELECTOR).forEach(enhance);}
+  
+  function enhancePhoneField(input){
+    if(state.phoneFields.has(input))return;
+    state.phoneFields.add(input);
+    input.setAttribute('inputmode','numeric');
+    input.setAttribute('placeholder','(202) 555-0123');
+    input.addEventListener('input',e=>{
+      let val=e.target.value.replace(/\D/g,'');
+      if(val.length>10)val=val.slice(0,10);
+      if(val.length===0){e.target.value=''}
+      else if(val.length<=3){e.target.value=val}
+      else if(val.length<=6){e.target.value=val.slice(0,3)+'-'+val.slice(3)}
+      else{e.target.value=val.slice(0,3)+'-'+val.slice(3,6)+'-'+val.slice(6,10)}
+    });
+    input.addEventListener('blur',e=>{
+      const val=e.target.value.replace(/\D/g,'');
+      if(val.length===10){
+        e.target.value=val.slice(0,3)+'-'+val.slice(3,6)+'-'+val.slice(6);
+      }
+    });
+  }
+  
+  function enhanceEmailField(input){
+    if(state.emailFields.has(input))return;
+    state.emailFields.add(input);
+    input.setAttribute('type','email');
+    input.setAttribute('inputmode','email');
+    input.addEventListener('blur',e=>{
+      const val=e.target.value.trim();
+      if(val.length>0&&!EMAIL_PATTERN.test(val)){
+        input.style.borderColor='var(--red, #db2839)';
+        input.setCustomValidity('Please enter a valid email address');
+      }else{
+        input.style.borderColor='';
+        input.setCustomValidity('');
+      }
+    });
+  }
+  
+  function scan(){normalizeBookLinks();document.querySelectorAll(SELECTOR).forEach(enhance);document.querySelectorAll('input[name="phone"],input[type="tel"],input[placeholder*="phone" i]').forEach(enhancePhoneField);document.querySelectorAll('input[name="email"],input[type="email"],input[placeholder*="email" i]').forEach(enhanceEmailField);}
   new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',scan);scan();
   window.NexusBooking={scan,refresh:scan,version:'0.42.0'};
