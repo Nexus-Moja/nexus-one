@@ -185,6 +185,10 @@
     
     console.log('[Nexus] Found form container, creating manage trip interface...');
     
+    // Find main page heading to swap titles
+    const mainHeading=document.querySelector('h1,h2');
+    const originalHeadingText=mainHeading?.textContent.trim();
+    
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
@@ -229,6 +233,8 @@
     manageButton.addEventListener('click',()=>{
       manageForm.style.display='block';
       manageButton.style.display='none';
+      // Swap main page heading
+      if(mainHeading){mainHeading.textContent='← Manage Existing Trip';}
       // Hide original form inputs
       Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
         if(!el.closest('.nexusManagedTrip')){el.style.display='none';}
@@ -239,6 +245,8 @@
     header.querySelector('[data-nexus-back]').addEventListener('click',()=>{
       manageForm.style.display='none';
       manageButton.style.display='block';
+      // Restore main page heading
+      if(mainHeading&&originalHeadingText){mainHeading.textContent=originalHeadingText;}
       // Show original form inputs
       Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
         if(!el.closest('.nexusManagedTrip')){el.style.display='';}
