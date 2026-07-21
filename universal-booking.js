@@ -257,7 +257,7 @@
         const r=await fetch(`/api/bookings/${encodeURIComponent(tripRef)}?phone=${encodeURIComponent(phone)}`);
         const data=await r.json();
         if(!r.ok)throw new Error(data.error||'Trip not found');
-        showManageActions(data.booking,tripRef,phone);
+        await showManageActions(data.booking,tripRef,phone);
       }catch(e){showManageMsg(e.message,false);btn.disabled=false;btn.textContent='Look Up Trip';}
     });
     
@@ -269,7 +269,7 @@
       el.style.borderLeft=`4px solid ${ok?'#10b981':'#e11d48'}`;
     }
     
-    function showManageActions(booking,ref,phone){
+    async function showManageActions(booking,ref,phone){
       const actions=manageForm.querySelector('.nexusManageActions');
       actions.innerHTML=`
         <div style="background:#f3f8fb;padding:16px;border-radius:8px;border:1px solid #dce6ee;margin-bottom:16px">
@@ -279,23 +279,109 @@
           <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Service Type</span><br>
             <input type="text" data-field="service" value="${booking.service}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
           <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Pickup Location</span><br>
-            <input type="text" data-field="pickup" value="${booking.pickup}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+            <input type="text" data-field="pickup" data-nexus-autocomplete="true" value="${booking.pickup}" placeholder="Pickup address" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
           <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Destination</span><br>
-            <input type="text" data-field="destination" value="${booking.destination}" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+            <input type="text" data-field="destination" data-nexus-autocomplete="true" value="${booking.destination}" placeholder="Destination address" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
           <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Email</span><br>
             <input type="email" data-field="email" value="${booking.email||''}" placeholder="name@example.com" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
           <label style="display:block;margin-bottom:10px"><span style="font-size:12px;font-weight:600;color:#62758a">Alternate Phone (optional)</span><br>
             <input type="tel" data-field="alternatePhone" value="${booking.alternatePhone||''}" placeholder="(555) 123-4567" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
           <label style="display:block;margin-bottom:12px"><span style="font-size:12px;font-weight:600;color:#62758a">Alternate Email (optional)</span><br>
             <input type="email" data-field="alternateEmail" value="${booking.alternateEmail||''}" placeholder="alternate@example.com" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <button type="button" data-nexus-action="update" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Update Details</button>
-            <button type="button" data-nexus-action="reschedule" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>
-            <button type="button" data-nexus-action="cancel" style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>
+        </div>
+        <div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #dce6ee;margin-bottom:16px">
+          <p style="margin:0 0 12px 0;font-size:13px;font-weight:600;color:#082f49">Trip Summary</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><span style="font-size:11px;color:#62758a">Passenger</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="name">${booking.name}</span></div>
+            <div><span style="font-size:11px;color:#62758a">Phone</span><br><span style="font-size:13px;font-weight:600;color:#082f49">${phone}</span></div>
+            <div><span style="font-size:11px;color:#62758a">Service</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="service">${booking.service}</span></div>
+            <div><span style="font-size:11px;color:#62758a">Email</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="email">${booking.email||'N/A'}</span></div>
           </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb">
+            <div style="margin-bottom:8px"><span style="font-size:11px;color:#62758a">Pickup</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="pickup">${booking.pickup}</span></div>
+            <div style="margin-bottom:8px"><span style="font-size:11px;color:#62758a">Destination</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="destination">${booking.destination}</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><span style="font-size:11px;color:#62758a">Distance</span><br><span style="font-size:13px;font-weight:600;color:#082f49" data-summary="distance">${booking.distanceMiles?booking.distanceMiles.toFixed(1)+' mi':'Calculating...'}</span></div>
+              <div><span style="font-size:11px;color:#62758a">Estimated Fare</span><br><span style="font-size:13px;font-weight:600;color:#0369a1" data-summary="fare">${booking.estimatedFare?'$'+booking.estimatedFare.toFixed(2):'Calculating...'}</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button type="button" data-nexus-action="update" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Update Details</button>
+          <button type="button" data-nexus-action="reschedule" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>
+          <button type="button" data-nexus-action="cancel" style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>
         </div>
         <div class="nexusManageResult" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
+      
+      // Setup autocomplete for pickup and destination
+      const pickupInput=actions.querySelector('[data-field="pickup"]');
+      const destInput=actions.querySelector('[data-field="destination"]');
+      await facilitySuggestions(pickupInput);
+      await facilitySuggestions(destInput);
+      
+      // Setup Google Maps autocomplete if available
+      const cfg=await config();
+      if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+        try{
+          await loadMaps(cfg.googleMapsBrowserKey);
+          const acPickup=new google.maps.places.Autocomplete(pickupInput,{fields:['formatted_address','geometry','place_id','name'],componentRestrictions:{country:'us'},types:['geocode','establishment']});
+          const acDest=new google.maps.places.Autocomplete(destInput,{fields:['formatted_address','geometry','place_id','name'],componentRestrictions:{country:'us'},types:['geocode','establishment']});
+          acPickup.addListener('place_changed',()=>{const p=acPickup.getPlace();if(p?.geometry){pickupInput.value=p.formatted_address||p.name||pickupInput.value;pickupInput.dataset.lat=p.geometry.location.lat();pickupInput.dataset.lng=p.geometry.location.lng();calculateRoute();}});
+          acDest.addListener('place_changed',()=>{const p=acDest.getPlace();if(p?.geometry){destInput.value=p.formatted_address||p.name||destInput.value;destInput.dataset.lat=p.geometry.location.lat();destInput.dataset.lng=p.geometry.location.lng();calculateRoute();}});
+        }catch(e){console.warn('[Nexus] Google autocomplete unavailable for manage trip',e);}
+      }
+      
+      // Live update of summary and calculate route
+      const updateSummary=()=>{
+        actions.querySelector('[data-summary="name"]').textContent=actions.querySelector('[data-field="name"]').value||booking.name;
+        actions.querySelector('[data-summary="service"]').textContent=actions.querySelector('[data-field="service"]').value||booking.service;
+        actions.querySelector('[data-summary="email"]').textContent=actions.querySelector('[data-field="email"]').value||booking.email||'N/A';
+        actions.querySelector('[data-summary="pickup"]').textContent=pickupInput.value||booking.pickup;
+        actions.querySelector('[data-summary="destination"]').textContent=destInput.value||booking.destination;
+        calculateRoute();
+      };
+      
+      pickupInput.addEventListener('change',updateSummary);
+      destInput.addEventListener('change',updateSummary);
+      actions.querySelector('[data-field="name"]').addEventListener('input',updateSummary);
+      actions.querySelector('[data-field="service"]').addEventListener('input',updateSummary);
+      actions.querySelector('[data-field="email"]').addEventListener('input',updateSummary);
+      
+      async function calculateRoute(){
+        const pickup=pickupInput.value.trim();
+        const dest=destInput.value.trim();
+        if(!pickup||!dest)return;
+        
+        const distanceSummary=actions.querySelector('[data-summary="distance"]');
+        const fareSummary=actions.querySelector('[data-summary="fare"]');
+        distanceSummary.textContent='Calculating...';
+        fareSummary.textContent='Calculating...';
+        
+        try{
+          const cfg=await config();
+          if(!cfg.googleMapsEnabled)return;
+          await loadMaps(cfg.googleMapsBrowserKey);
+          const service=new google.maps.DistanceMatrixService();
+          const result=await service.getDistanceMatrix({origins:[pickup],destinations:[dest],travelMode:'DRIVING',unitSystem:google.maps.UnitSystem.IMPERIAL});
+          if(result.rows[0]?.elements[0]?.status==='OK'){
+            const distance=result.rows[0].elements[0].distance.value/1609.34;
+            const distanceText=distance.toFixed(1);
+            distanceSummary.textContent=distanceText+' mi';
+            const baseFare=5.00;
+            const perMileFare=2.50;
+            const estimatedFare=baseFare+(distance*perMileFare);
+            fareSummary.textContent='$'+estimatedFare.toFixed(2);
+          }
+        }catch(e){
+          console.warn('[Nexus] Route calculation failed',e);
+          distanceSummary.textContent='N/A';
+          fareSummary.textContent='N/A';
+        }
+      }
+      
+      calculateRoute();
+      
       actions.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>doCancel(ref,phone,actions));
       actions.querySelector('[data-nexus-action="reschedule"]').addEventListener('click',()=>doReschedule(ref,phone,actions));
       actions.querySelector('[data-nexus-action="update"]').addEventListener('click',()=>doUpdate(ref,phone,actions));
