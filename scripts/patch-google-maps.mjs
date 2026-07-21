@@ -3,8 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 // Patch the hardcoded Google Maps API key placeholder
-// This script is run after build to replace the placeholder with empty string
-// The real API key is loaded dynamically via index.html script
+// Replace the entire var ud=`PLACEHOLDER` declaration with var ud=""
 
 const root = process.cwd();
 const files = [
@@ -16,18 +15,20 @@ const files = [
 for (const file of files) {
   try {
     let content = readFileSync(file, 'utf8');
-    const hasRedacted = content.includes('REDACTED_GOOGLE_API_KEY');
-    const hasPlaceholder = content.includes('YOUR_GOOGLE_MAPS_API_KEY_HERE');
     
-    if (hasRedacted || hasPlaceholder) {
-      // Simply replace the hardcoded placeholder with an empty string
-      // The real API key is injected via index.html script before React loads
-      content = content.replace(/`REDACTED_GOOGLE_API_KEY`/g, '``');
-      content = content.replace(/`YOUR_GOOGLE_MAPS_API_KEY_HERE`/g, '``');
-      
-      writeFileSync(file, content, 'utf8');
-      console.log(`✓ Removed hardcoded API key placeholder from ${path.basename(file)}`);
+    // Replace the entire var ud=`REDACTED_GOOGLE_API_KEY` with var ud=""
+    if (content.includes('var ud=`REDACTED_GOOGLE_API_KEY`')) {
+      content = content.replace(/var ud=`REDACTED_GOOGLE_API_KEY`/g, 'var ud=""');
+      console.log(`✓ Removed REDACTED_GOOGLE_API_KEY from ${path.basename(file)}`);
     }
+    
+    // Also handle YOUR_GOOGLE_MAPS_API_KEY_HERE variant
+    if (content.includes('var ud=`YOUR_GOOGLE_MAPS_API_KEY_HERE`')) {
+      content = content.replace(/var ud=`YOUR_GOOGLE_MAPS_API_KEY_HERE`/g, 'var ud=""');
+      console.log(`✓ Removed YOUR_GOOGLE_MAPS_API_KEY_HERE from ${path.basename(file)}`);
+    }
+    
+    writeFileSync(file, content, 'utf8');
   } catch (err) {
     // File might not exist, that's ok
     if (err.code !== 'ENOENT') {
@@ -36,5 +37,6 @@ for (const file of files) {
   }
 }
 
-console.log('[Build] Google Maps placeholder removal complete');
+console.log('[Build] Google Maps key placeholder replacement complete');
+
 
