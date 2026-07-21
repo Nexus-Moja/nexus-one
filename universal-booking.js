@@ -150,23 +150,29 @@
     });
   }
   
-  function scan(){normalizeBookLinks();document.querySelectorAll(SELECTOR).forEach(enhance);document.querySelectorAll('input[name="phone"],input[type="tel"],input[placeholder*="phone" i]').forEach(enhancePhoneField);document.querySelectorAll('input[name="email"],input[type="email"],input[placeholder*="email" i]').forEach(enhanceEmailField);}
+  function scan(){normalizeBookLinks();document.querySelectorAll(SELECTOR).forEach(enhance);document.querySelectorAll('input[name="phone"],input[type="tel"],input[placeholder*="phone" i]').forEach(enhancePhoneField);document.querySelectorAll('input[name="email"],input[type="email"],input[placeholder*="email" i]').forEach(enhanceEmailField);injectManageTrip();}
   new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
-  document.addEventListener('DOMContentLoaded',scan);scan();
+  document.addEventListener('DOMContentLoaded',scan);
+  setTimeout(scan,500);setTimeout(scan,1500);setTimeout(scan,3000);
+  scan();
 
   // ── Cancel / Reschedule ──────────────────────────────────────────────────
   function injectManageTrip(){
     // Look for booking form container - if tabs already exist, skip
     if(document.querySelector('.nexusBookingTabs'))return;
-    // Find the first phone field - if we find it, inject tabs above the form container
-    const phoneField=document.querySelector('input[type="tel"]');
-    if(!phoneField)return;
+    // Find the first phone field - try multiple selectors
+    let phoneField=document.querySelector('input[type="tel"]');
+    if(!phoneField)phoneField=document.querySelector('input[name="phone"]');
+    if(!phoneField)phoneField=document.querySelector('input[placeholder*="phone" i]');
+    if(!phoneField){console.log('[Nexus] Phone field not found yet');return;}
     
+    console.log('[Nexus] Found phone field, searching for container...');
     // Find the closest container (usually a form or fieldset)
-    let container=phoneField.closest('form')||phoneField.closest('[role="group"]')||phoneField.closest('div[class*="form"]')||phoneField.closest('div[class*="card"]');
-    if(!container)container=phoneField.parentElement?.parentElement;
-    if(!container)return;
+    let container=phoneField.closest('form')||phoneField.closest('fieldset')||phoneField.closest('[role="group"]')||phoneField.closest('div[class*="form"]')||phoneField.closest('div[class*="card"]')||phoneField.closest('[role="dialog"]');
+    if(!container){container=phoneField.parentElement?.parentElement||phoneField.parentElement;}
+    if(!container){console.log('[Nexus] No container found');return;}
     
+    console.log('[Nexus] Found container, injecting manage trip tabs...');
     // Find where to inject - look for the first label or input in the container
     const firstField=container.querySelector('input,label,button:not([data-nexus])');
     if(!firstField)return;
