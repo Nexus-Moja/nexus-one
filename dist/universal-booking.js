@@ -155,6 +155,142 @@
 
   // ── Cancel / Reschedule ──────────────────────────────────────────────────
   // Inject buttons into the React success screen after booking completes
+  function injectManageTrip(formEl){
+    if(formEl._nexusManageInjected)return;
+    formEl._nexusManageInjected=true;
+    // Inject "Manage Existing Trip" tab at the very beginning
+    const tabsContainer=document.createElement('div');
+    tabsContainer.className='nexusBookingTabs';
+    tabsContainer.style.cssText='display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid #dce6ee';
+    const newBookTab=document.createElement('button');
+    newBookTab.type='button';newBookTab.textContent='Book a Ride';newBookTab.dataset.tab='new';
+    newBookTab.style.cssText='flex:1;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#082f49;border-bottom:3px solid #0369a1;margin-bottom:-2px';
+    const manageTab=document.createElement('button');
+    manageTab.type='button';manageTab.textContent='Manage Trip';manageTab.dataset.tab='manage';
+    manageTab.style.cssText='flex:1;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#62758a;border-bottom:3px solid transparent;margin-bottom:-2px';
+    tabsContainer.appendChild(newBookTab);
+    tabsContainer.appendChild(manageTab);
+    formEl.insertBefore(tabsContainer,formEl.firstChild);
+    // Create manage trip form
+    const manageForm=document.createElement('div');
+    manageForm.className='nexusManageTripForm';manageForm.style.display='none';
+    manageForm.style.cssText='display:none;padding:16px;background:#f3f8fb;border-radius:12px;margin-bottom:16px';
+    manageForm.innerHTML=`
+      <p style="font-size:13px;color:#62758a;margin:0 0 12px 0">Enter your trip reference number and phone to reschedule or cancel.</p>
+      <label style="display:block;margin-bottom:8px"><span style="font-size:13px;font-weight:600;color:#082f49">Trip Reference (e.g., NMT-20260721-1234)</span><br>
+        <input type="text" placeholder="NMT-..." maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
+      <label style="display:block;margin-bottom:12px"><span style="font-size:13px;font-weight:600;color:#082f49">Phone Number</span><br>
+        <input type="tel" placeholder="202-555-0123" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
+      <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
+      <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
+      <div class="nexusManageActions" style="display:none;margin-top:12px"></div>`;
+    formEl.insertBefore(manageForm,tabsContainer.nextSibling);
+    const newBookContent=document.createElement('div');
+    newBookContent.className='nexusNewBookContent';newBookContent.dataset.tab='new';
+    const origContent=formEl.querySelector('[role="dialog"]')||formEl.parentElement.querySelector('.bookingForm')||formEl.querySelector('form')||formEl.querySelector('label')?.parentElement;
+    if(origContent){
+      // Move the original form into the new book tab
+      const tempDiv=document.createElement('div');
+      tempDiv.appendChild(origContent.cloneNode(true));
+      newBookContent.appendChild(tempDiv);
+      formEl.appendChild(newBookContent);
+    }
+    // Tab switching
+    newBookTab.addEventListener('click',()=>{
+      newBookTab.style.borderBottomColor='#0369a1';newBookTab.style.color='#082f49';
+      manageTab.style.borderBottomColor='transparent';manageTab.style.color='#62758a';
+      manageForm.style.display='none';
+      if(newBookContent)newBookContent.style.display='block';
+    });
+    manageTab.addEventListener('click',()=>{
+      manageTab.style.borderBottomColor='#0369a1';manageTab.style.color='#082f49';
+      newBookTab.style.borderBottomColor='transparent';newBookTab.style.color='#62758a';
+      manageForm.style.display='block';
+      if(newBookContent)newBookContent.style.display='none';
+    });
+    // Lookup trip
+    manageForm.querySelector('[data-nexus-lookup]').addEventListener('click',async()=>{
+      const ref=manageForm.querySelector('input[placeholder*="NMT"]').value.trim();
+      const phone=manageForm.querySelector('input[type="tel"]').value.trim();
+      if(!ref||!phone){showManageMsg('Please enter both trip reference and phone number.',false);return;}
+      const btn=manageForm.querySelector('[data-nexus-lookup]');
+      btn.disabled=true;btn.textContent='Looking up...';
+      try{
+        const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}?phone=${encodeURIComponent(phone)}`);
+        const data=await r.json();
+        if(!r.ok)throw new Error(data.error||'Trip not found');
+        showManageActions(data.booking,ref,phone);
+      }catch(e){showManageMsg(e.message,false);btn.disabled=false;btn.textContent='Look Up Trip';}
+    });
+    function showManageMsg(msg,ok){
+      const el=manageForm.querySelector('.nexusLookupMsg');
+      el.textContent=msg;el.style.display='block';
+      el.style.background=ok?'#d1fae5':'#fff1f2';
+      el.style.color=ok?'#047857':'#e11d48';
+      el.style.borderLeft=`4px solid ${ok?'#10b981':'#e11d48'}`;
+    }
+    function showManageActions(booking,ref,phone){
+      const actions=manageForm.querySelector('.nexusManageActions');
+      actions.innerHTML=`
+        <div style="padding:12px;background:#fff;border-radius:8px;border:1px solid #dce6ee;margin-bottom:12px">
+          <p style="margin:0 0 8px 0;font-size:13px;color:#62758a"><strong>${booking.service}</strong> on ${booking.date} at ${booking.time}</p>
+          <p style="margin:0;font-size:12px;color:#62758a">${booking.pickup} → ${booking.destination}</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="button" data-nexus-action="reschedule" style="flex:1;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>
+          <button type="button" data-nexus-action="cancel" style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>
+        </div>
+        <div class="nexusManageResult" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
+      actions.style.display='block';
+      actions.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>doCancel(ref,phone,actions));
+      actions.querySelector('[data-nexus-action="reschedule"]').addEventListener('click',()=>doReschedule(ref,phone,actions));
+    }
+    function doCancel(ref,phone,actions){
+      const result=actions.querySelector('.nexusManageResult');
+      result.innerHTML=`<label style="display:block;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#082f49">Cancellation Reason (optional)</span><br>
+        <textarea placeholder="e.g., Found alternative transport" maxlength="200" style="width:100%;height:60px;padding:8px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px;resize:none"></textarea></label>
+        <button type="button" data-nexus-do-cancel style="width:100%;padding:8px;background:#e11d48;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Confirm Cancellation</button>`;
+      result.style.display='block';
+      result.querySelector('[data-nexus-do-cancel]').addEventListener('click',async()=>{
+        const reason=result.querySelector('textarea').value.trim();
+        const btn=result.querySelector('[data-nexus-do-cancel]');
+        btn.disabled=true;btn.textContent='Cancelling...';
+        try{
+          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/cancel`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone,reason})});
+          const data=await r.json();
+          if(!r.ok)throw new Error(data.error||'Cancellation failed');
+          showManageMsg('✓ Trip cancelled. Confirmation sent via text and email.',true);
+          actions.style.display='none';
+        }catch(e){const msg=result.querySelector('.nexusMsg')||document.createElement('div');msg.textContent=e.message;msg.style.cssText='padding:8px;background:#fff1f2;color:#e11d48;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:600';result.insertBefore(msg,result.firstChild);btn.disabled=false;btn.textContent='Confirm Cancellation';}
+      });
+    }
+    function doReschedule(ref,phone,actions){
+      const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+      const minDate=tomorrow.toISOString().slice(0,10);
+      const result=actions.querySelector('.nexusManageResult');
+      result.innerHTML=`<label style="display:block;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#082f49">New Date</span><br>
+        <input type="date" name="date" min="${minDate}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+        <label style="display:block;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#082f49">New Time</span><br>
+        <input type="time" name="time" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
+        <button type="button" data-nexus-do-reschedule style="width:100%;padding:8px;background:#0369a1;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Confirm Reschedule</button>`;
+      result.style.display='block';
+      result.querySelector('[data-nexus-do-reschedule]').addEventListener('click',async()=>{
+        const date=result.querySelector('[name="date"]').value;
+        const time=result.querySelector('[name="time"]').value;
+        if(!date||!time){const msg=document.createElement('div');msg.textContent='Please fill in date and time.';msg.style.cssText='padding:8px;background:#fff1f2;color:#e11d48;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:600';result.insertBefore(msg,result.firstChild);return;}
+        const btn=result.querySelector('[data-nexus-do-reschedule]');
+        btn.disabled=true;btn.textContent='Rescheduling...';
+        try{
+          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/reschedule`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone,date,time})});
+          const data=await r.json();
+          if(!r.ok)throw new Error(data.error||'Reschedule failed');
+          showManageMsg(`✓ Trip rescheduled to ${date} at ${time}. Confirmation sent via text and email.`,true);
+          actions.style.display='none';
+        }catch(e){const msg=result.querySelector('.nexusMsg')||document.createElement('div');msg.textContent=e.message;msg.style.cssText='padding:8px;background:#fff1f2;color:#e11d48;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:600';result.insertBefore(msg,result.firstChild);btn.disabled=false;btn.textContent='Confirm Reschedule';}
+      });
+    }
+  }
+
   function injectManageButtons(successEl){
     if(successEl._nexusManaged)return;
     successEl._nexusManaged=true;
@@ -248,9 +384,10 @@
     });
   }
 
-  // Watch for the React success screen to appear
+  // Watch for React forms and success screens
   new MutationObserver(()=>{
     document.querySelectorAll('.success[role="status"]').forEach(injectManageButtons);
+    document.querySelectorAll('.bookingForm,[role="dialog"]').forEach(injectManageTrip);
   }).observe(document.documentElement,{childList:true,subtree:true});
 
   // Intercept "Book a Ride" nav links on non-home pages and open an overlay instead of navigating
@@ -259,7 +396,7 @@
     if(document.getElementById('nexus-booking-overlay'))return;
     const overlay=document.createElement('div');
     overlay.id='nexus-booking-overlay';
-    Object.assign(overlay.style,{position:'fixed',inset:'0',zIndex:'9999',background:'rgba(8,47,73,0.7)',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)'});
+    Object.assign(overlay.style,{position:'fixed',inset:'0',zIndex:'9999',background:'#e8eef5',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'none'});
     const frame=document.createElement('iframe');
     frame.src='/?book=1';
     frame.title='Book a Ride';
