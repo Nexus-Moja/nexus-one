@@ -14,15 +14,10 @@
     <span><small>Active</small><strong id="activeTrips">—</strong></span>
     <span><small>Completed</small><strong id="completedTrips">—</strong></span>
   </div>
-  <div class="livecareLoginBlock">
-    <div class="livecareLoginHeading"><strong>Quick actions</strong><span>Dispatch workspace</span></div>
-    <div class="livecareRoleButtons">
-      <button class="livecareRoleButton" type="button" onclick="document.getElementById('tripBoard').scrollIntoView({behavior:'smooth'})"><b>Trip board</b><small>View all requests</small></button>
-      <button class="livecareRoleButton" type="button" onclick="document.getElementById('loadTrips').click()"><b>Refresh trips</b><small>Reload from API</small></button>
-      <button class="livecareRoleButton" type="button" onclick="document.getElementById('aiSection').scrollIntoView({behavior:'smooth'})"><b>AI insights</b><small>Recommendations</small></button>
-      <button class="livecareRoleButton" type="button" onclick="window.location.href='/fleet.html'"><b>Fleet status</b><small>Vehicle overview</small></button>
-    </div>
-    <div class="livecareStoryActions"><a class="button lightButton" href="/livecare.html">Open Livecare</a><a class="button outlineLight" href="/fleet.html">Fleet view</a><a class="button outlineLight" href="tel:+18887604990">Call support</a></div>
+  <div class="livecareStoryActions" style="margin-top:4px">
+    <a class="button lightButton" href="#tripBoard" onclick="event.preventDefault();document.getElementById('tripBoard').scrollIntoView({behavior:'smooth'})">Trip board</a>
+    <a class="button outlineLight" href="/fleet.html">Fleet</a>
+    <a class="button outlineLight" href="/livecare.html">Livecare</a>
   </div>
 </div>
 <aside class="livecareMapPanel" aria-label="Dispatch fleet telemetry">

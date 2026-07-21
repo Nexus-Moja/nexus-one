@@ -13,6 +13,7 @@
     "verify": "node scripts/verify-build042.mjs",
     "start": "netlify dev --dir dist",
     "admin:create-test": "node scripts/create-test-admin.mjs",
+    "test:create-users": "node scripts/create-test-users.mjs",
     "debug:admin": "node scripts/debug-admin.mjs"
   },
   "dependencies": {

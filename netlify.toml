@@ -1,5 +1,5 @@
 [build]
-  command = "npm run db:migrate && npm run admin:create-test && npm run build"
+  command = "npm run db:migrate && npm run admin:create-test && npm run test:create-users && npm run build"
   publish = "dist"
   functions = "netlify/functions"
 
