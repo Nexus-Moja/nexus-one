@@ -185,9 +185,20 @@
     
     console.log('[Nexus] Found form container, creating manage trip interface...');
     
-    // Find form heading (inside form container, not page-level)
-    const formHeading=formContainer.querySelector('h1,h2,h3,h4,h5,h6')||formContainer.previousElementSibling?.querySelector('h1,h2,h3,h4,h5,h6');
+    // Find form heading - search in formContainer and up the tree
+    let formHeading=formContainer.querySelector('h1,h2,h3,h4,h5,h6');
+    if(!formHeading&&formContainer.previousElementSibling){
+      formHeading=formContainer.previousElementSibling.querySelector('h1,h2,h3,h4,h5,h6');
+    }
+    if(!formHeading){
+      let parent=formContainer.parentElement;
+      for(let i=0;i<4&&!formHeading&&parent;i++){
+        formHeading=parent.querySelector('h1,h2,h3,h4,h5,h6');
+        parent=parent.parentElement;
+      }
+    }
     const originalHeadingText=formHeading?.textContent?.trim();
+    console.log('[Nexus] Found heading:',formHeading?.tagName,originalHeadingText);
     
     // Create manage form with header
     const manageForm=document.createElement('div');
@@ -233,8 +244,14 @@
     manageButton.addEventListener('click',()=>{
       manageForm.style.display='block';
       manageButton.style.display='none';
+      console.log('[Nexus] Manage button clicked - formHeading:',formHeading?.tagName,formHeading?.textContent);
       // Swap form heading inside the dialog
-      if(formHeading){formHeading.textContent='← Manage Existing Trip';}
+      if(formHeading){
+        console.log('[Nexus] Swapping heading text to: ← Manage Existing Trip');
+        formHeading.textContent='← Manage Existing Trip';
+      }else{
+        console.log('[Nexus] WARNING: formHeading is null or undefined');
+      }
       // Hide original form inputs
       Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
         if(!el.closest('.nexusManagedTrip')){el.style.display='none';}
@@ -245,8 +262,13 @@
     header.querySelector('[data-nexus-back]').addEventListener('click',()=>{
       manageForm.style.display='none';
       manageButton.style.display='block';
+      console.log('[Nexus] Back button clicked - restoring heading to:',originalHeadingText);
       // Restore form heading
-      if(formHeading&&originalHeadingText){formHeading.textContent=originalHeadingText;}
+      if(formHeading&&originalHeadingText){
+        formHeading.textContent=originalHeadingText;
+      }else{
+        console.log('[Nexus] WARNING: Cannot restore - formHeading:',!!formHeading,'originalHeadingText:',originalHeadingText);
+      }
       // Show original form inputs
       Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
         if(!el.closest('.nexusManagedTrip')){el.style.display='';}
