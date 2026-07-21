@@ -153,6 +153,106 @@
   new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',scan);scan();
 
+  // ── Cancel / Reschedule ──────────────────────────────────────────────────
+  // Inject buttons into the React success screen after booking completes
+  function injectManageButtons(successEl){
+    if(successEl._nexusManaged)return;
+    successEl._nexusManaged=true;
+    // Extract reference and phone from the success screen
+    const refText=successEl.querySelector('b')?.textContent?.trim()||'';
+    const ref=refText.match(/NMT-[\w-]+/)?.[0]||'';
+    if(!ref)return;
+    // Build the manage section
+    const section=document.createElement('div');
+    section.className='nexusManageTrip';
+    section.style.cssText='margin-top:20px;padding-top:18px;border-top:1px solid #dce6ee;display:flex;flex-direction:column;gap:10px';
+    section.innerHTML=`
+      <p style="font-size:13px;color:#62758a;margin:0">Need to make a change?</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button type="button" data-nexus-action="reschedule" style="flex:1;min-width:120px;padding:10px 16px;border-radius:10px;border:1px solid #dce6ee;background:#f3f8fb;color:#082f49;font-weight:600;font-size:14px;cursor:pointer">Reschedule</button>
+        <button type="button" data-nexus-action="cancel" style="flex:1;min-width:120px;padding:10px 16px;border-radius:10px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-weight:600;font-size:14px;cursor:pointer">Cancel Trip</button>
+      </div>
+      <div class="nexusManageForm" style="display:none"></div>
+      <div class="nexusManageMsg" style="display:none;padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600"></div>`;
+    successEl.appendChild(section);
+
+    function showMsg(msg,ok){
+      const el=section.querySelector('.nexusManageMsg');
+      el.textContent=msg;el.style.display='block';
+      el.style.background=ok?'#d1fae5':'#fff1f2';el.style.color=ok?'#047857':'#e11d48';
+      el.style.border=`1px solid ${ok?'#6ee7b7':'#fecdd3'}`;
+    }
+    function phoneVerifyField(){
+      const w=document.createElement('div');
+      w.style.cssText='display:flex;flex-direction:column;gap:8px';
+      w.innerHTML=`<label style="font-size:13px;font-weight:600;color:#62758a">Verify your phone number</label>
+        <input type="tel" placeholder="202-555-0123" maxlength="20" style="padding:9px 12px;border:1px solid #dce6ee;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box">`;
+      return w;
+    }
+    section.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>{
+      const form=section.querySelector('.nexusManageForm');
+      form.style.display='block';
+      form.innerHTML='';
+      const pf=phoneVerifyField();
+      const btn=document.createElement('button');
+      btn.type='button';btn.textContent='Confirm Cancellation';
+      btn.style.cssText='padding:10px 16px;background:#e11d48;color:#fff;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;margin-top:4px';
+      btn.onclick=async()=>{
+        const phone=pf.querySelector('input').value.trim();
+        if(!phone){showMsg('Please enter your phone number to confirm.', false);return;}
+        btn.disabled=true;btn.textContent='Cancelling…';
+        try{
+          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/cancel`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone})});
+          const data=await r.json();
+          if(!r.ok)throw new Error(data.error||'Cancellation failed');
+          form.style.display='none';
+          showMsg('✓ Trip cancelled. A confirmation text/email has been sent.',true);
+          section.querySelectorAll('[data-nexus-action]').forEach(b=>b.style.display='none');
+        }catch(e){showMsg(e.message,false);btn.disabled=false;btn.textContent='Confirm Cancellation';}
+      };
+      form.appendChild(pf);form.appendChild(btn);
+    });
+
+    section.querySelector('[data-nexus-action="reschedule"]').addEventListener('click',()=>{
+      const form=section.querySelector('.nexusManageForm');
+      form.style.display='block';
+      form.innerHTML='';
+      const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+      const minDate=tomorrow.toISOString().slice(0,10);
+      form.innerHTML=`
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:13px;font-weight:600;color:#62758a">Verify your phone number</label>
+          <input type="tel" name="phone" placeholder="202-555-0123" maxlength="20" style="padding:9px 12px;border:1px solid #dce6ee;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box">
+          <label style="font-size:13px;font-weight:600;color:#62758a;margin-top:4px">New date</label>
+          <input type="date" name="date" min="${minDate}" style="padding:9px 12px;border:1px solid #dce6ee;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box">
+          <label style="font-size:13px;font-weight:600;color:#62758a">New time</label>
+          <input type="time" name="time" style="padding:9px 12px;border:1px solid #dce6ee;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box">
+          <button type="button" data-nexus-submit style="padding:10px 16px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;margin-top:4px">Confirm Reschedule</button>
+        </div>`;
+      form.querySelector('[data-nexus-submit]').addEventListener('click',async()=>{
+        const phone=form.querySelector('[name="phone"]').value.trim();
+        const date=form.querySelector('[name="date"]').value;
+        const time=form.querySelector('[name="time"]').value;
+        if(!phone||!date||!time){showMsg('Please fill in all fields.',false);return;}
+        const btn2=form.querySelector('[data-nexus-submit]');
+        btn2.disabled=true;btn2.textContent='Rescheduling…';
+        try{
+          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/reschedule`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone,date,time})});
+          const data=await r.json();
+          if(!r.ok)throw new Error(data.error||'Reschedule failed');
+          form.style.display='none';
+          showMsg(`✓ Trip rescheduled to ${date} at ${time}. A confirmation text/email has been sent.`,true);
+          section.querySelectorAll('[data-nexus-action]').forEach(b=>b.style.display='none');
+        }catch(e){showMsg(e.message,false);btn2.disabled=false;btn2.textContent='Confirm Reschedule';}
+      });
+    });
+  }
+
+  // Watch for the React success screen to appear
+  new MutationObserver(()=>{
+    document.querySelectorAll('.success[role="status"]').forEach(injectManageButtons);
+  }).observe(document.documentElement,{childList:true,subtree:true});
+
   // Intercept "Book a Ride" nav links on non-home pages and open an overlay instead of navigating
   function openBookingOverlay(e){
     e.preventDefault();

@@ -10,6 +10,10 @@
   NEXUS_ADMIN_EMAIL = "admin@nexusmt.com"
   NEXUS_ADMIN_PASSWORD = "NexusAdmin042!"
 
+# Scheduled function: send ride reminders 1 hour before trip
+[functions.ride-reminders]
+  schedule = "*/15 * * * *"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"

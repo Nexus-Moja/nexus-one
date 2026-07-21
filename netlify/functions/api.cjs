@@ -94,6 +94,43 @@ async function handler(event){
    const phone=clean(event.queryStringParameters?.phone);if(!phone)return json(400,{error:'Phone number is required'});
    const r=await query('SELECT * FROM bookings WHERE reference=$1 AND regexp_replace(phone,\'\\D\',\'\',\'g\')=regexp_replace($2,\'\\D\',\'\',\'g\')',[decodeURIComponent(p[1]),phone]);if(!r.rows[0])return json(404,{error:'Request not found'});return json(200,{booking:mapBooking(r.rows[0])});
   }
+  // Cancel booking
+  if(p[0]==='bookings'&&p[1]&&p[2]==='cancel'&&method==='POST'){
+   const b=parseBody(event);const phone=clean(b.phone);if(!phone)return json(400,{error:'Phone number is required to cancel'});
+   const ref=decodeURIComponent(p[1]);
+   const r=await query('SELECT * FROM bookings WHERE reference=$1 AND regexp_replace(phone,\'\\D\',\'\',\'g\')=regexp_replace($2,\'\\D\',\'\',\'g\')',[ref,phone]);
+   if(!r.rows[0])return json(404,{error:'Booking not found or phone number does not match'});
+   if(['CANCELLED','COMPLETED','IN_TRANSIT','ARRIVED'].includes(r.rows[0].status))return json(400,{error:`Cannot cancel a booking with status: ${r.rows[0].status}`});
+   const updated=await query('UPDATE bookings SET status=$2,cancelled_at=now(),cancel_reason=$3,updated_at=now() WHERE reference=$1 RETURNING *',[ref,'CANCELLED',clean(b.reason)||'Cancelled by passenger']);
+   await query('INSERT INTO trip_status_history(booking_reference,status,status_label,note,actor) VALUES($1,$2,$3,$4,$5)',[ref,'CANCELLED','cancelled',clean(b.reason)||'Cancelled by passenger','PASSENGER']);
+   await audit('BOOKING',ref,'CANCELLED',{reason:clean(b.reason)||'Passenger request'});
+   const booking=mapBooking(updated.rows[0]);
+   // Notify passenger of cancellation
+   await Promise.allSettled([
+     sendSms(booking.phone,`Nexus Medical Transit: Your trip ${ref} has been cancelled. Reference saved for your records. Call (888) 760-4990 to rebook.`),
+     booking.email?sendEmail(booking.email,`Trip ${ref} cancelled`,`<h2>Your trip has been cancelled</h2><p>Reference <strong>${ref}</strong> has been cancelled as requested.</p><p>Call <strong>(888) 760-4990</strong> or visit nexusmt.com to book a new trip.</p>`):Promise.resolve()
+   ]);
+   return json(200,{booking,message:'Booking cancelled successfully'});
+  }
+  // Reschedule booking
+  if(p[0]==='bookings'&&p[1]&&p[2]==='reschedule'&&method==='POST'){
+   const b=parseBody(event);const phone=clean(b.phone);if(!phone)return json(400,{error:'Phone number is required to reschedule'});
+   if(!b.date||!b.time)return json(400,{error:'New date and time are required'});
+   const ref=decodeURIComponent(p[1]);
+   const r=await query('SELECT * FROM bookings WHERE reference=$1 AND regexp_replace(phone,\'\\D\',\'\',\'g\')=regexp_replace($2,\'\\D\',\'\',\'g\')',[ref,phone]);
+   if(!r.rows[0])return json(404,{error:'Booking not found or phone number does not match'});
+   if(['CANCELLED','COMPLETED','IN_TRANSIT','ARRIVED'].includes(r.rows[0].status))return json(400,{error:`Cannot reschedule a booking with status: ${r.rows[0].status}`});
+   const updated=await query('UPDATE bookings SET trip_date=$2,trip_time=$3,reminder_sent=false,updated_at=now() WHERE reference=$1 RETURNING *',[ref,b.date,b.time]);
+   await query('INSERT INTO trip_status_history(booking_reference,status,status_label,note,actor) VALUES($1,$2,$3,$4,$5)',[ref,r.rows[0].status,statusLabel(r.rows[0].status),`Rescheduled to ${b.date} at ${b.time}`,'PASSENGER']);
+   await audit('BOOKING',ref,'RESCHEDULED',{newDate:b.date,newTime:b.time});
+   const booking=mapBooking(updated.rows[0]);
+   // Notify passenger of reschedule
+   await Promise.allSettled([
+     sendSms(booking.phone,`Nexus Medical Transit: Your trip ${ref} has been rescheduled to ${b.date} at ${b.time}. Questions? Call (888) 760-4990.`),
+     booking.email?sendEmail(booking.email,`Trip ${ref} rescheduled`,`<h2>Your trip has been rescheduled</h2><p>Reference <strong>${ref}</strong> is now scheduled for <strong>${b.date} at ${b.time}</strong>.</p><p>Questions? Call <strong>(888) 760-4990</strong>.</p>`):Promise.resolve()
+   ]);
+   return json(200,{booking,message:'Booking rescheduled successfully'});
+  }
   if(p.join('/')==='payments/create-intent'&&method==='POST'){
    const b=parseBody(event);required(b,['bookingReference']);const r=await query('SELECT reference,estimated_fare,payment_status FROM bookings WHERE reference=$1',[b.bookingReference]);if(!r.rows[0])return json(404,{error:'Booking not found'});
    const amount=Math.round(Number(b.amount||r.rows[0].estimated_fare||0)*100);if(amount<50)return json(400,{error:'A valid payment amount is required'});
