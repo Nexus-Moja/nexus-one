@@ -62,6 +62,20 @@
       else if(input.placeholder.toLowerCase().includes('destination'))input.name='destination';
     }
     input.setAttribute('autocomplete','street-address');input.setAttribute('spellcheck','false');input.classList.add('nexusAddressInput');input.removeAttribute('pattern');input.removeAttribute('title');
+    input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');
+    // Hide validation error indicators
+    input.style.backgroundImage='none';
+    input.addEventListener('invalid',e=>{e.preventDefault();e.target.style.boxShadow='none'},true);
+    // Remove error sibling elements
+    setTimeout(()=>{
+      let el=input.nextElementSibling;
+      while(el){
+        if(el.getAttribute('role')==='status'||el.textContent?.includes('!')||el.classList?.contains('error')||el.classList?.contains('invalid')){
+          el.style.display='none';
+        }
+        el=el.nextElementSibling;
+      }
+    },100);
     await facilitySuggestions(input);
     const cfg=await config();
     if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){

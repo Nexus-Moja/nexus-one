@@ -1,6 +1,23 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#082f49"/><meta name="description" content="Nexus Medical Transit — accessible medical transportation across the Washington Metropolitan Area."/><title>Nexus Medical Transit | Access Drives Equity</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* Booking form now enabled - nexus-booking.js interceptor removed */
+    /* Hide React form validation error indicators on address inputs */
+    input[placeholder*="address" i]:invalid,
+    input[placeholder*="pickup" i]:invalid,
+    input[placeholder*="destination" i]:invalid {
+      box-shadow: none !important;
+      background-image: none !important;
+    }
+    input[placeholder*="address" i]:invalid::after,
+    input[placeholder*="pickup" i]:invalid::after,
+    input[placeholder*="destination" i]:invalid::after {
+      display: none !important;
+    }
+    /* Hide validation icons in form groups */
+    .bookingFormGroup input:invalid,
+    [role="dialog"] input:invalid {
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.1) !important;
+    }
   </style>
   <script>
     /* Clear ?book=1 before React initializes to prevent React form from showing */
