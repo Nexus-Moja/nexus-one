@@ -152,5 +152,44 @@
   function scan(){normalizeBookLinks();document.querySelectorAll(SELECTOR).forEach(enhance);document.querySelectorAll('input[name="phone"],input[type="tel"],input[placeholder*="phone" i]').forEach(enhancePhoneField);document.querySelectorAll('input[name="email"],input[type="email"],input[placeholder*="email" i]').forEach(enhanceEmailField);}
   new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',scan);scan();
-  window.NexusBooking={scan,refresh:scan,version:'0.42.0'};
+
+  // Intercept "Book a Ride" nav links on non-home pages and open an overlay instead of navigating
+  function openBookingOverlay(e){
+    e.preventDefault();
+    if(document.getElementById('nexus-booking-overlay'))return;
+    const overlay=document.createElement('div');
+    overlay.id='nexus-booking-overlay';
+    Object.assign(overlay.style,{position:'fixed',inset:'0',zIndex:'9999',background:'rgba(8,47,73,0.7)',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)'});
+    const frame=document.createElement('iframe');
+    frame.src='/?book=1';
+    frame.title='Book a Ride';
+    Object.assign(frame.style,{width:'min(780px,100%)',height:'min(92vh,780px)',border:'none',borderRadius:'18px',background:'#fff',boxShadow:'0 32px 80px rgba(8,47,73,0.35)'});
+    const close=document.createElement('button');
+    close.setAttribute('aria-label','Close booking form');
+    Object.assign(close.style,{position:'absolute',top:'16px',right:'20px',background:'none',border:'none',color:'#fff',fontSize:'28px',cursor:'pointer',lineHeight:'1',padding:'4px 8px'});
+    close.textContent='\u00d7';
+    close.onclick=()=>document.body.removeChild(overlay);
+    overlay.appendChild(close);
+    overlay.appendChild(frame);
+    overlay.addEventListener('click',ev=>{if(ev.target===overlay)document.body.removeChild(overlay);});
+    document.addEventListener('keydown',function esc(ev){if(ev.key==='Escape'){document.body.removeChild(overlay);document.removeEventListener('keydown',esc);}});
+    document.body.appendChild(overlay);
+    // Ask the iframe to open the dialog once React has mounted
+    frame.addEventListener('load',()=>{
+      try{frame.contentWindow.postMessage({type:'nexus:openBooking'},'*');}catch{}
+    });
+  }
+
+  function attachBookingInterceptors(){
+    // Only intercept on non-home pages (home page uses the React nav button directly)
+    const isHome=location.pathname==='/'||location.pathname==='/index.html';
+    if(isHome)return;
+    document.querySelectorAll('a[href="/?book=1"],a[href*="book=1"]').forEach(a=>{
+      if(!a._nexusIntercepted){a._nexusIntercepted=true;a.addEventListener('click',openBookingOverlay);}
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded',attachBookingInterceptors);
+  new MutationObserver(attachBookingInterceptors).observe(document.documentElement,{childList:true,subtree:true});
+  window.NexusBooking={scan,refresh:scan,openBookingOverlay,version:'0.42.0'};
 })();

@@ -33,11 +33,28 @@
     }
   </style>
   <script>
-    /* Clear ?book=1 before React initializes to prevent React form from showing */
+    /* Handle ?book=1 — auto-open the booking dialog once React mounts */
     if(window.location.search.includes('book=1')){
       window.__nexusAutoOpenBooking=true;
       history.replaceState(null,'',window.location.pathname);
     }
+    /* Listen for postMessage from iframe overlay on other pages */
+    window.addEventListener('message',function(e){
+      if(e.data&&e.data.type==='nexus:openBooking'){
+        window.__nexusAutoOpenBooking=true;
+        tryOpenBookingDialog();
+      }
+    });
+    function tryOpenBookingDialog(){
+      var btn=document.querySelector('.navBookRide,[data-book-ride="true"],.bookRideCta');
+      if(btn){btn.click();return;}
+      // React not yet mounted — keep trying
+      if((window.__nexusOpenAttempts=(window.__nexusOpenAttempts||0)+1)<40)
+        setTimeout(tryOpenBookingDialog,150);
+    }
+    /* Auto-open if flag already set before this script ran */
+    if(window.__nexusAutoOpenBooking)
+      document.addEventListener('DOMContentLoaded',function(){setTimeout(tryOpenBookingDialog,400);});
     
     // Error tracking for debugging
     window.__nexusErrors = [];
