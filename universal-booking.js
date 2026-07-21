@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const SELECTOR='input[name="pickup"],input[name="destination"]';
+  const SELECTOR='input[name="pickup"],input[name="destination"],input[placeholder*="pickup"],input[placeholder*="Pickup"],input[placeholder*="destination"],input[placeholder*="Destination"],input[placeholder*="address"],input[placeholder*="Address"]';
   let configPromise, mapsPromise;
   const state={enhanced:new WeakSet(), facilities:[]};
 
@@ -36,6 +36,11 @@
   }
   async function enhance(input){
     if(state.enhanced.has(input))return;state.enhanced.add(input);
+    // Set proper name attributes if missing for form submission
+    if(!input.name){
+      if(input.placeholder.toLowerCase().includes('pickup'))input.name='pickup';
+      else if(input.placeholder.toLowerCase().includes('destination'))input.name='destination';
+    }
     input.setAttribute('autocomplete','street-address');input.setAttribute('spellcheck','false');input.classList.add('nexusAddressInput');input.removeAttribute('pattern');input.removeAttribute('title');
     await facilitySuggestions(input);
     const cfg=await config();
