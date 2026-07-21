@@ -159,7 +159,7 @@
   // ── Cancel / Reschedule ──────────────────────────────────────────────────
   function injectManageTrip(){
     // Look for booking form container - if tabs already exist, skip
-    if(document.querySelector('.nexusBookingTabs'))return;
+    if(document.querySelector('.nexusManagedTrip'))return;
     // Find the first phone field - try multiple selectors
     let phoneField=document.querySelector('input[type="tel"]');
     if(!phoneField)phoneField=document.querySelector('input[name="phone"]');
@@ -183,33 +183,25 @@
     }
     if(!formContainer){console.log('[Nexus] No form container found');return;}
     
-    console.log('[Nexus] Found form container, creating tabs...');
+    console.log('[Nexus] Found form container, creating manage trip interface...');
     
-    // Create tabs container
-    const tabsContainer=document.createElement('div');
-    tabsContainer.className='nexusBookingTabs';
-    tabsContainer.style.cssText='display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid #dce6ee;background:#fff;position:relative;z-index:100';
-    
-    const bookTab=document.createElement('button');
-    bookTab.type='button';
-    bookTab.textContent='Book a Ride';
-    bookTab.className='nexus-tab-book';
-    bookTab.style.cssText='flex:1;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#082f49;border-bottom:3px solid #0369a1;margin-bottom:-2px;text-align:center;transition:all 0.2s';
-    
-    const manageTab=document.createElement('button');
-    manageTab.type='button';
-    manageTab.textContent='Manage Existing Trip';
-    manageTab.className='nexus-tab-manage';
-    manageTab.style.cssText='flex:1;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#62758a;border-bottom:3px solid transparent;margin-bottom:-2px;text-align:center;transition:all 0.2s';
-    
-    tabsContainer.appendChild(bookTab);
-    tabsContainer.appendChild(manageTab);
-    
-    // Create manage form
+    // Create manage form with header
     const manageForm=document.createElement('div');
-    manageForm.className='nexusManageTripForm';
-    manageForm.style.cssText='display:none;padding:16px;background:#f3f8fb;border-radius:0;margin-bottom:16px;border:1px solid #dce6ee;border-top:none';
-    manageForm.innerHTML=`
+    manageForm.className='nexusManagedTrip';
+    manageForm.style.cssText='display:none;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden';
+    
+    // Create header with back button and title
+    const header=document.createElement('div');
+    header.style.cssText='display:flex;align-items:center;gap:12px;padding:16px;background:#f3f8fb;border-bottom:1px solid #dce6ee';
+    header.innerHTML=`
+      <button type="button" data-nexus-back style="background:none;border:none;cursor:pointer;font-size:20px;color:#0369a1;padding:4px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;transition:all 0.2s" title="Back to Book a Ride">←</button>
+      <h3 style="margin:0;font-size:16px;font-weight:700;color:#082f49;flex:1">Manage Existing Trip</h3>`;
+    manageForm.appendChild(header);
+    
+    // Create content container
+    const content=document.createElement('div');
+    content.style.cssText='padding:16px;background:#fff';
+    content.innerHTML=`
       <p style="font-size:13px;color:#62758a;margin:0 0 12px 0">Enter your trip reference number or name and phone to reschedule or cancel.</p>
       <label style="display:block;margin-bottom:8px"><span style="font-size:13px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
         <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
@@ -218,32 +210,42 @@
       <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
       <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
       <div class="nexusManageActions" style="display:none;margin-top:12px"></div>`;
+    manageForm.appendChild(content);
     
-    // Insert tabs and form at the very top of the form container
-    formContainer.insertBefore(tabsContainer, formContainer.firstChild);
-    formContainer.insertBefore(manageForm, tabsContainer.nextSibling);
+    // Create "Manage Trip" button to show the manage form (replaces manage tab)
+    const manageButton=document.createElement('button');
+    manageButton.type='button';
+    manageButton.textContent='Manage Existing Trip';
+    manageButton.className='nexus-manage-btn';
+    manageButton.style.cssText='width:100%;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#0369a1;text-decoration:underline;margin-bottom:16px;transition:all 0.2s';
     
-    console.log('[Nexus] Tabs and manage form injected successfully');
+    // Insert manage form and button at the very top of the form container
+    formContainer.insertBefore(manageButton, formContainer.firstChild);
+    formContainer.insertBefore(manageForm, formContainer.firstChild);
     
-    // Tab switching
-    bookTab.addEventListener('click',()=>{
-      bookTab.style.borderBottomColor='#0369a1';bookTab.style.color='#082f49';
-      manageTab.style.borderBottomColor='transparent';manageTab.style.color='#62758a';
-      manageForm.style.display='none';
-      // Show original form inputs
+    console.log('[Nexus] Manage trip interface injected successfully');
+    
+    // Show manage form when button is clicked
+    manageButton.addEventListener('click',()=>{
+      manageForm.style.display='block';
+      manageButton.style.display='none';
+      // Hide original form inputs
       Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
-        if(!el.closest('.nexusManageTripForm')){el.style.display='';}
+        if(!el.closest('.nexusManagedTrip')){el.style.display='none';}
       });
     });
     
-    manageTab.addEventListener('click',()=>{
-      manageTab.style.borderBottomColor='#0369a1';manageTab.style.color='#082f49';
-      bookTab.style.borderBottomColor='transparent';bookTab.style.color='#62758a';
-      manageForm.style.display='block';
-      // Hide original form inputs
+    // Back button in header
+    header.querySelector('[data-nexus-back]').addEventListener('click',()=>{
+      manageForm.style.display='none';
+      manageButton.style.display='block';
+      // Show original form inputs
       Array.from(formContainer.querySelectorAll('input:not([data-nexus]),select:not([data-nexus]),textarea,button[type="submit"]')).forEach(el=>{
-        if(!el.closest('.nexusManageTripForm')){el.style.display='none';}
+        if(!el.closest('.nexusManagedTrip')){el.style.display='';}
       });
+      // Clear lookup fields
+      content.querySelector('input[type="text"]').value='';
+      content.querySelector('input[type="tel"]').value='';
     });
     
     // Lookup trip
