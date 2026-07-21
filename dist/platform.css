@@ -184,61 +184,59 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 .mapServiceStrip{margin:0 18px 18px}
 .moduleMain{padding-top:28px}
 
-/* ── Nexus Booking Sheet (Modern Premium Design) ────────────────── */
-@keyframes nbkSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes nbkFadeBackdrop{from{backdrop-filter:blur(0)}to{backdrop-filter:blur(12px)}}
-#nexusBookingSheet{width:min(540px,calc(100vw - 20px));max-height:92dvh;overflow-y:auto;border:0;border-radius:24px;padding:0;background:#fff;box-shadow:0 20px 50px rgba(4,20,38,.08),0 40px 100px rgba(4,20,38,.16);overscroll-behavior:contain;animation:nbkSlideIn .35s cubic-bezier(.16,.1,.3,1)}
-#nexusBookingSheet::backdrop{background:rgba(4,18,34,.68);backdrop-filter:blur(12px);animation:nbkFadeBackdrop .35s cubic-bezier(.16,.1,.3,1)}
-.nbkHeader{display:flex;justify-content:space-between;align-items:flex-start;padding:28px 32px 24px;border-bottom:1px solid rgba(203,216,226,.5);background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(248,251,253,.7));position:sticky;top:0;z-index:2;border-radius:24px 24px 0 0;backdrop-filter:blur(8px)}
-.nbkEyebrow{display:block;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.14em;color:#0369a1;font-family:Manrope,sans-serif;margin-bottom:4px;opacity:.85}
-.nbkHeader h2{margin:0;font-size:28px;font-family:Manrope,sans-serif;font-weight:800;color:var(--navy);line-height:1.1}
-.nbkClose{border:0;background:rgba(79,172,254,.08);width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer;color:var(--muted);flex-shrink:0;margin-top:0;display:grid;place-items:center;transition:all .2s ease;padding:0}
-.nbkClose:hover{background:rgba(79,172,254,.16);color:var(--blue);transform:scale(1.08)}
-.nbkClose:active{transform:scale(.95)}
-.nbkForm{padding:0 32px 32px;display:grid;gap:0}
-.nbkSection{padding-top:24px}
-.nbkSectionLabel{font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.12em;color:#52677c;font-family:Manrope,sans-serif;margin-bottom:14px;opacity:.9}
-.nbkRow{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.nbkField{display:grid;gap:8px;font-weight:600;font-size:13px;color:#0f2744}
-.nbkField input,.nbkField select,.nbkField textarea{width:100%;padding:12px 14px;border:1.5px solid #e0e8f0;border-radius:12px;background:#fff;font:15px/1.5 "Source Sans 3","Segoe UI",sans-serif;color:var(--ink);transition:all .2s ease;box-shadow:0 2px 8px rgba(8,47,73,.04)}
-.nbkField input::placeholder,.nbkField select:invalid+.nbkField,.nbkField textarea::placeholder{color:#9db3c4}
-.nbkField input:hover,.nbkField select:hover,.nbkField textarea:hover{border-color:#cbd8e2;box-shadow:0 4px 12px rgba(8,47,73,.06)}
-.nbkField input:focus,.nbkField select:focus,.nbkField textarea:focus{outline:0;border-color:#0369a1;background:#f8fafc;box-shadow:0 0 0 3px rgba(3,105,161,.1),0 4px 16px rgba(3,105,161,.08);transform:scale(1.001)}
-.nbkField textarea{resize:none;min-height:80px}
-.nbkReq{color:#b42335;margin-left:3px;font-weight:700}
-.nbkOpt{color:#9db3c4;font-weight:500;font-size:11px;margin-left:5px}
-.nbkAddrLabel{display:flex;align-items:center;gap:8px;font-weight:600;color:#0f2744}
-.nbkDot{width:11px;height:11px;border-radius:50%;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.1)}
-.nbkPickup{background:#16a36a;box-shadow:0 2px 6px rgba(22,163,106,.25)}
-.nbkDest{background:#b42335;box-shadow:0 2px 6px rgba(180,35,53,.25)}
-.nbkAddressGroup{position:relative;display:grid;gap:6px;padding:14px;background:linear-gradient(135deg,rgba(243,247,250,.6),rgba(248,251,253,.8));border:1.5px solid rgba(203,216,226,.6);border-radius:14px;margin-bottom:0;transition:all .2s ease}
-.nbkAddressGroup:hover{border-color:#cbd8e2;box-shadow:0 4px 12px rgba(8,47,73,.06)}
-.nbkRouteLine{width:2px;height:20px;background:linear-gradient(180deg,#16a36a,#b42335);margin:2px 0 0 5px;border-radius:2px}
-.nbkNoteSection{padding-top:14px}
-.nbkMapSection{padding-top:18px;display:grid;gap:12px}
-.nbkMapHeader{display:flex;align-items:center;gap:12px;margin-bottom:4px}
-.nbkMapHeader h3{margin:0;font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em}
-.nbkMap{position:relative;min-height:240px;border:1.5px solid rgba(203,216,226,.6);border-radius:14px;background:linear-gradient(135deg,rgba(243,247,250,.4),rgba(248,251,253,.7));display:grid;place-items:center;overflow:hidden;background-image:linear-gradient(rgba(8,47,73,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(8,47,73,.03) 1px,transparent 1px);background-size:32px 32px}
-.nbkMapPlaceholder{display:grid;place-items:center;gap:8px;color:#9db3c4;text-align:center;padding:20px}
-.nbkMapPlaceholder svg{width:48px;height:48px;opacity:.6}
-.nbkMapPlaceholder p{margin:0;font-size:13px;font-weight:500}
-.nbkFooter{padding-top:20px;border-top:1.5px solid rgba(203,216,226,.5);margin-top:12px;display:flex;flex-direction:column;gap:12px}
-.nbkError{color:#b42335;font-size:13px;font-weight:700;min-height:22px;opacity:.9}
-.nbkFooter .button{width:100%;justify-content:center;font-size:15px;font-weight:800;min-height:52px;border-radius:12px;background:linear-gradient(135deg,#db2839,#b91c2c);color:#fff;border:0;cursor:pointer;transition:all .2s ease;box-shadow:0 8px 20px rgba(219,40,57,.2);letter-spacing:.02em;text-transform:uppercase;font-family:Manrope,sans-serif}
-.nbkFooter .button:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(219,40,57,.3)}
-.nbkFooter .button:active{transform:translateY(0);box-shadow:0 4px 12px rgba(219,40,57,.2)}
-.nbkFooter .button:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.nbkSuccess{padding:48px 32px 36px;text-align:center;display:grid;gap:14px;place-items:center}
-.nbkSuccessIcon{width:76px;height:76px;border-radius:18px;background:linear-gradient(135deg,#d9f4e8,#ecf9f5);color:#16a36a;font-size:38px;display:grid;place-items:center;font-weight:900;animation:nbkSlideIn .4s cubic-bezier(.16,.1,.3,1);box-shadow:0 8px 20px rgba(22,163,106,.15)}
-.nbkSuccess h3{margin:0;font-size:24px;font-family:Manrope,sans-serif;font-weight:800;color:var(--navy);letter-spacing:-.01em}
-.nbkSuccess p{margin:0;color:#52677c;font-size:15px;line-height:1.6}
-.nbkRef{background:linear-gradient(135deg,rgba(243,247,250,.6),rgba(248,251,253,.8));border:1.5px solid rgba(203,216,226,.6);border-radius:12px;padding:12px 16px;font-size:13px;margin-top:6px;font-family:Manrope,sans-serif;font-weight:700;letter-spacing:.02em}
+/* ── Nexus Booking Sheet (Uber-style Design) ────────────────── */
+@keyframes nbkSlideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+#nexusBookingSheet{width:100vw;height:100dvh;max-height:100dvh;border:0;padding:0;background:transparent;box-shadow:none;animation:nbkSlideUp .4s cubic-bezier(.32,.72,.36,1)}
+#nexusBookingSheet::backdrop{background:rgba(4,18,34,.3);backdrop-filter:blur(8px);animation:fade-in .4s ease}
+.nbkUberLayout{display:grid;grid-template-columns:1fr;grid-template-rows:1fr auto;height:100dvh;overflow:hidden}
+.nbkMapContainer{position:relative;background:#f8fafc;overflow:hidden;display:grid;place-items:center}
+.nbkMap{position:absolute;inset:0;background:linear-gradient(135deg,#eef6fb,#f3f7fa);display:grid;place-items:center;border-bottom:1px solid #e0e8f0}
+.nbkMapSvg{width:100%;height:100%;opacity:.6}
+.nbkMapOverlay{display:grid;place-items:center;gap:12px;color:#9db3c4;text-align:center;z-index:1}
+.nbkMapOverlay svg{width:56px;height:56px;opacity:.5}
+.nbkMapOverlay p{margin:0;font-size:14px;font-weight:500}
+.nbkPanel{display:grid;grid-template-rows:auto 1fr;background:#fff;max-height:60dvh;overflow-y:auto;border-radius:24px 24px 0 0;box-shadow:0 -8px 32px rgba(4,20,38,.12);z-index:10}
+.nbkPanelHandle{height:5px;width:48px;background:#e0e8f0;border-radius:999px;margin:12px auto 0;cursor:grab;transition:background .2s}
+.nbkPanelHandle:active{cursor:grabbing;background:#cbd8e2}
+.nbkLocationCards{padding:16px 20px;display:grid;gap:0;background:linear-gradient(135deg,rgba(243,247,250,.4),rgba(248,251,253,.8))}
+.nbkLocCard{display:flex;align-items:center;gap:14px;padding:12px 0;font-size:14px;font-weight:600;color:#0f2744}
+.nbkLocDot{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.08)}
+.nbkLocInfo{display:grid;gap:2px}
+.nbkLocLabel{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9db3c4;font-weight:700}
+.nbkLocValue{font-weight:700;color:#0f2744}
+.nbkLocDivider{height:1px;background:rgba(203,216,226,.4);margin:4px 0}
+.nbkForm{padding:20px;display:grid;gap:16px;overflow-y:auto;max-height:calc(60dvh - 80px)}
+.nbkFormSection{display:grid;gap:10px}
+.nbkLabel{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#52677c}
+.nbkField{display:grid;gap:0}
+.nbkField input,.nbkField textarea{width:100%;padding:11px 14px;border:1.5px solid #e0e8f0;border-radius:10px;background:#fff;font:15px/1.4 "Source Sans 3","Segoe UI",sans-serif;color:#0f2744;transition:all .2s ease}
+.nbkField input::placeholder,.nbkField textarea::placeholder{color:#cbd8e2}
+.nbkField input:focus,.nbkField textarea:focus{outline:0;border-color:#0369a1;background:#f8fafc;box-shadow:0 0 0 3px rgba(3,105,161,.1)}
+.nbkField textarea{resize:none;min-height:70px}
+.nbkRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nbkServiceGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.nbkServiceCard{cursor:pointer}
+.nbkServiceOption{padding:12px;border:1.5px solid #e0e8f0;border-radius:12px;background:#fff;display:grid;place-items:center;gap:6px;text-align:center;transition:all .2s ease;font-size:11px;font-weight:700;color:#0f2744}
+.nbkServiceCard input:checked~.nbkServiceOption{border-color:#0369a1;background:#ecf7fc;box-shadow:0 0 0 3px rgba(3,105,161,.1)}
+.nbkServiceOption:hover{border-color:#cbd8e2;background:#f8fafc}
+.nbkServiceIcon{font-size:20px;display:block}
+.nbkFormFooter{padding:16px;border-top:1px solid #e0e8f0;display:grid;gap:10px;background:#fff}
+.nbkError{color:#b42335;font-size:13px;font-weight:700;min-height:20px}
+.nbkCtaButton{width:100%;padding:14px 16px;background:linear-gradient(135deg,#db2839,#b91c2c);color:#fff;border:0;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s ease;box-shadow:0 8px 20px rgba(219,40,57,.2);font-family:Manrope,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.nbkCtaButton:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(219,40,57,.3)}
+.nbkCtaButton:active{transform:translateY(0);box-shadow:0 4px 12px rgba(219,40,57,.2)}
+.nbkSuccess{padding:32px 24px;display:grid;gap:14px;place-items:center;text-align:center}
+.nbkSuccessIcon{width:64px;height:64px;background:linear-gradient(135deg,#d9f4e8,#ecf9f5);color:#16a36a;display:grid;place-items:center;border-radius:16px;font-size:32px;font-weight:900}
+.nbkSuccess h3{margin:0;font-size:22px;font-family:Manrope,sans-serif;font-weight:800;color:#0f2744}
+.nbkSuccess p{margin:0;color:#52677c;font-size:14px;line-height:1.6}
+.nbkRef{background:#f8fafc;border:1px solid #e0e8f0;border-radius:10px;padding:10px 14px;font-size:13px;margin:0;font-family:Manrope,sans-serif;font-weight:700}
 .nbkRef strong{color:#0369a1}
-.nbkDrop{position:absolute;left:0;right:0;top:100%;background:#fff;border:1.5px solid rgba(203,216,226,.7);border-top:0;border-radius:0 0 12px 12px;margin:0;padding:6px 0;list-style:none;box-shadow:0 12px 40px rgba(4,20,38,.16);z-index:200;max-height:240px;overflow-y:auto;backdrop-filter:blur(2px)}
-.nbkDrop li{padding:11px 16px;cursor:pointer;font-size:14px;line-height:1.4;color:var(--ink);border-bottom:1px solid rgba(243,247,250,.8);transition:all .15s ease;font-weight:500}
+.nbkDrop{position:absolute;left:0;right:0;top:100%;background:#fff;border:1.5px solid #e0e8f0;border-top:0;border-radius:0 0 12px 12px;margin:0;padding:6px 0;list-style:none;box-shadow:0 12px 40px rgba(4,20,38,.16);z-index:200;max-height:240px;overflow-y:auto}
+.nbkDrop li{padding:11px 16px;cursor:pointer;font-size:14px;line-height:1.4;color:#0f2744;border-bottom:1px solid #f3f7fa;transition:all .15s ease;font-weight:500}
 .nbkDrop li:last-child{border-bottom:0}
-.nbkDrop li:hover,.nbkDrop li:focus{background:#f8fafc;color:var(--blue);padding-left:18px}
-@media(max-width:560px){#nexusBookingSheet{width:100vw;max-height:100dvh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;margin:0;animation:none}#nexusBookingSheet::backdrop{align-items:flex-end;animation:none}.nbkHeader{padding:24px 24px 20px;border-radius:20px 20px 0 0}.nbkHeader h2{font-size:24px}.nbkForm{padding:0 24px 24px}.nbkFooter .button{min-height:48px;font-size:14px}.nbkRow{grid-template-columns:1fr;gap:14px}.nbkHeader{border-radius:20px 20px 0 0}}
+.nbkDrop li:hover,.nbkDrop li:focus{background:#f8fafc;color:#0369a1;padding-left:18px}
+@media(max-width:768px){.nbkUberLayout{height:100dvh}.nbkMapContainer{display:none}.nbkPanel{max-height:100dvh;border-radius:24px 24px 0 0}}
+@media(prefers-reduced-motion:reduce){#nexusBookingSheet,#nexusBookingSheet::backdrop{animation:none}}
 .accessGateway{scroll-margin-top:110px}
 @media(max-width:1100px){.livecareExperience{grid-template-columns:minmax(320px,.9fr) minmax(0,1.1fr)}.livecareStoryPanel h1{font-size:clamp(44px,5.6vw,64px)}.mapServiceStrip span{font-size:11px;padding:14px 7px}}
 @media(max-width:980px){.livecareMapHero{padding-top:40px}.livecareExperience{width:min(760px,calc(100% - 28px));grid-template-columns:1fr;border-radius:24px 24px 0 0}.mapOnlyShell,.mapOnlyShell .liveFleetMap{min-height:520px}}

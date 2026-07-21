@@ -1,7 +1,7 @@
 /**
  * nexus-booking.js — Nexus Medical Transit unified booking intercept
  * Intercepts "Book a Ride" links/buttons on every portal page and opens
- * a compact, intelligent booking sheet without leaving the page.
+ * an Uber-style intelligent booking sheet without leaving the page.
  * Address fields use Nominatim (free) + Google Places (if configured).
  */
 (function(){
@@ -30,7 +30,6 @@ function loadGoogle(key){
   });
 }
 
-/* Nominatim typeahead returns suggestions as {label, lat, lng} */
 async function nominatimSearch(query){
   try{
     const url=NOMINATIM+'?format=json&addressdetails=0&limit=6&countrycodes=us&q='+encodeURIComponent(query);
@@ -85,7 +84,6 @@ async function attachAddressIntelligence(input){
   let timer=null;
   let acInstance=null;
 
-  /* Try Google Places first */
   const cfg=await getConfig().catch(()=>({googleMapsEnabled:false}));
   if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
     try{
@@ -102,11 +100,10 @@ async function attachAddressIntelligence(input){
         input.dataset.lng=p.geometry.location.lng();
       });
       acInstance=ac;
-      return; /* Google Places is active, skip Nominatim */
-    }catch(e){/* fall through to Nominatim */}
+      return;
+    }catch(e){/*fall through to Nominatim*/}
   }
 
-  /* Nominatim fallback typeahead */
   buildDropdown(input);
   input.addEventListener('input',()=>{
     clearTimeout(timer);
@@ -119,152 +116,166 @@ async function attachAddressIntelligence(input){
   });
 }
 
-/* ─── Dialog HTML + logic ─── */
+/* ─── Dialog HTML + logic (Uber-style design) ─── */
 function createBookingDialog(){
   const d=document.createElement('dialog');
   d.id='nexusBookingSheet';
-  d.setAttribute('aria-labelledby','nbkTitle');
   d.innerHTML=`
-<div class="nbkHeader">
-  <div>
-    <span class="nbkEyebrow">Nexus Medical Transit</span>
-    <h2 id="nbkTitle">Book a Ride</h2>
-  </div>
-  <button class="nbkClose" aria-label="Close booking form" type="button">&#x2715;</button>
-</div>
-
-<div id="nbkSuccess" class="nbkSuccess" hidden>
-  <div class="nbkSuccessIcon" aria-hidden="true">✓</div>
-  <h3>Request received!</h3>
-  <p>Your transportation request has been submitted. Nexus will review and confirm shortly.</p>
-  <p class="nbkRef">Reference: <strong id="nbkRefNum"></strong></p>
-  <button class="button" id="nbkDone" type="button">Done</button>
-</div>
-
-<form id="nbkForm" class="nbkForm" novalidate>
-
-  <div class="nbkSection">
-    <div class="nbkSectionLabel">Your information</div>
-    <div class="nbkRow">
-      <label class="nbkField">
-        Full name<span class="nbkReq">*</span>
-        <input name="name" type="text" placeholder="First and last name" required autocomplete="name">
-      </label>
-      <label class="nbkField">
-        Phone number<span class="nbkReq">*</span>
-        <input name="phone" type="tel" placeholder="(202) 555-0100" required autocomplete="tel">
-      </label>
-    </div>
-    <label class="nbkField">
-      Email <span class="nbkOpt">optional</span>
-      <input name="email" type="email" placeholder="you@example.com" autocomplete="email">
-    </label>
-  </div>
-
-  <div class="nbkSection">
-    <div class="nbkSectionLabel">Trip details</div>
-    <div class="nbkAddressGroup">
-      <label class="nbkField">
-        <span class="nbkAddrLabel"><span class="nbkDot nbkPickup" aria-hidden="true"></span>Pickup address<span class="nbkReq">*</span></span>
-        <input name="pickup" type="text" placeholder="Enter pickup address…" required>
-      </label>
-      <div class="nbkRouteLine" aria-hidden="true"></div>
-      <label class="nbkField">
-        <span class="nbkAddrLabel"><span class="nbkDot nbkDest" aria-hidden="true"></span>Destination<span class="nbkReq">*</span></span>
-        <input name="destination" type="text" placeholder="Enter destination address…" required>
-      </label>
-    </div>
-    <div class="nbkRow">
-      <label class="nbkField">
-        Date<span class="nbkReq">*</span>
-        <input name="date" type="date" required id="nbkDate">
-      </label>
-      <label class="nbkField">
-        Time<span class="nbkReq">*</span>
-        <input name="time" type="time" required id="nbkTime">
-      </label>
-    </div>
-    <label class="nbkField">
-      Service type<span class="nbkReq">*</span>
-      <select name="service" required>
-        <option value="">Select service…</option>
-        <option value="ambulatory">Ambulatory</option>
-        <option value="wheelchair">Wheelchair</option>
-        <option value="broda">Broda chair</option>
-        <option value="stretcher">Stretcher</option>
-        <option value="bariatric">Bariatric</option>
-        <option value="bls">BLS ambulance</option>
-        <option value="als1">ALS I ambulance</option>
-        <option value="als2">ALS II ambulance</option>
-      </select>
-    </label>
-
-    <div class="nbkMapSection">
-      <div class="nbkMapHeader">
-        <h3>Trip route and fare estimate</h3>
-        <button class="button compact" type="button" id="nbkCalcRoute" style="margin-left:auto;">📍 Calculate route</button>
+<div class="nbkUberLayout">
+  <div class="nbkMapContainer" id="nbkMapContainer">
+    <div class="nbkMap" id="nbkMap">
+      <svg class="nbkMapSvg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e0e8f0" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="400" height="300" fill="url(#grid)"/>
+        <circle cx="200" cy="150" r="8" fill="#16a36a" opacity="0.8"/>
+        <circle cx="200" cy="150" r="20" fill="#16a36a" opacity="0.2"/>
+      </svg>
+      <div class="nbkMapOverlay">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <p>Map will display your route</p>
       </div>
-      <div class="nbkMap" id="nbkMap">
-        <div class="nbkMapPlaceholder">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#9db3c4"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <p>Select both addresses to calculate route</p>
+    </div>
+  </div>
+
+  <div class="nbkPanel">
+    <div class="nbkPanelHandle" aria-label="Drag to resize"></div>
+
+    <div class="nbkLocationCards">
+      <div class="nbkLocCard nbkLocPickup">
+        <span class="nbkLocDot" style="background:#16a36a"></span>
+        <div class="nbkLocInfo">
+          <div class="nbkLocLabel">Pickup</div>
+          <div class="nbkLocValue" id="nbkPickupDisplay">Select location</div>
+        </div>
+      </div>
+      <div class="nbkLocDivider"></div>
+      <div class="nbkLocCard nbkLocDest">
+        <span class="nbkLocDot" style="background:#b42335"></span>
+        <div class="nbkLocInfo">
+          <div class="nbkLocLabel">Destination</div>
+          <div class="nbkLocValue" id="nbkDestDisplay">Select location</div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="nbkSection nbkNoteSection">
-    <label class="nbkField">
-      Special instructions <span class="nbkOpt">optional</span>
-      <textarea name="notes" rows="2" placeholder="Mobility aids, medical needs, multi-leg trips…"></textarea>
-    </label>
-  </div>
+    <form id="nbkForm" class="nbkForm" novalidate>
+      <div class="nbkFormSection">
+        <label class="nbkField">
+          <input name="pickup" type="text" placeholder="Pickup location…" required>
+        </label>
+        <label class="nbkField">
+          <input name="destination" type="text" placeholder="Destination…" required>
+        </label>
+      </div>
 
-  <div class="nbkFooter">
-    <p id="nbkError" class="nbkError" role="alert"></p>
-    <button class="button" type="submit" id="nbkSubmit"><span>Request transportation</span></button>
+      <div class="nbkFormSection">
+        <div class="nbkLabel">Service type</div>
+        <div class="nbkServiceGrid">
+          <label class="nbkServiceCard">
+            <input type="radio" name="service" value="ambulatory" required style="display:none">
+            <div class="nbkServiceOption">
+              <span class="nbkServiceIcon">🚗</span>
+              <span class="nbkServiceName">Ambulatory</span>
+            </div>
+          </label>
+          <label class="nbkServiceCard">
+            <input type="radio" name="service" value="wheelchair" required style="display:none">
+            <div class="nbkServiceOption">
+              <span class="nbkServiceIcon">♿</span>
+              <span class="nbkServiceName">Wheelchair</span>
+            </div>
+          </label>
+          <label class="nbkServiceCard">
+            <input type="radio" name="service" value="stretcher" required style="display:none">
+            <div class="nbkServiceOption">
+              <span class="nbkServiceIcon">🚑</span>
+              <span class="nbkServiceName">Stretcher</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="nbkFormSection">
+        <div class="nbkLabel">Trip details</div>
+        <div class="nbkRow">
+          <label class="nbkField">
+            <input name="date" type="date" required id="nbkDate">
+          </label>
+          <label class="nbkField">
+            <input name="time" type="time" required id="nbkTime">
+          </label>
+        </div>
+      </div>
+
+      <div class="nbkFormSection">
+        <label class="nbkField">
+          Full name
+          <input name="name" type="text" placeholder="Your name" required>
+        </label>
+        <label class="nbkField">
+          Phone number
+          <input name="phone" type="tel" placeholder="(202) 555-0100" required>
+        </label>
+        <label class="nbkField">
+          Email (optional)
+          <input name="email" type="email" placeholder="you@example.com">
+        </label>
+      </div>
+
+      <div class="nbkFormSection">
+        <label class="nbkField">
+          Special instructions (optional)
+          <textarea name="notes" placeholder="Mobility aids, medical needs…"></textarea>
+        </label>
+      </div>
+
+      <div class="nbkFormFooter">
+        <p id="nbkError" class="nbkError" role="alert"></p>
+        <button class="nbkCtaButton" type="submit" id="nbkSubmit">Request ride</button>
+      </div>
+    </form>
+
+    <div id="nbkSuccess" class="nbkSuccess" hidden>
+      <div class="nbkSuccessIcon">✓</div>
+      <h3>Request confirmed!</h3>
+      <p>Nexus is reviewing your request. You'll receive a confirmation shortly.</p>
+      <p class="nbkRef">Reference: <strong id="nbkRefNum"></strong></p>
+      <button class="nbkCtaButton" id="nbkDone" type="button">Done</button>
+    </div>
   </div>
-</form>`;
+</div>`;
 
   document.body.appendChild(d);
 
-  /* Set minimum date to today */
   const today=new Date().toISOString().split('T')[0];
   d.querySelector('#nbkDate').min=today;
   d.querySelector('#nbkDate').value=today;
 
-  /* Attach address intelligence to both fields */
   setTimeout(()=>{
     d.querySelectorAll('input[name="pickup"],input[name="destination"]').forEach(attachAddressIntelligence);
   },0);
 
-  /* Close handlers */
-  d.querySelector('.nbkClose').addEventListener('click',()=>d.close());
   d.querySelector('#nbkDone')?.addEventListener('click',()=>d.close());
   d.addEventListener('click',e=>{if(e.target===d)d.close();});
 
-  /* Reset on close */
   d.addEventListener('close',()=>{
     d.querySelector('#nbkForm').hidden=false;
     d.querySelector('#nbkSuccess').hidden=true;
     d.querySelector('#nbkError').textContent='';
     d.querySelector('#nbkForm').reset();
-    d.querySelector('#nbkDate').value=today;
-    d.querySelectorAll('.nbkDrop').forEach(dr=>dr.remove());
-    d.querySelectorAll('input[name="pickup"],input[name="destination"]').forEach(inp=>{
-      delete inp._nbkEnhanced;delete inp._nexusDrop;inp.dataset.lat='';inp.dataset.lng='';
-    });
   });
 
-  /* Submit */
   d.querySelector('#nbkForm').addEventListener('submit',async e=>{
     e.preventDefault();
-    const form=e.currentTarget;
+    const form=d.querySelector('#nbkForm');
     const err=d.querySelector('#nbkError');
     const btn=d.querySelector('#nbkSubmit');
     err.textContent='';
 
-    /* Inline validation */
     const required=['name','phone','pickup','destination','date','time','service'];
     const fd=new FormData(form);
     for(const k of required){
@@ -274,7 +285,7 @@ function createBookingDialog(){
       }
     }
 
-    btn.disabled=true;btn.querySelector('span').textContent='Submitting…';
+    btn.disabled=true;btn.textContent='Submitting…';
     try{
       const pickupInput=form.querySelector('[name="pickup"]');
       const destInput=form.querySelector('[name="destination"]');
@@ -293,7 +304,6 @@ function createBookingDialog(){
         destinationLat:destInput?.dataset.lat||undefined,
         destinationLng:destInput?.dataset.lng||undefined,
       };
-      /* Remove undefined keys */
       Object.keys(body).forEach(k=>body[k]===undefined&&delete body[k]);
 
       const res=await fetch('/api/bookings',{
@@ -307,11 +317,9 @@ function createBookingDialog(){
       d.querySelector('#nbkRefNum').textContent=json.booking?.reference||'—';
       d.querySelector('#nbkForm').hidden=true;
       d.querySelector('#nbkSuccess').hidden=false;
-      d.querySelector('#nbkSuccess').scrollIntoView({block:'nearest'});
     }catch(ex){
-      err.textContent=ex.message||'Something went wrong. Please try again.';
-    }finally{
-      btn.disabled=false;btn.querySelector('span').textContent='Request transportation';
+      err.textContent=ex.message||'Error submitting request. Please try again.';
+      btn.disabled=false;btn.textContent='Request ride';
     }
   });
 
@@ -326,7 +334,6 @@ function intercept(el){
     e.preventDefault();
     let dlg=document.getElementById('nexusBookingSheet');
     if(!dlg)dlg=createBookingDialog();
-    /* Re-attach intelligence on each open since the dialog was reset */
     dlg.querySelectorAll('input[name="pickup"],input[name="destination"]').forEach(attachAddressIntelligence);
     if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','');
   });
