@@ -215,6 +215,13 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 .nbkAddressGroup:hover{border-color:#cbd8e2;box-shadow:0 4px 12px rgba(8,47,73,.06)}
 .nbkRouteLine{width:2px;height:20px;background:linear-gradient(180deg,#16a36a,#b42335);margin:2px 0 0 5px;border-radius:2px}
 .nbkNoteSection{padding-top:14px}
+.nbkMapSection{padding-top:18px;display:grid;gap:12px}
+.nbkMapHeader{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.nbkMapHeader h3{margin:0;font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em}
+.nbkMap{position:relative;min-height:240px;border:1.5px solid rgba(203,216,226,.6);border-radius:14px;background:linear-gradient(135deg,rgba(243,247,250,.4),rgba(248,251,253,.7));display:grid;place-items:center;overflow:hidden;background-image:linear-gradient(rgba(8,47,73,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(8,47,73,.03) 1px,transparent 1px);background-size:32px 32px}
+.nbkMapPlaceholder{display:grid;place-items:center;gap:8px;color:#9db3c4;text-align:center;padding:20px}
+.nbkMapPlaceholder svg{width:48px;height:48px;opacity:.6}
+.nbkMapPlaceholder p{margin:0;font-size:13px;font-weight:500}
 .nbkFooter{padding-top:20px;border-top:1.5px solid rgba(203,216,226,.5);margin-top:12px;display:flex;flex-direction:column;gap:12px}
 .nbkError{color:#b42335;font-size:13px;font-weight:700;min-height:22px;opacity:.9}
 .nbkFooter .button{width:100%;justify-content:center;font-size:15px;font-weight:800;min-height:52px;border-radius:12px;background:linear-gradient(135deg,#db2839,#b91c2c);color:#fff;border:0;cursor:pointer;transition:all .2s ease;box-shadow:0 8px 20px rgba(219,40,57,.2);letter-spacing:.02em;text-transform:uppercase;font-family:Manrope,sans-serif}

@@ -198,6 +198,19 @@ function createBookingDialog(){
         <option value="als2">ALS II ambulance</option>
       </select>
     </label>
+
+    <div class="nbkMapSection">
+      <div class="nbkMapHeader">
+        <h3>Trip route and fare estimate</h3>
+        <button class="button compact" type="button" id="nbkCalcRoute" style="margin-left:auto;">📍 Calculate route</button>
+      </div>
+      <div class="nbkMap" id="nbkMap">
+        <div class="nbkMapPlaceholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#9db3c4"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <p>Select both addresses to calculate route</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="nbkSection nbkNoteSection">
