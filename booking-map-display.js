@@ -6,20 +6,33 @@
 (function() {
   'use strict';
   
+  // Helper to find calculate button by text content
+  function findCalculateButton() {
+    const buttons = document.querySelectorAll('button');
+    for (const btn of buttons) {
+      if (btn.textContent.toLowerCase().includes('calculate') ||
+          btn.getAttribute('data-calculate-route') ||
+          btn.getAttribute('data-testid') === 'calculate-route') {
+        return btn;
+      }
+    }
+    return null;
+  }
+  
   // Helper to trigger route calculation when both pickup and destination are filled
   function setupRouteCalculation() {
     const observer = new MutationObserver(function(mutations) {
       // Look for the booking form inputs
       const pickupInput = document.querySelector(
-        'input[placeholder*="Pickup"][placeholder*="address" i], ' +
-        'input[placeholder*="pickup" i], ' +
+        'input[placeholder*="Pickup"], ' +
+        'input[placeholder*="pickup"], ' +
         'input[name="pickup"], ' +
         '.bookingForm input[data-field="pickup"]'
       );
       
       const destinationInput = document.querySelector(
-        'input[placeholder*="Destination"][placeholder*="address" i], ' +
-        'input[placeholder*="destination" i], ' +
+        'input[placeholder*="Destination"], ' +
+        'input[placeholder*="destination"], ' +
         'input[name="destination"], ' +
         '.bookingForm input[data-field="destination"]'
       );
@@ -30,12 +43,7 @@
       const checkAndCalculate = () => {
         if (pickupInput.value.trim() && destinationInput.value.trim()) {
           // Look for the calculate route button
-          const calculateBtn = document.querySelector(
-            'button[data-calculate-route], ' +
-            '[data-testid="calculate-route"], ' +
-            'button:contains("Calculate"), ' +
-            'button:contains("calculate")'
-          );
+          const calculateBtn = findCalculateButton();
           
           // If button found, click it; otherwise try to find and trigger the function
           if (calculateBtn && !calculateBtn.disabled) {
@@ -48,6 +56,7 @@
             document.dispatchEvent(event);
           }
         }
+
       };
       
       // Trigger on blur of destination input
