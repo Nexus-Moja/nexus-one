@@ -183,6 +183,45 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 .mapOnlyShell,.mapOnlyShell .liveFleetMap{min-height:545px}
 .mapServiceStrip{margin:0 18px 18px}
 .moduleMain{padding-top:28px}
+
+/* ── Nexus Booking Sheet ───────────────────────────────────────── */
+#nexusBookingSheet{width:min(520px,calc(100vw - 20px));max-height:92dvh;overflow-y:auto;border:0;border-radius:22px;padding:0;box-shadow:0 32px 100px rgba(4,20,38,.42);overscroll-behavior:contain}
+#nexusBookingSheet::backdrop{background:rgba(4,18,34,.72);backdrop-filter:blur(4px)}
+.nbkHeader{display:flex;justify-content:space-between;align-items:flex-start;padding:22px 24px 18px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:2;border-radius:22px 22px 0 0}
+.nbkEyebrow{display:block;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--blue);font-family:Manrope,sans-serif;margin-bottom:3px}
+.nbkHeader h2{margin:0;font-size:20px;font-family:Manrope,sans-serif;font-weight:800;color:var(--navy)}
+.nbkClose{border:0;background:#f0f4f7;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;color:var(--muted);flex-shrink:0;margin-top:2px;display:grid;place-items:center;transition:background .15s}
+.nbkClose:hover{background:#dde5ec}
+.nbkForm{padding:0 24px 24px}
+.nbkSection{padding-top:18px}
+.nbkSectionLabel{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-family:Manrope,sans-serif;margin-bottom:10px}
+.nbkRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.nbkField{display:grid;gap:5px;font-weight:700;font-size:14px;color:var(--navy)}
+.nbkField input,.nbkField select,.nbkField textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font:15px/1.4 "Source Sans 3","Segoe UI",sans-serif;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+.nbkField input:focus,.nbkField select:focus,.nbkField textarea:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px rgba(3,105,161,.14)}
+.nbkField textarea{resize:none}
+.nbkReq{color:var(--red);margin-left:2px}
+.nbkOpt{color:var(--muted);font-weight:500;font-size:12px;margin-left:4px}
+.nbkAddrLabel{display:flex;align-items:center;gap:7px}
+.nbkDot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.nbkPickup{background:var(--green)}
+.nbkDest{background:var(--red)}
+.nbkAddressGroup{position:relative;display:grid;gap:4px;padding:12px 12px;background:var(--soft);border:1px solid var(--line);border-radius:14px;margin-bottom:0}
+.nbkRouteLine{width:2px;height:18px;background:var(--line);margin:0 0 0 4px}
+.nbkNoteSection{padding-top:10px}
+.nbkFooter{padding-top:16px;border-top:1px solid var(--line);margin-top:6px;display:flex;flex-direction:column;gap:10px}
+.nbkError{color:var(--red);font-size:14px;font-weight:700;min-height:20px}
+.nbkFooter .button{width:100%;justify-content:center;font-size:16px;min-height:48px;border-radius:12px}
+.nbkSuccess{padding:36px 24px 32px;text-align:center;display:grid;gap:10px;place-items:center}
+.nbkSuccessIcon{width:64px;height:64px;border-radius:50%;background:#e6f7ee;color:var(--green);font-size:32px;display:grid;place-items:center;font-weight:900}
+.nbkSuccess h3{margin:0;font-size:22px;font-family:Manrope,sans-serif;font-weight:800;color:var(--navy)}
+.nbkSuccess p{margin:0;color:var(--muted);font-size:15px}
+.nbkRef{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-size:14px;margin-top:4px}
+.nbkDrop{position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;margin:0;padding:4px 0;list-style:none;box-shadow:0 12px 32px rgba(4,20,38,.18);z-index:200;max-height:220px;overflow-y:auto}
+.nbkDrop li{padding:9px 14px;cursor:pointer;font-size:14px;line-height:1.35;color:var(--ink);border-bottom:1px solid var(--soft)}
+.nbkDrop li:last-child{border-bottom:0}
+.nbkDrop li:hover,.nbkDrop li:focus{background:var(--soft)}
+@media(max-width:560px){#nexusBookingSheet{width:100vw;max-height:100dvh;border-radius:20px 20px 0 0;position:fixed;bottom:0;left:0;margin:0}#nexusBookingSheet::backdrop{align-items:flex-end}.nbkRow{grid-template-columns:1fr}.nbkHeader{border-radius:20px 20px 0 0}}
 .accessGateway{scroll-margin-top:110px}
 @media(max-width:1100px){.livecareExperience{grid-template-columns:minmax(320px,.9fr) minmax(0,1.1fr)}.livecareStoryPanel h1{font-size:clamp(44px,5.6vw,64px)}.mapServiceStrip span{font-size:11px;padding:14px 7px}}
 @media(max-width:980px){.livecareMapHero{padding-top:40px}.livecareExperience{width:min(760px,calc(100% - 28px));grid-template-columns:1fr;border-radius:24px 24px 0 0}.mapOnlyShell,.mapOnlyShell .liveFleetMap{min-height:520px}}
