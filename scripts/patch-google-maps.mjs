@@ -29,18 +29,18 @@ for (const file of files) {
       } else {
         // Configure dynamic loading: replace the key variable initialization
         // so it fetches from the config endpoint instead
-        const dynamicLoader = `var ud='',_ud_promise;async function _fetchGoogleMapsKey(){if(ud)return ud;if(!_ud_promise)_ud_promise=fetch('/api/integrations/config').then(r=>r.json()).then(c=>{ud=c.googleMapsBrowserKey||'';return ud}).catch(e=>{console.warn('[Nexus] Failed to load Google Maps key:',e);return ''});return _ud_promise}`;
+        const dynamicLoader = `var ud='',_ud_promise,dd;async function _fetchGoogleMapsKey(){if(ud)return ud;if(!_ud_promise)_ud_promise=fetch('/api/integrations/config').then(r=>r.json()).then(c=>{ud=c.googleMapsBrowserKey||'';return ud}).catch(e=>{console.warn('[Nexus] Failed to load Google Maps key:',e);return ''});return _ud_promise}`;
         
         // Replace the variable initialization
         if (hasRedacted) {
           content = content.replace(
-            /var ud=`REDACTED_GOOGLE_API_KEY`/g,
+            /var ud=`REDACTED_GOOGLE_API_KEY`,dd/g,
             dynamicLoader
           );
         }
         if (hasPlaceholder) {
           content = content.replace(
-            /var ud=`YOUR_GOOGLE_MAPS_API_KEY_HERE`/g,
+            /var ud=`YOUR_GOOGLE_MAPS_API_KEY_HERE`,dd/g,
             dynamicLoader
           );
         }
