@@ -1,4 +1,15 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#082f49"/><meta name="description" content="Nexus Medical Transit — accessible medical transportation across the Washington Metropolitan Area."/><title>Nexus Medical Transit | Access Drives Equity</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Hide React booking form to prevent dual forms */
+    [data-book-ride-modal], .bookingFormOverlay, [role="dialog"][data-book] { display: none !important; }
+  </style>
+  <script>
+    /* Clear ?book=1 before React initializes to prevent React form from showing */
+    if(window.location.search.includes('book=1')){
+      window.__nexusAutoOpenBooking=true;
+      history.replaceState(null,'',window.location.pathname);
+    }
+  </script>
   <script src="./trustedsite.js" defer></script>
   <script src="./i18n.js" defer></script>
   <script type="module" crossorigin src="./assets/index-DRVoTLB1.js"></script>

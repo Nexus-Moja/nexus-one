@@ -327,17 +327,32 @@ new MutationObserver(scan).observe(document.documentElement,{childList:true,subt
 document.addEventListener('DOMContentLoaded',scan);
 scan();
 
-/* ─── Auto-open on ?book=1 and clear URL parameter ─── */
-if(window.location.search.includes('book=1')){
-  /* Clear the URL parameter so React doesn't show its form */
-  history.replaceState(null,'',window.location.pathname);
-  /* Wait for DOM to settle, then open booking dialog */
+/* ─── Auto-open on ?book=1 (URL cleared by inline script in index.html) ─── */
+if(window.__nexusAutoOpenBooking){
+  delete window.__nexusAutoOpenBooking;
   setTimeout(()=>{
     let dlg=document.getElementById('nexusBookingSheet');
     if(!dlg)dlg=createBookingDialog();
     dlg.querySelectorAll('input[name="pickup"],input[name="destination"]').forEach(attachAddressIntelligence);
     if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','');
-  },100);
+  },50);
 }
+
+/* ─── Hide any React booking form that tries to appear ─── */
+const hideReactForm=setInterval(()=>{
+  const reactFormSelectors=[
+    'dialog[open]:not(#nexusBookingSheet)',
+    '.bookingFormModal:not(#nexusBookingSheet)',
+    '[role="dialog"]:not(#nexusBookingSheet)',
+    '.modal[data-testid*="book"]:not(#nexusBookingSheet)'
+  ];
+  reactFormSelectors.forEach(sel=>{
+    document.querySelectorAll(sel).forEach(el=>{
+      if(el.id!=='nexusBookingSheet')el.style.display='none!important';
+    });
+  });
+  if(document.getElementById('nexusBookingSheet'))clearInterval(hideReactForm);
+},100);
+setTimeout(()=>clearInterval(hideReactForm),2000);
 
 })();

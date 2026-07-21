@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const SELECTOR='input[name="pickup"],input[name="destination"]';
+  const SELECTOR='input[name="pickup"],input[name="destination"],input[placeholder*="pickup"],input[placeholder*="Pickup"],input[placeholder*="destination"],input[placeholder*="Destination"],input[placeholder*="address"],input[placeholder*="Address"]';
   let configPromise, mapsPromise;
   const state={enhanced:new WeakSet(), facilities:[]};
 
@@ -36,14 +36,19 @@
   }
   async function enhance(input){
     if(state.enhanced.has(input))return;state.enhanced.add(input);
-    input.setAttribute('autocomplete','street-address');input.setAttribute('spellcheck','false');input.classList.add('nexusAddressInput');
+    // Set proper name attributes if missing for form submission
+    if(!input.name){
+      if(input.placeholder.toLowerCase().includes('pickup'))input.name='pickup';
+      else if(input.placeholder.toLowerCase().includes('destination'))input.name='destination';
+    }
+    input.setAttribute('autocomplete','street-address');input.setAttribute('spellcheck','false');input.classList.add('nexusAddressInput');input.removeAttribute('pattern');input.removeAttribute('title');
     await facilitySuggestions(input);
     const cfg=await config();
     if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
       try{
         await loadMaps(cfg.googleMapsBrowserKey);
         const ac=new google.maps.places.Autocomplete(input,{fields:['formatted_address','geometry','place_id','name'],componentRestrictions:{country:'us'},types:['geocode','establishment']});
-        ac.addListener('place_changed',()=>{const p=ac.getPlace();if(!p?.geometry)return;setAddress(input,p.formatted_address||p.name||input.value,{placeId:p.place_id,lat:p.geometry.location.lat(),lng:p.geometry.location.lng()});input.dispatchEvent(new CustomEvent('nexus:address-selected',{bubbles:true,detail:{field:input.name,address:input.value}}));});
+        ac.addListener('place_changed',()=>{const p=ac.getPlace();if(!p?.geometry)return;setAddress(input,p.formatted_address||p.name||input.value,{placeId:p.place_id,lat:p.geometry.location.lat(),lng:p.geometry.location.lng()});input.dispatchEvent(new CustomEvent('nexus:address-selected',{bubbles:true,detail:{field:input.name,address:input.value}}));});input.addEventListener('keydown',e=>{if(e.key==='!'){e.preventDefault();return false;}});
       }catch(e){console.warn('[Nexus Booking] Google autocomplete unavailable; facility and browser suggestions remain active.',e);}
     }
   }

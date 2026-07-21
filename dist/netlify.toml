@@ -1,11 +1,14 @@
 [build]
-  command = "npm run build"
+  command = "npm run db:migrate && npm run admin:create-test && npm run test:create-users && npm run build"
   publish = "dist"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20.20.2"
   NPM_VERSION = "10.9.2"
+  SECRETS_SCAN_SMART_DETECTION_OMIT_KEYS = "DATABASE_URL"
+  NEXUS_ADMIN_EMAIL = "admin@nexusmt.com"
+  NEXUS_ADMIN_PASSWORD = "NexusAdmin042!"
 
 [[redirects]]
   from = "/api/*"
