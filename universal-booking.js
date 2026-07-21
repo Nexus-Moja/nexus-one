@@ -217,7 +217,7 @@
         <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
       <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
       <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
-      <div class="nexusManageActions" style="display:none;margin-top:12px"></div>`;
+      <div class="nexusManageActions" style="display:none;margin-top:12px;width:100%;box-sizing:border-box"></div>`;
     manageForm.appendChild(content);
     
     // Create "Manage Trip" button to show the manage form (replaces manage tab)
