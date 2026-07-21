@@ -116,121 +116,95 @@ async function attachAddressIntelligence(input){
   });
 }
 
-/* ─── Dialog HTML + logic (Uber-style design) ─── */
+/* ─── Dialog HTML + logic (Premium landscape design) ─── */
 function createBookingDialog(){
   const d=document.createElement('dialog');
   d.id='nexusBookingSheet';
   d.innerHTML=`
-<div class="nbkUberLayout">
-  <div class="nbkMapContainer" id="nbkMapContainer">
-    <div class="nbkMap" id="nbkMap">
-      <svg class="nbkMapSvg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e0e8f0" stroke-width="0.5"/>
-          </pattern>
-        </defs>
-        <rect width="400" height="300" fill="url(#grid)"/>
-        <circle cx="200" cy="150" r="8" fill="#16a36a" opacity="0.8"/>
-        <circle cx="200" cy="150" r="20" fill="#16a36a" opacity="0.2"/>
-      </svg>
-      <div class="nbkMapOverlay">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <p>Map will display your route</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="nbkPanel">
-    <div class="nbkPanelHandle" aria-label="Drag to resize"></div>
-
-    <div class="nbkLocationCards">
-      <div class="nbkLocCard nbkLocPickup">
-        <span class="nbkLocDot" style="background:#16a36a"></span>
-        <div class="nbkLocInfo">
-          <div class="nbkLocLabel">Pickup</div>
-          <div class="nbkLocValue" id="nbkPickupDisplay">Select location</div>
-        </div>
-      </div>
-      <div class="nbkLocDivider"></div>
-      <div class="nbkLocCard nbkLocDest">
-        <span class="nbkLocDot" style="background:#b42335"></span>
-        <div class="nbkLocInfo">
-          <div class="nbkLocLabel">Destination</div>
-          <div class="nbkLocValue" id="nbkDestDisplay">Select location</div>
-        </div>
-      </div>
+<div class="nbkLandscapeLayout">
+  <div class="nbkFormPanel">
+    <div class="nbkFormHeader">
+      <h2>Request a ride</h2>
+      <button class="nbkCloseButton" aria-label="Close" type="button">×</button>
     </div>
 
     <form id="nbkForm" class="nbkForm" novalidate>
-      <div class="nbkFormSection">
-        <label class="nbkField">
-          <input name="pickup" type="text" placeholder="Pickup location…" required>
-        </label>
-        <label class="nbkField">
-          <input name="destination" type="text" placeholder="Destination…" required>
-        </label>
-      </div>
-
-      <div class="nbkFormSection">
-        <div class="nbkLabel">Service type</div>
-        <div class="nbkServiceGrid">
-          <label class="nbkServiceCard">
-            <input type="radio" name="service" value="ambulatory" required style="display:none">
-            <div class="nbkServiceOption">
-              <span class="nbkServiceIcon">🚗</span>
-              <span class="nbkServiceName">Ambulatory</span>
-            </div>
-          </label>
-          <label class="nbkServiceCard">
-            <input type="radio" name="service" value="wheelchair" required style="display:none">
-            <div class="nbkServiceOption">
-              <span class="nbkServiceIcon">♿</span>
-              <span class="nbkServiceName">Wheelchair</span>
-            </div>
-          </label>
-          <label class="nbkServiceCard">
-            <input type="radio" name="service" value="stretcher" required style="display:none">
-            <div class="nbkServiceOption">
-              <span class="nbkServiceIcon">🚑</span>
-              <span class="nbkServiceName">Stretcher</span>
-            </div>
+      <div class="nbkFormScroll">
+        <div class="nbkFormSection">
+          <label class="nbkField nbkFieldCompact">
+            <span class="nbkFieldLabel">Pickup location</span>
+            <input name="pickup" type="text" placeholder="Enter pickup address…" required>
           </label>
         </div>
-      </div>
 
-      <div class="nbkFormSection">
-        <div class="nbkLabel">Trip details</div>
-        <div class="nbkRow">
-          <label class="nbkField">
-            <input name="date" type="date" required id="nbkDate">
-          </label>
-          <label class="nbkField">
-            <input name="time" type="time" required id="nbkTime">
+        <div class="nbkFormSection">
+          <label class="nbkField nbkFieldCompact">
+            <span class="nbkFieldLabel">Destination</span>
+            <input name="destination" type="text" placeholder="Enter destination…" required>
           </label>
         </div>
-      </div>
 
-      <div class="nbkFormSection">
-        <label class="nbkField">
-          Full name
-          <input name="name" type="text" placeholder="Your name" required>
-        </label>
-        <label class="nbkField">
-          Phone number
-          <input name="phone" type="tel" placeholder="(202) 555-0100" required>
-        </label>
-        <label class="nbkField">
-          Email (optional)
-          <input name="email" type="email" placeholder="you@example.com">
-        </label>
-      </div>
+        <div class="nbkFormSection">
+          <div class="nbkLabel">Service</div>
+          <div class="nbkServiceGrid">
+            <label class="nbkServiceCard">
+              <input type="radio" name="service" value="ambulatory" required style="display:none">
+              <div class="nbkServiceOption">
+                <span class="nbkServiceIcon">🚗</span>
+                <span class="nbkServiceName">Ambulatory</span>
+              </div>
+            </label>
+            <label class="nbkServiceCard">
+              <input type="radio" name="service" value="wheelchair" required style="display:none">
+              <div class="nbkServiceOption">
+                <span class="nbkServiceIcon">♿</span>
+                <span class="nbkServiceName">Wheelchair</span>
+              </div>
+            </label>
+            <label class="nbkServiceCard">
+              <input type="radio" name="service" value="stretcher" required style="display:none">
+              <div class="nbkServiceOption">
+                <span class="nbkServiceIcon">🚑</span>
+                <span class="nbkServiceName">Stretcher</span>
+              </div>
+            </label>
+          </div>
+        </div>
 
-      <div class="nbkFormSection">
-        <label class="nbkField">
-          Special instructions (optional)
-          <textarea name="notes" placeholder="Mobility aids, medical needs…"></textarea>
-        </label>
+        <div class="nbkFormSection">
+          <div class="nbkLabel">When</div>
+          <div class="nbkRow">
+            <label class="nbkField nbkFieldCompact">
+              <input name="date" type="date" required id="nbkDate">
+            </label>
+            <label class="nbkField nbkFieldCompact">
+              <input name="time" type="time" required id="nbkTime">
+            </label>
+          </div>
+        </div>
+
+        <div class="nbkFormSection">
+          <div class="nbkLabel">Your details</div>
+          <label class="nbkField nbkFieldCompact">
+            <span class="nbkFieldLabel">Full name</span>
+            <input name="name" type="text" placeholder="Enter your name" required>
+          </label>
+          <label class="nbkField nbkFieldCompact">
+            <span class="nbkFieldLabel">Phone</span>
+            <input name="phone" type="tel" placeholder="(202) 555-0100" required>
+          </label>
+          <label class="nbkField nbkFieldCompact">
+            <span class="nbkFieldLabel">Email</span>
+            <input name="email" type="email" placeholder="you@example.com">
+          </label>
+        </div>
+
+        <div class="nbkFormSection">
+          <label class="nbkField nbkFieldCompact">
+            <span class="nbkFieldLabel">Special instructions</span>
+            <textarea name="notes" placeholder="Any mobility aids or medical needs…" style="min-height:60px"></textarea>
+          </label>
+        </div>
       </div>
 
       <div class="nbkFormFooter">
@@ -240,11 +214,40 @@ function createBookingDialog(){
     </form>
 
     <div id="nbkSuccess" class="nbkSuccess" hidden>
-      <div class="nbkSuccessIcon">✓</div>
-      <h3>Request confirmed!</h3>
-      <p>Nexus is reviewing your request. You'll receive a confirmation shortly.</p>
-      <p class="nbkRef">Reference: <strong id="nbkRefNum"></strong></p>
-      <button class="nbkCtaButton" id="nbkDone" type="button">Done</button>
+      <div class="nbkSuccessHeader">
+        <div class="nbkSuccessIcon">✓</div>
+        <h3>Confirmed</h3>
+      </div>
+      <p>Your request has been submitted to Nexus. You'll receive a confirmation shortly.</p>
+      <p class="nbkRef">Ref: <strong id="nbkRefNum"></strong></p>
+      <button class="nbkCtaButton" id="nbkDone" type="button">Close</button>
+    </div>
+  </div>
+
+  <div class="nbkMapPanel">
+    <div class="nbkMap" id="nbkMap">
+      <svg class="nbkMapSvg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e5e9f0" stroke-width="0.8"/>
+          </pattern>
+          <linearGradient id="mapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f8fbfe;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#f0f4f8;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <rect width="800" height="600" fill="url(#mapGrad)"/>
+        <rect width="800" height="600" fill="url(#grid)"/>
+        <circle cx="200" cy="200" r="12" fill="#16a36a" opacity="0.9"/>
+        <circle cx="200" cy="200" r="30" fill="#16a36a" opacity="0.15"/>
+        <circle cx="600" cy="420" r="12" fill="#b42335" opacity="0.9"/>
+        <circle cx="600" cy="420" r="30" fill="#b42335" opacity="0.15"/>
+        <path d="M 200 200 Q 400 300 600 420" stroke="#0369a1" stroke-width="2" fill="none" stroke-dasharray="5,5" opacity="0.6"/>
+      </svg>
+      <div class="nbkMapOverlay">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <p>Route preview</p>
+      </div>
     </div>
   </div>
 </div>`;
@@ -254,6 +257,8 @@ function createBookingDialog(){
   const today=new Date().toISOString().split('T')[0];
   d.querySelector('#nbkDate').min=today;
   d.querySelector('#nbkDate').value=today;
+
+  d.querySelector('.nbkCloseButton')?.addEventListener('click',()=>d.close());
 
   setTimeout(()=>{
     d.querySelectorAll('input[name="pickup"],input[name="destination"]').forEach(attachAddressIntelligence);

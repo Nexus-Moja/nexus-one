@@ -184,58 +184,99 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 .mapServiceStrip{margin:0 18px 18px}
 .moduleMain{padding-top:28px}
 
-/* ── Nexus Booking Sheet (Uber-style Design) ────────────────── */
-@keyframes nbkSlideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
-#nexusBookingSheet{width:100vw;height:100dvh;max-height:100dvh;border:0;padding:0;background:transparent;box-shadow:none;animation:nbkSlideUp .4s cubic-bezier(.32,.72,.36,1)}
-#nexusBookingSheet::backdrop{background:rgba(4,18,34,.3);backdrop-filter:blur(8px);animation:fade-in .4s ease}
-.nbkUberLayout{display:grid;grid-template-columns:1fr;grid-template-rows:1fr auto;height:100dvh;overflow:hidden}
-.nbkMapContainer{position:relative;background:#f8fafc;overflow:hidden;display:grid;place-items:center}
-.nbkMap{position:absolute;inset:0;background:linear-gradient(135deg,#eef6fb,#f3f7fa);display:grid;place-items:center;border-bottom:1px solid #e0e8f0}
-.nbkMapSvg{width:100%;height:100%;opacity:.6}
-.nbkMapOverlay{display:grid;place-items:center;gap:12px;color:#9db3c4;text-align:center;z-index:1}
-.nbkMapOverlay svg{width:56px;height:56px;opacity:.5}
-.nbkMapOverlay p{margin:0;font-size:14px;font-weight:500}
-.nbkPanel{display:grid;grid-template-rows:auto 1fr;background:#fff;max-height:60dvh;overflow-y:auto;border-radius:24px 24px 0 0;box-shadow:0 -8px 32px rgba(4,20,38,.12);z-index:10}
-.nbkPanelHandle{height:5px;width:48px;background:#e0e8f0;border-radius:999px;margin:12px auto 0;cursor:grab;transition:background .2s}
-.nbkPanelHandle:active{cursor:grabbing;background:#cbd8e2}
-.nbkLocationCards{padding:16px 20px;display:grid;gap:0;background:linear-gradient(135deg,rgba(243,247,250,.4),rgba(248,251,253,.8))}
-.nbkLocCard{display:flex;align-items:center;gap:14px;padding:12px 0;font-size:14px;font-weight:600;color:#0f2744}
-.nbkLocDot{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.08)}
-.nbkLocInfo{display:grid;gap:2px}
-.nbkLocLabel{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9db3c4;font-weight:700}
-.nbkLocValue{font-weight:700;color:#0f2744}
-.nbkLocDivider{height:1px;background:rgba(203,216,226,.4);margin:4px 0}
-.nbkForm{padding:20px;display:grid;gap:16px;overflow-y:auto;max-height:calc(60dvh - 80px)}
-.nbkFormSection{display:grid;gap:10px}
-.nbkLabel{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#52677c}
+/* ── Nexus Booking Sheet (Premium Landscape Design) ────────────────── */
+@keyframes nbkSlideIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+#nexusBookingSheet{width:100vw;height:100dvh;max-height:100dvh;border:0;padding:0;background:transparent;box-shadow:none;animation:nbkSlideIn .5s cubic-bezier(.34,.69,.36,1)}
+#nexusBookingSheet::backdrop{background:rgba(4,18,34,.4);backdrop-filter:blur(12px);animation:fadeIn .5s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.nbkLandscapeLayout{display:grid;grid-template-columns:440px 1fr;height:100dvh;overflow:hidden;border-radius:20px}
+
+/* Form Panel - Left Side */
+.nbkFormPanel{display:grid;grid-template-rows:auto 1fr auto;background:#fff;overflow:hidden;box-shadow:0 20px 60px rgba(4,18,34,.18)}
+.nbkFormHeader{display:flex;justify-content:space-between;align-items:center;padding:28px 32px 20px;border-bottom:1px solid #f0f4f8;background:linear-gradient(180deg,#fafbfc 0%,#ffffff 100%)}
+.nbkFormHeader h2{margin:0;font-size:26px;font-family:Manrope,sans-serif;font-weight:800;color:#082f49;letter-spacing:-.02em}
+.nbkCloseButton{width:36px;height:36px;background:transparent;border:1px solid #e0e8f0;border-radius:10px;color:#52677c;font-size:24px;cursor:pointer;display:grid;place-items:center;transition:all .2s ease;line-height:1}
+.nbkCloseButton:hover{background:#f8fafc;border-color:#cbd8e2;color:#0f2744}
+
+.nbkFormScroll{overflow-y:auto;padding:0;flex:1}
+.nbkForm{display:grid;grid-template-rows:1fr auto;height:100%;padding:0;gap:0}
+.nbkFormScroll{padding:24px 28px;display:grid;gap:20px}
+
+.nbkFormSection{display:grid;gap:12px}
+.nbkLabel{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#52677c}
+.nbkFieldLabel{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#7a8a9a;margin-bottom:6px}
 .nbkField{display:grid;gap:0}
-.nbkField input,.nbkField textarea{width:100%;padding:11px 14px;border:1.5px solid #e0e8f0;border-radius:10px;background:#fff;font:15px/1.4 "Source Sans 3","Segoe UI",sans-serif;color:#0f2744;transition:all .2s ease}
-.nbkField input::placeholder,.nbkField textarea::placeholder{color:#cbd8e2}
-.nbkField input:focus,.nbkField textarea:focus{outline:0;border-color:#0369a1;background:#f8fafc;box-shadow:0 0 0 3px rgba(3,105,161,.1)}
-.nbkField textarea{resize:none;min-height:70px}
-.nbkRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nbkFieldCompact input,.nbkFieldCompact textarea{width:100%;padding:12px 14px;border:1.5px solid #e0e8f0;border-radius:9px;background:#fff;font:14px/1.5 "Source Sans 3","Segoe UI",sans-serif;color:#0f2744;transition:all .2s ease}
+.nbkFieldCompact input::placeholder,.nbkFieldCompact textarea::placeholder{color:#cbd8e2;font-weight:500}
+.nbkFieldCompact input:focus,.nbkFieldCompact textarea:focus{outline:0;border-color:#0369a1;background:#f9fbfd;box-shadow:inset 0 0 0 2px rgba(3,105,161,.08),0 0 0 4px rgba(3,105,161,.06)}
+.nbkFieldCompact textarea{resize:none}
+
+.nbkRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .nbkServiceGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .nbkServiceCard{cursor:pointer}
-.nbkServiceOption{padding:12px;border:1.5px solid #e0e8f0;border-radius:12px;background:#fff;display:grid;place-items:center;gap:6px;text-align:center;transition:all .2s ease;font-size:11px;font-weight:700;color:#0f2744}
-.nbkServiceCard input:checked~.nbkServiceOption{border-color:#0369a1;background:#ecf7fc;box-shadow:0 0 0 3px rgba(3,105,161,.1)}
-.nbkServiceOption:hover{border-color:#cbd8e2;background:#f8fafc}
-.nbkServiceIcon{font-size:20px;display:block}
-.nbkFormFooter{padding:16px;border-top:1px solid #e0e8f0;display:grid;gap:10px;background:#fff}
-.nbkError{color:#b42335;font-size:13px;font-weight:700;min-height:20px}
-.nbkCtaButton{width:100%;padding:14px 16px;background:linear-gradient(135deg,#db2839,#b91c2c);color:#fff;border:0;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s ease;box-shadow:0 8px 20px rgba(219,40,57,.2);font-family:Manrope,sans-serif;text-transform:uppercase;letter-spacing:.02em}
-.nbkCtaButton:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(219,40,57,.3)}
-.nbkCtaButton:active{transform:translateY(0);box-shadow:0 4px 12px rgba(219,40,57,.2)}
-.nbkSuccess{padding:32px 24px;display:grid;gap:14px;place-items:center;text-align:center}
-.nbkSuccessIcon{width:64px;height:64px;background:linear-gradient(135deg,#d9f4e8,#ecf9f5);color:#16a36a;display:grid;place-items:center;border-radius:16px;font-size:32px;font-weight:900}
-.nbkSuccess h3{margin:0;font-size:22px;font-family:Manrope,sans-serif;font-weight:800;color:#0f2744}
+.nbkServiceOption{padding:14px 10px;border:1.5px solid #e0e8f0;border-radius:11px;background:#fff;display:grid;place-items:center;gap:6px;text-align:center;transition:all .2s cubic-bezier(.32,.72,.36,1);font-size:10px;font-weight:700;color:#0f2744}
+.nbkServiceCard input:checked~.nbkServiceOption{border-color:#0369a1;background:linear-gradient(135deg,#ecf7fc,#f3fbff);box-shadow:0 0 0 3px rgba(3,105,161,.08);transform:scale(1.04)}
+.nbkServiceOption:hover{border-color:#cbd8e2;background:#f8fafc;transform:translateY(-1px)}
+.nbkServiceIcon{font-size:22px;display:block}
+
+.nbkFormFooter{padding:20px 28px;border-top:1px solid #f0f4f8;background:#fafbfc;display:grid;gap:10px}
+.nbkError{color:#b42335;font-size:12px;font-weight:700;min-height:18px}
+.nbkCtaButton{width:100%;padding:15px 16px;background:linear-gradient(135deg,#db2839,#b91c2c);color:#fff;border:0;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;transition:all .2s ease;box-shadow:0 10px 28px rgba(219,40,57,.25);font-family:Manrope,sans-serif;letter-spacing:.01em;text-transform:uppercase}
+.nbkCtaButton:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 14px 36px rgba(219,40,57,.35)}
+.nbkCtaButton:active:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 16px rgba(219,40,57,.2)}
+.nbkCtaButton:disabled{opacity:.6;cursor:not-allowed}
+
+.nbkSuccess{padding:40px 28px;display:grid;gap:18px;place-items:center;text-align:center}
+.nbkSuccessHeader{display:grid;gap:12px;place-items:center}
+.nbkSuccessIcon{width:70px;height:70px;background:linear-gradient(135deg,#d9f4e8 0%,#ecf9f5 100%);color:#16a36a;display:grid;place-items:center;border-radius:16px;font-size:36px;font-weight:900;box-shadow:0 8px 20px rgba(22,163,106,.15)}
+.nbkSuccess h3{margin:0;font-size:24px;font-family:Manrope,sans-serif;font-weight:800;color:#082f49}
 .nbkSuccess p{margin:0;color:#52677c;font-size:14px;line-height:1.6}
-.nbkRef{background:#f8fafc;border:1px solid #e0e8f0;border-radius:10px;padding:10px 14px;font-size:13px;margin:0;font-family:Manrope,sans-serif;font-weight:700}
-.nbkRef strong{color:#0369a1}
-.nbkDrop{position:absolute;left:0;right:0;top:100%;background:#fff;border:1.5px solid #e0e8f0;border-top:0;border-radius:0 0 12px 12px;margin:0;padding:6px 0;list-style:none;box-shadow:0 12px 40px rgba(4,20,38,.16);z-index:200;max-height:240px;overflow-y:auto}
-.nbkDrop li{padding:11px 16px;cursor:pointer;font-size:14px;line-height:1.4;color:#0f2744;border-bottom:1px solid #f3f7fa;transition:all .15s ease;font-weight:500}
+.nbkRef{background:#f0f8f4;border:1px solid #d9f4e8;border-radius:9px;padding:12px 14px;font-size:12px;margin:4px 0 0;font-family:Manrope,sans-serif;font-weight:700;color:#087f5b}
+.nbkRef strong{color:#16a36a}
+
+.nbkDrop{position:absolute;left:0;right:0;top:100%;background:#fff;border:1.5px solid #e0e8f0;border-top:0;border-radius:0 0 11px 11px;margin:0;padding:6px 0;list-style:none;box-shadow:0 12px 40px rgba(4,20,38,.16);z-index:200;max-height:240px;overflow-y:auto}
+.nbkDrop li{padding:12px 16px;cursor:pointer;font-size:14px;line-height:1.5;color:#0f2744;border-bottom:1px solid #f3f7fa;transition:all .15s ease;font-weight:500}
 .nbkDrop li:last-child{border-bottom:0}
 .nbkDrop li:hover,.nbkDrop li:focus{background:#f8fafc;color:#0369a1;padding-left:18px}
-@media(max-width:768px){.nbkUberLayout{height:100dvh}.nbkMapContainer{display:none}.nbkPanel{max-height:100dvh;border-radius:24px 24px 0 0}}
+
+/* Map Panel - Right Side */
+.nbkMapPanel{position:relative;overflow:hidden;background:linear-gradient(135deg,#f8fbfe,#f3f7fa);display:grid;place-items:center}
+.nbkMap{position:absolute;inset:0;display:grid;place-items:center}
+.nbkMapSvg{width:100%;height:100%;opacity:.85}
+.nbkMapOverlay{position:absolute;display:grid;place-items:center;gap:12px;color:#52677c;text-align:center;z-index:5;font-size:14px;font-weight:600;pointer-events:none}
+.nbkMapOverlay svg{width:40px;height:40px;opacity:.6;stroke-width:1.2}
+.nbkMapOverlay p{margin:0;font-size:13px;font-weight:600}
+
+@media(max-width:1200px){
+  .nbkLandscapeLayout{grid-template-columns:380px 1fr}
+  .nbkFormHeader{padding:24px 28px 18px}
+  .nbkFormHeader h2{font-size:24px}
+  .nbkFormScroll{padding:20px 24px;gap:16px}
+  .nbkFormFooter{padding:18px 24px}
+}
+
+@media(max-width:900px){
+  .nbkLandscapeLayout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .nbkFormPanel{grid-template-rows:auto 1fr auto}
+  .nbkMapPanel{display:none}
+  .nbkFormHeader{padding:20px 24px 16px}
+  .nbkFormHeader h2{font-size:22px}
+  .nbkFormScroll{padding:18px 22px;gap:14px;max-height:calc(100dvh - 200px)}
+}
+
+@media(max-width:640px){
+  .nbkFormHeader{padding:18px 20px 14px}
+  .nbkFormHeader h2{font-size:20px}
+  .nbkFormScroll{padding:16px 18px;gap:12px}
+  .nbkFormFooter{padding:16px 18px}
+  .nbkLabel{font-size:10px;letter-spacing:.09em}
+  .nbkFieldLabel{font-size:10px}
+  .nbkFieldCompact input,.nbkFieldCompact textarea{font-size:13px;padding:11px 12px}
+  .nbkCloseButton{width:32px;height:32px;font-size:20px}
+  .nbkServiceIcon{font-size:20px}
+}
+
 @media(prefers-reduced-motion:reduce){#nexusBookingSheet,#nexusBookingSheet::backdrop{animation:none}}
 .accessGateway{scroll-margin-top:110px}
 @media(max-width:1100px){.livecareExperience{grid-template-columns:minmax(320px,.9fr) minmax(0,1.1fr)}.livecareStoryPanel h1{font-size:clamp(44px,5.6vw,64px)}.mapServiceStrip span{font-size:11px;padding:14px 7px}}
