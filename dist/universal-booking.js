@@ -315,19 +315,22 @@
     }
     
     // Lookup trip
-    manageForm.querySelector('[data-nexus-lookup]').addEventListener('click',async()=>{
-      const tripRef=manageForm.querySelector('input[type="text"]').value.trim();
-      const phone=manageForm.querySelector('input[type="tel"]').value.trim();
-      if(!tripRef||!phone){showManageMsg('Please enter both trip reference and phone number.',false);return;}
-      const btn=manageForm.querySelector('[data-nexus-lookup]');
-      btn.disabled=true;btn.textContent='Looking up...';
-      try{
-        const r=await fetch(`/api/bookings/${encodeURIComponent(tripRef)}?phone=${encodeURIComponent(phone)}`);
-        const data=await r.json();
-        if(!r.ok)throw new Error(data.error||'Trip not found');
-        await showManageActions(data.booking,tripRef,phone);
-      }catch(e){showManageMsg(e.message,false);btn.disabled=false;btn.textContent='Look Up Trip';}
-    });
+    const lookupBtn=manageForm.querySelector('[data-nexus-lookup]');
+    if(lookupBtn){
+      lookupBtn.addEventListener('click',async()=>{
+        const tripRef=manageForm.querySelector('input[type="text"]').value.trim();
+        const phone=manageForm.querySelector('input[type="tel"]').value.trim();
+        if(!tripRef||!phone){showManageMsg('Please enter both trip reference and phone number.',false);return;}
+        const btn=manageForm.querySelector('[data-nexus-lookup]');
+        btn.disabled=true;btn.textContent='Looking up...';
+        try{
+          const r=await fetch(`/api/bookings/${encodeURIComponent(tripRef)}?phone=${encodeURIComponent(phone)}`);
+          const data=await r.json();
+          if(!r.ok)throw new Error(data.error||'Trip not found');
+          await showManageActions(data.booking,tripRef,phone);
+        }catch(e){showManageMsg(e.message,false);btn.disabled=false;btn.textContent='Look Up Trip';}
+      });
+    }
     
     function showManageMsg(msg,ok){
       const el=manageForm.querySelector('.nexusLookupMsg');
