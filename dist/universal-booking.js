@@ -470,7 +470,7 @@
             <span style="font-size:9px;font-weight:600;opacity:.85;white-space:nowrap;text-align:right;flex-shrink:0">${ref}<br>${tripDate||''}</span>
           </div>
           <!-- Full-width scrollable body -->
-          <div style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px">
+          <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;margin:0.5rem">
             <!-- Trip Route Map -->
             <div style="height:280px;border:1px solid #dce6ee;border-radius:8px;overflow:hidden;background:#f5f5f5" id="nexusRouteMap"></div>
             <!-- Patient Information - Editable -->
@@ -511,7 +511,7 @@
             </div>
           </div>
           <!-- Payment Options Section -->
-          <div style="padding:10px 16px;border-top:1px solid #dce6ee;background:#f9fafb">
+          <div style="padding:16px;border-top:1px solid #dce6ee;background:#f9fafb;margin:0.5rem">
             <p style="margin:0 0 6px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Payment Method</p>
             <div style="display:flex;gap:6px;flex-direction:column">
               <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s;position:relative">
