@@ -458,7 +458,7 @@
       actions.innerHTML=`
         <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:0;font-size:12px;box-sizing:border-box;display:flex;flex-direction:column">
           <!-- Title bar with back arrow - styled like a button -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0369a1;color:#fff;flex-shrink:0;border-radius:0;cursor:pointer;gap:12px" class="nexus-manage-back" onmouseover="this.style.background='#0258a1'" onmouseout="this.style.background='#0369a1'">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0369a1;color:#fff;flex-shrink:0;border-radius:0;cursor:pointer;gap:12px;margin:0.5rem" class="nexus-manage-back" onmouseover="this.style.background='#0258a1'" onmouseout="this.style.background='#0369a1'">
             <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -534,7 +534,7 @@
             </div>
           </div>
           <!-- Action buttons -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid #dce6ee;flex-shrink:0">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid #dce6ee;flex-shrink:0;margin:0.5rem">
             <button type="button" data-nexus-action="cancel" style="padding:10px 6px;background:#dc2626;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:11px;transition:background 0.2s">Cancel</button>
             <button type="button" data-nexus-action="update" style="padding:10px 6px;background:#0369a1;color:#fff;border:none;border-left:1px solid rgba(255,255,255,.2);border-right:1px solid rgba(255,255,255,.2);font-weight:600;cursor:pointer;font-size:11px;transition:background 0.2s">Update</button>
             <button type="button" data-nexus-action="complete" style="padding:10px 6px;background:#059669;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:11px;transition:background 0.2s">Call In</button>
