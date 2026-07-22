@@ -93,6 +93,18 @@ async function handler(event){
   if(p[0]==='bookings'&&p[1]&&method==='GET'){
    const phone=clean(event.queryStringParameters?.phone);if(!phone)return json(400,{error:'Phone number is required'});
    const searchRef=decodeURIComponent(p[1]);
+   // Demo trips for testing (no database required)
+   const demoTrips={
+     'NMT-DEMO-0001':{phone:'2025550101',booking:{reference:'NMT-DEMO-0001',name:'James Mitchell',phone:'(202) 555-0101',email:'james.mitchell@example.com',service:'wheelchair',pickup:'3800 Reservoir Road NW, Washington, DC 20007',destination:'18101 Prince Philip Drive, Olney, MD 20832',date:new Date(Date.now()+86400000*2).toISOString().split('T')[0],time:'10:00',status:'confirmed',notes:'Regular dialysis appointment, requires accessible vehicle'}},
+     'NMT-DEMO-0002':{phone:'2025550108',booking:{reference:'NMT-DEMO-0002',name:'Jennifer Smith',phone:'(202) 555-0108',email:'jennifer.smith@example.com',service:'ambulatory',pickup:'110 Irving Street NW, Washington, DC 20010',destination:'2041 Georgia Avenue NW, Washington, DC 20060',date:new Date(Date.now()+86400000*3).toISOString().split('T')[0],time:'14:30',status:'confirmed',notes:'Online booking - routine appointment'}},
+     'NMT-DEMO-0003':{phone:'7035550103',booking:{reference:'NMT-DEMO-0003',name:'Robert Chen',phone:'(703) 555-0103',email:'robert.chen@example.com',service:'broda',pickup:'5255 Loughboro Road NW, Washington, DC 20016',destination:'1447 Kennedy Street NW, Washington, DC 20011',date:new Date(Date.now()+86400000).toISOString().split('T')[0],time:'09:00',status:'confirmed',notes:'Bariatric chair transfer required'}}
+   };
+   if(demoTrips[searchRef]){
+     const demo=demoTrips[searchRef];
+     const cleanPhone=phone.replace(/\D/g,'');
+     if(cleanPhone===demo.phone)return json(200,{booking:demo.booking});
+     return json(404,{error:'Request not found'});
+   }
    // Try matching by reference first, then by name
    let r=await query('SELECT * FROM bookings WHERE reference=$1 AND regexp_replace(phone,\'\\D\',\'\',\'g\')=regexp_replace($2,\'\\D\',\'\',\'g\')',[searchRef,phone]);
    if(!r.rows[0]){r=await query('SELECT * FROM bookings WHERE LOWER(name)=LOWER($1) AND regexp_replace(phone,\'\\D\',\'\',\'g\')=regexp_replace($2,\'\\D\',\'\',\'g\') ORDER BY created_at DESC LIMIT 1',[searchRef,phone]);}

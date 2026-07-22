@@ -305,6 +305,14 @@
         <label style="display:block;margin-bottom:10px"><span style="font-size:11px;font-weight:600;color:#082f49">Phone Number</span><br>
           <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:11px"></label>
         <button type="button" data-nexus-lookup style="width:100%;padding:8px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:11px">Look Up Trip</button>
+        <div style="margin-top:8px;padding:8px 10px;background:#f0f4f8;border-radius:6px;border:1px solid #dce6ee">
+          <p style="margin:0 0 6px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Try Demo Trips</p>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <button type="button" data-nexus-demo="NMT-DEMO-0001" data-nexus-demo-phone="(202) 555-0101" style="padding:5px 8px;background:#fff;border:1px solid #dce6ee;border-radius:6px;font-size:10px;cursor:pointer;text-align:left;color:#082f49">NMT-DEMO-0001 · James Mitchell · Wheelchair</button>
+            <button type="button" data-nexus-demo="NMT-DEMO-0002" data-nexus-demo-phone="(202) 555-0108" style="padding:5px 8px;background:#fff;border:1px solid #dce6ee;border-radius:6px;font-size:10px;cursor:pointer;text-align:left;color:#082f49">NMT-DEMO-0002 · Jennifer Smith · Ambulatory</button>
+            <button type="button" data-nexus-demo="NMT-DEMO-0003" data-nexus-demo-phone="(703) 555-0103" style="padding:5px 8px;background:#fff;border:1px solid #dce6ee;border-radius:6px;font-size:10px;cursor:pointer;text-align:left;color:#082f49">NMT-DEMO-0003 · Robert Chen · Broda Chair</button>
+          </div>
+        </div>
         <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
       </div>
       <div class="nexusManageActions" style="display:none;overflow:hidden;width:100%"></div>`;
@@ -411,6 +419,17 @@
       formHeading.style.cursor='pointer';
       formHeading.addEventListener('click',restoreBookingForm);
     }
+    
+    // Demo trip quick-fill buttons
+    manageForm.querySelectorAll('[data-nexus-demo]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const ref=btn.getAttribute('data-nexus-demo');
+        const phone=btn.getAttribute('data-nexus-demo-phone');
+        manageForm.querySelector('input[type="text"]').value=ref;
+        manageForm.querySelector('input[type="tel"]').value=phone;
+        manageForm.querySelector('[data-nexus-lookup]').click();
+      });
+    });
     
     // Lookup trip
     const lookupBtn=manageForm.querySelector('[data-nexus-lookup]');
