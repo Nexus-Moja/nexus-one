@@ -680,9 +680,11 @@
 
     function showMsg(msg,ok){
       const el=section.querySelector('.nexusManageMsg');
-      el.textContent=msg;el.style.display='block';
-      el.style.background=ok?'#d1fae5':'#fff1f2';el.style.color=ok?'#047857':'#e11d48';
-      el.style.border=`1px solid ${ok?'#6ee7b7':'#fecdd3'}`;
+      if(el){
+        el.textContent=msg;el.style.display='block';
+        el.style.background=ok?'#d1fae5':'#fff1f2';el.style.color=ok?'#047857':'#e11d48';
+        el.style.border=`1px solid ${ok?'#6ee7b7':'#fecdd3'}`;
+      }
     }
     function phoneVerifyField(){
       const w=document.createElement('div');
@@ -693,7 +695,7 @@
     }
     const cancelActionBtn=section.querySelector('[data-nexus-action="cancel"]');
     if(cancelActionBtn){
-      cancelActionBtn.addEventListener('click',()=>{
+      try{cancelActionBtn.addEventListener('click',()=>{
       const form=section.querySelector('.nexusManageForm');
       form.style.display='block';
       form.innerHTML='';
@@ -715,12 +717,12 @@
         }catch(e){showMsg(e.message,false);btn.disabled=false;btn.textContent='Confirm Cancellation';}
       };
       form.appendChild(pf);form.appendChild(btn);
-      });
+      });}catch(e){console.warn('[Nexus] Cancel action button error',e);}
     }
 
     const reschedActionBtn=section.querySelector('[data-nexus-action="reschedule"]');
     if(reschedActionBtn){
-      reschedActionBtn.addEventListener('click',()=>{
+      try{reschedActionBtn.addEventListener('click',()=>{
       const form=section.querySelector('.nexusManageForm');
       form.style.display='block';
       form.innerHTML='';
@@ -738,7 +740,7 @@
         </div>`;
       const submitBtn2=form.querySelector('[data-nexus-submit]');
       if(submitBtn2){
-        submitBtn2.addEventListener('click',async()=>{
+        try{submitBtn2.addEventListener('click',async()=>{
         const phone=form.querySelector('[name="phone"]').value.trim();
         const date=form.querySelector('[name="date"]').value;
         const time=form.querySelector('[name="time"]').value;
@@ -753,9 +755,9 @@
           showMsg(`✓ Trip rescheduled to ${date} at ${time}. A confirmation text/email has been sent.`,true);
           section.querySelectorAll('[data-nexus-action]').forEach(b=>b.style.display='none');
         }catch(e){showMsg(e.message,false);btn2.disabled=false;btn2.textContent='Confirm Reschedule';}
-        });
+        });}catch(e){console.warn('[Nexus] Reschedule submit button error',e);}
       }
-      });
+      });}catch(e){console.warn('[Nexus] Reschedule action button error',e);}
     }
   }
 
