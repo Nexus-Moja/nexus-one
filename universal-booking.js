@@ -334,10 +334,12 @@
     
     function showManageMsg(msg,ok){
       const el=manageForm.querySelector('.nexusLookupMsg');
-      el.textContent=msg;el.style.display='block';
-      el.style.background=ok?'#d1fae5':'#fff1f2';
-      el.style.color=ok?'#047857':'#e11d48';
-      el.style.borderLeft=`4px solid ${ok?'#10b981':'#e11d48'}`;
+      if(el){
+        el.textContent=msg;el.style.display='block';
+        el.style.background=ok?'#d1fae5':'#fff1f2';
+        el.style.color=ok?'#047857':'#e11d48';
+        el.style.borderLeft=`4px solid ${ok?'#10b981':'#e11d48'}`;
+      }
     }
     
     async function showManageActions(booking,ref,phone){
@@ -539,19 +541,19 @@
       // Button handlers with null checks
       const cancelBtn=actions.querySelector('[data-nexus-action="cancel"]');
       if(cancelBtn){
-        cancelBtn.addEventListener('click',()=>{
+        try{cancelBtn.addEventListener('click',()=>{
           if(confirm('Are you certain you want to cancel your trip?')){
             doCancel(ref,phone,actions);
           }
-        });
+        });}catch(e){console.warn('[Nexus] Cancel button error',e);}
       }
       const updateBtn=actions.querySelector('[data-nexus-action="update"]');
       if(updateBtn){
-        updateBtn.addEventListener('click',()=>doUpdate(ref,phone,actions));
+        try{updateBtn.addEventListener('click',()=>doUpdate(ref,phone,actions));}catch(e){console.warn('[Nexus] Update button error',e);}
       }
       const completeBtn=actions.querySelector('[data-nexus-action="complete"]');
       if(completeBtn){
-        completeBtn.addEventListener('click',async()=>{
+        try{completeBtn.addEventListener('click',async()=>{
           const btn=completeBtn;
           btn.disabled=true;btn.textContent='Completing…';
           try{
@@ -561,13 +563,13 @@
             showManageMsg('✓ Trip marked complete.',true);
           }catch(e){showManageMsg(e.message,false);}
           btn.disabled=false;btn.textContent='Complete Trip';
-        });
+        });}catch(e){console.warn('[Nexus] Complete button error',e);}
       }
       
       // Back button handler
       const backBtn=actions.querySelector('.nexus-manage-back');
       if(backBtn){
-        backBtn.addEventListener('click',()=>restoreBookingForm());
+        try{backBtn.addEventListener('click',()=>restoreBookingForm());}catch(e){console.warn('[Nexus] Back button error',e);}
       }
     }
     
