@@ -9,6 +9,65 @@
   let configPromise, mapsPromise;
   const state={enhanced:new WeakSet(), facilities:[], timers:{}, phoneFields:new WeakSet(), emailFields:new WeakSet()};
 
+  // Inject comprehensive booking form optimization styles
+  if(!document.querySelector('#nexus-booking-styles')){
+    const style=document.createElement('style');
+    style.id='nexus-booking-styles';
+    style.textContent=`
+      /* Optimize all form labels in booking form */
+      [role="dialog"] label, form label, fieldset label, [class*="Form"] label {
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        color: #082f49 !important;
+        margin-bottom: 4px !important;
+        display: block !important;
+      }
+      
+      /* Optimize form section spacing */
+      [role="dialog"] > *, form > *, fieldset > *, [class*="Form"] > * {
+        margin-bottom: 10px !important;
+      }
+      
+      /* Compact input fields */
+      input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+      textarea, select, [role="dialog"] input, [role="dialog"] textarea {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        margin-top: 4px !important;
+        line-height: 1.4 !important;
+      }
+      
+      /* Optimize form buttons */
+      [role="dialog"] button, form button, fieldset button, [class*="Form"] button {
+        padding: 10px 12px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        line-height: 1.2 !important;
+      }
+      
+      /* Reduce form container padding */
+      [role="dialog"] > div, form > fieldset, [class*="Form"] > div {
+        padding: 12px 16px !important;
+      }
+      
+      /* Optimize section headings */
+      [role="dialog"] h1, [role="dialog"] h2, [role="dialog"] h3, 
+      form h1, form h2, form h3,
+      fieldset legend, [class*="Form"] h1, [class*="Form"] h2 {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        margin: 0 0 8px 0 !important;
+        line-height: 1.2 !important;
+      }
+      
+      /* Reduce gaps in flex containers */
+      [role="dialog"], form, fieldset, [class*="Form"] {
+        gap: 10px !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function api(path, options){return fetch('/api'+path, options).then(async r=>{const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Request failed');return data;});}
   function config(){return configPromise||(configPromise=api('/integrations/config').catch(()=>({googleMapsEnabled:false})));}
   
@@ -230,11 +289,11 @@
     content.innerHTML=`
       <div style="padding:12px 16px">
         <p style="font-size:11px;color:#62758a;margin:0 0 10px 0;line-height:1.4">Enter trip reference and phone to reschedule or cancel.</p>
-        <label style="display:block;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
-          <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
-        <label style="display:block;margin-bottom:12px"><span style="font-size:13px;font-weight:600;color:#082f49">Phone Number</span><br>
-          <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
-        <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
+        <label style="display:block;margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
+          <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:11px"></label>
+        <label style="display:block;margin-bottom:10px"><span style="font-size:11px;font-weight:600;color:#082f49">Phone Number</span><br>
+          <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:11px"></label>
+        <button type="button" data-nexus-lookup style="width:100%;padding:8px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:11px">Look Up Trip</button>
         <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
       </div>
       <div class="nexusManageActions" style="display:none;margin:0 -9999px;padding:0 9999px;overflow:hidden"></div>`;
@@ -244,11 +303,11 @@
     const manageButton=document.createElement('button');
     manageButton.type='button';
     manageButton.className='nexus-manage-btn';
-    manageButton.style.cssText='grid-column:1/-1;width:100%;padding:18px 16px;background:#0369a1;border:2px solid #0369a1;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700;color:#fff;margin-bottom:16px;transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;gap:12px';
+    manageButton.style.cssText='grid-column:1/-1;width:100%;padding:14px 12px;background:#0369a1;border:2px solid #0369a1;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;gap:10px';
     manageButton.innerHTML=`
       <div style="text-align:left">
-        <div style="font-size:15px;font-weight:700">Manage Trip</div>
-        <div style="font-size:13px;font-weight:500;opacity:0.95;margin-top:4px">Need to make changes? Click here</div>
+        <div style="font-size:13px;font-weight:700">Manage Trip</div>
+        <div style="font-size:11px;font-weight:500;opacity:0.95;margin-top:2px">Make changes</div>
       </div>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
         <polyline points="9 18 15 12 9 6"></polyline>
