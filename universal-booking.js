@@ -237,6 +237,10 @@
     manageButton.addEventListener('click',()=>{
       manageForm.style.display='block';
       manageButton.style.display='none';
+      // Remove padding from form container to allow full-width card
+      const originalPadding=formContainer.style.padding;
+      formContainer.style.padding='0';
+      manageForm.dataset.originalPadding=originalPadding;
       console.log('[Nexus] Manage button clicked - formHeading:',formHeading?.tagName,formHeading?.textContent);
       // Swap form heading inside the dialog
       if(formHeading){
@@ -265,6 +269,10 @@
     function restoreBookingForm(){
       manageForm.style.display='none';
       manageButton.style.display='block';
+      // Restore form container padding
+      if(manageForm.dataset.originalPadding){
+        formContainer.style.padding=manageForm.dataset.originalPadding;
+      }
       console.log('[Nexus] Back clicked - restoring heading to:',originalHeadingText);
       if(formHeading&&originalHeadingText){
         formHeading.textContent=originalHeadingText;
@@ -327,7 +335,7 @@
         notifications:`<em style="color:#94a3b8">No notifications sent yet.</em>`
       };
       actions.innerHTML=`
-        <div style="margin:0 -75px;width:calc(100% + 150px);background:#fff;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;font-size:12px;box-sizing:border-box">
+        <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;font-size:12px;box-sizing:border-box">
           <!-- Title bar -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#082f49;color:#fff">
             <span style="font-weight:700;font-size:13px">Manage Existing Trip</span>
