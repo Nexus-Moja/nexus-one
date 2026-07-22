@@ -471,6 +471,11 @@
           </div>
           <!-- Full-width scrollable body -->
           <div style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px">
+            <!-- Trip Route and Fare Estimate -->
+            <div style="padding:12px;background:#d1fae5;border-radius:8px;border:1px solid #86efac">
+              <div style="font-weight:700;font-size:13px;color:#082f49;margin-bottom:6px">Trip route and fare estimate</div>
+              <div style="font-size:12px;color:#62758a;line-height:1.5">Select both addresses to calculate mileage and ETA.</div>
+            </div>
             <!-- Patient Information - Editable -->
             <div>
               <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Patient Information</p>
