@@ -329,7 +329,7 @@
     const content=document.createElement('div');
     content.style.cssText='padding:0;background:#fff;border:1px solid #dce6ee;border-radius:0;margin:0;width:100%';
     content.innerHTML=`
-      <div style="padding:12px 16px">
+      <div style="padding:12px 16px;margin:0.5rem">
         <p style="font-size:11px;color:#62758a;margin:0 0 10px 0;line-height:1.4">Enter trip reference and phone to reschedule or cancel.</p>
         <label style="display:block;margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
           <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:11px"></label>
