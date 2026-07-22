@@ -471,11 +471,8 @@
           </div>
           <!-- Full-width scrollable body -->
           <div style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px">
-            <!-- Trip Route and Fare Estimate -->
-            <div style="padding:12px;background:#d1fae5;border-radius:8px;border:1px solid #86efac">
-              <div style="font-weight:700;font-size:13px;color:#082f49;margin-bottom:6px">Trip route and fare estimate</div>
-              <div style="font-size:12px;color:#62758a;line-height:1.5">Select both addresses to calculate mileage and ETA.</div>
-            </div>
+            <!-- Trip Route Map -->
+            <div style="height:280px;border:1px solid #dce6ee;border-radius:8px;overflow:hidden;background:#f5f5f5" id="nexusRouteMap"></div>
             <!-- Patient Information - Editable -->
             <div>
               <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Patient Information</p>
@@ -634,6 +631,34 @@
       const backBtn=actions.querySelector('.nexus-manage-back');
       if(backBtn){
         try{backBtn.addEventListener('click',()=>restoreBookingForm());backBtn.style.transition='background 0.2s';}catch(e){console.warn('[Nexus] Back button error',e);}
+      }
+      
+      // Initialize route map if pickup and destination exist
+      if(booking.pickup&&booking.destination){
+        try{
+          const mapContainer=actions.querySelector('#nexusRouteMap');
+          if(mapContainer){
+            const cfg=await config();
+            if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+              await loadMaps(cfg.googleMapsBrowserKey);
+              const map=new google.maps.Map(mapContainer,{zoom:13,center:{lat:40.7128,lng:-74.0060}});
+              const dirRenderer=new google.maps.DirectionsRenderer({map});
+              const dirSvc=new google.maps.DirectionsService();
+              dirSvc.route({
+                origin:booking.pickup,destination:booking.destination,
+                travelMode:google.maps.TravelMode.DRIVING,unitSystem:google.maps.UnitSystem.IMPERIAL
+              },(result,status)=>{
+                if(status==='OK'){
+                  dirRenderer.setDirections(result);
+                }else{
+                  mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Unable to load route</div>';
+                }
+              });
+            }else{
+              mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Maps not available</div>';
+            }
+          }
+        }catch(e){console.warn('[Nexus] Map initialization error',e);}
       }
     }
     
