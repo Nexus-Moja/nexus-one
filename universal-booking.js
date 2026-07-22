@@ -241,6 +241,14 @@
       const originalPadding=formContainer.style.padding;
       formContainer.style.padding='0';
       manageForm.dataset.originalPadding=originalPadding;
+      // Also remove padding from dialog or parent container
+      const dialog=formContainer.closest('dialog')||formContainer.closest('[role="dialog"]');
+      const contentWrapper=formContainer.parentElement;
+      if(contentWrapper){
+        const originalContentPadding=contentWrapper.style.padding;
+        contentWrapper.style.padding='0';
+        manageForm.dataset.originalContentPadding=originalContentPadding;
+      }
       console.log('[Nexus] Manage button clicked - formHeading:',formHeading?.tagName,formHeading?.textContent);
       // Swap form heading inside the dialog
       if(formHeading){
@@ -272,6 +280,11 @@
       // Restore form container padding
       if(manageForm.dataset.originalPadding){
         formContainer.style.padding=manageForm.dataset.originalPadding;
+      }
+      // Restore parent content wrapper padding
+      const contentWrapper=formContainer.parentElement;
+      if(contentWrapper&&manageForm.dataset.originalContentPadding){
+        contentWrapper.style.padding=manageForm.dataset.originalContentPadding;
       }
       console.log('[Nexus] Back clicked - restoring heading to:',originalHeadingText);
       if(formHeading&&originalHeadingText){
