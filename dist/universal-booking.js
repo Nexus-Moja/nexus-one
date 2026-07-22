@@ -633,7 +633,36 @@
     }
     
     function doUpdate(ref,phone,actions){
-      // Update functionality - no action taken
+      const result=actions.querySelector('.nexusManageResult');
+      const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+      const minDate=tomorrow.toISOString().slice(0,10);
+      result.innerHTML=`
+        <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#082f49">Update Trip Date / Time</p>
+        <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:8px">
+          <label><span style="font-size:11px;font-weight:600;color:#62758a">New Date</span><br>
+            <input type="date" name="date" min="${minDate}" style="width:100%;padding:7px 9px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px"></label>
+          <label><span style="font-size:11px;font-weight:600;color:#62758a">New Time</span><br>
+            <input type="time" name="time" style="width:100%;padding:7px 9px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px"></label>
+        </div>
+        <button type="button" data-nexus-do-update style="padding:8px 16px;background:#0369a1;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px">Confirm Update</button>`;
+      result.style.display='block';
+      const updateBtn=result.querySelector('[data-nexus-do-update]');
+      if(updateBtn){
+        updateBtn.addEventListener('click',async()=>{
+        const date=result.querySelector('[name="date"]').value;
+        const time=result.querySelector('[name="time"]').value;
+        if(!date||!time){showManageMsg('Please select both date and time.',false);return;}
+        const btn=result.querySelector('[data-nexus-do-update]');
+        btn.disabled=true;btn.textContent='Updating…';
+        try{
+          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/reschedule`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone,date,time})});
+          const data=await r.json();
+          if(!r.ok)throw new Error(data.error||'Update failed');
+          showManageMsg(`✓ Trip updated to ${date} at ${time}. Confirmation sent.`,true);
+          result.style.display='none';
+        }catch(e){showManageMsg(e.message,false);btn.disabled=false;btn.textContent='Confirm Update';}
+        });
+      }
     }
     
     function doCancel(ref,phone,actions){
