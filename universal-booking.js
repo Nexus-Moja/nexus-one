@@ -636,30 +636,33 @@
       
       // Initialize route map if pickup and destination exist
       if(booking.pickup&&booking.destination){
-        try{
-          const mapContainer=actions.querySelector('#nexusRouteMap');
-          if(mapContainer){
-            const cfg=await config();
-            if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
-              await loadMaps(cfg.googleMapsBrowserKey);
-              const map=new google.maps.Map(mapContainer,{zoom:13,center:{lat:40.7128,lng:-74.0060}});
-              const dirRenderer=new google.maps.DirectionsRenderer({map});
-              const dirSvc=new google.maps.DirectionsService();
-              dirSvc.route({
-                origin:booking.pickup,destination:booking.destination,
-                travelMode:google.maps.TravelMode.DRIVING,unitSystem:google.maps.UnitSystem.IMPERIAL
-              },(result,status)=>{
-                if(status==='OK'){
-                  dirRenderer.setDirections(result);
-                }else{
-                  mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Unable to load route</div>';
-                }
-              });
-            }else{
-              mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Maps not available</div>';
-            }
-          }
-        }catch(e){console.warn('[Nexus] Map initialization error',e);}
+        const mapContainer=actions.querySelector('#nexusRouteMap');
+        if(mapContainer){
+          (async()=>{
+            try{
+              const cfg=await config();
+              if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+                await loadMaps(cfg.googleMapsBrowserKey);
+                if(!mapContainer.parentElement) return; // Element removed
+                const map=new google.maps.Map(mapContainer,{zoom:13,center:{lat:40.7128,lng:-74.0060}});
+                const dirRenderer=new google.maps.DirectionsRenderer({map});
+                const dirSvc=new google.maps.DirectionsService();
+                dirSvc.route({
+                  origin:booking.pickup,destination:booking.destination,
+                  travelMode:google.maps.TravelMode.DRIVING,unitSystem:google.maps.UnitSystem.IMPERIAL
+                },(result,status)=>{
+                  if(status==='OK'&&mapContainer.parentElement){
+                    dirRenderer.setDirections(result);
+                  }else if(mapContainer.parentElement){
+                    mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Unable to load route</div>';
+                  }
+                });
+              }else if(mapContainer.parentElement){
+                mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Maps not available</div>';
+              }
+            }catch(e){console.warn('[Nexus] Map init',e);}
+          })();
+        }
       }
     }
     
