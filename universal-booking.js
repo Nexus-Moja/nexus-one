@@ -217,7 +217,7 @@
         <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
       <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
       <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
-      <div class="nexusManageActions" style="display:none;margin:0;padding:0;width:100vw;position:relative;left:calc(-50vw + 50%);overflow:visible"></div>`;
+      <div class="nexusManageActions" style="display:none;margin:0;padding:0;overflow:visible"></div>`;
     manageForm.appendChild(content);
     
     // Create "Manage Trip" button to show the manage form (replaces manage tab)
@@ -327,7 +327,7 @@
         notifications:`<em style="color:#94a3b8">No notifications sent yet.</em>`
       };
       actions.innerHTML=`
-        <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;font-size:12px;box-sizing:border-box">
+        <div style="margin:0 -500px;width:calc(100% + 1000px);background:#fff;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;font-size:12px;box-sizing:border-box">
           <!-- Title bar -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#082f49;color:#fff">
             <span style="font-weight:700;font-size:13px">Manage Existing Trip</span>
