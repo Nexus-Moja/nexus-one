@@ -487,13 +487,6 @@
                   <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Destination</label>
                   <input type="text" data-field="destination" value="${booking.destination||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
                 </div>
-                <div>
-                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Service</label>
-                  <input type="text" data-field="service" value="${booking.service||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
-                </div>
-                <div style="padding:8px;border-radius:6px;background:${statusBg};color:${statusColor};font-weight:700;font-size:10px">
-                  Status: ${statusLabel}
-                </div>
               </div>
             </div>
             <!-- Fare Estimate -->
@@ -520,21 +513,21 @@
           <div style="padding:10px 16px;border-top:1px solid #dce6ee;background:#f9fafb">
             <p style="margin:0 0 6px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Payment Method</p>
             <div style="display:flex;gap:6px;flex-direction:column">
-              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s">
-                <input type="radio" name="payment-option" value="deposit" checked style="cursor:pointer;width:15px;height:15px;accent-color:#0369a1">
+              <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s;position:relative">
+                <input type="radio" name="payment-option" value="deposit" checked style="cursor:pointer;width:15px;height:15px;accent-color:#0369a1;margin-top:2px;flex-shrink:0">
                 <div style="flex:1">
                   <div style="font-size:11px;font-weight:600;color:#082f49">Pay 25%</div>
                   <div style="font-size:10px;color:#62758a">Reserve</div>
                 </div>
-                <span style="font-weight:700;color:#0369a1;font-size:12px;text-align:right;white-space:nowrap;margin-left:12px" data-payment-deposit>—</span>
+                <span style="font-weight:700;color:#0369a1;font-size:12px;position:absolute;right:10px;top:8px" data-payment-deposit>—</span>
               </label>
-              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s">
-                <input type="radio" name="payment-option" value="full" style="cursor:pointer;width:15px;height:15px;accent-color:#0369a1">
+              <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s;position:relative">
+                <input type="radio" name="payment-option" value="full" style="cursor:pointer;width:15px;height:15px;accent-color:#0369a1;margin-top:2px;flex-shrink:0">
                 <div style="flex:1">
                   <div style="font-size:11px;font-weight:600;color:#082f49">Pay Full</div>
                   <div style="font-size:10px;color:#62758a">Now</div>
                 </div>
-                <span style="font-weight:700;color:#0369a1;font-size:12px;text-align:right;white-space:nowrap;margin-left:12px" data-payment-full>—</span>
+                <span style="font-weight:700;color:#0369a1;font-size:12px;position:absolute;right:10px;top:8px" data-payment-full>—</span>
               </label>
             </div>
           </div>
