@@ -225,9 +225,19 @@
     // Create "Manage Trip" button to show the manage form (replaces manage tab)
     const manageButton=document.createElement('button');
     manageButton.type='button';
-    manageButton.textContent='Manage Existing Trip';
     manageButton.className='nexus-manage-btn';
-    manageButton.style.cssText='grid-column:1/-1;width:100%;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#0369a1;text-decoration:underline;margin-bottom:16px;transition:all 0.2s';
+    manageButton.style.cssText='grid-column:1/-1;width:100%;padding:18px 16px;background:#0369a1;border:2px solid #0369a1;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700;color:#fff;margin-bottom:16px;transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;gap:12px';
+    manageButton.innerHTML=`
+      <div style="text-align:left">
+        <div style="font-size:15px;font-weight:700">Manage Existing Trip</div>
+        <div style="font-size:13px;font-weight:500;opacity:0.95;margin-top:4px">Need to make changes? Click here</div>
+      </div>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    `;
+    manageButton.onmouseover=()=>{manageButton.style.background='#0258a1';manageButton.style.borderColor='#0258a1';};
+    manageButton.onmouseout=()=>{manageButton.style.background='#0369a1';manageButton.style.borderColor='#0369a1';};
     
     // Insert manage form and button at the very top of the form container
     formContainer.insertBefore(manageButton, formContainer.firstChild);
@@ -359,15 +369,18 @@
       };
       actions.innerHTML=`
         <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:0;font-size:12px;box-sizing:border-box;display:flex;flex-direction:column">
-          <!-- Title bar with back arrow -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#082f49;color:#fff;flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" class="nexus-manage-back">
+          <!-- Title bar with back arrow - styled like a button -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:#0369a1;color:#fff;flex-shrink:0;border-radius:0;cursor:pointer" class="nexus-manage-back" onmouseover="this.style.background='#0258a1'" onmouseout="this.style.background='#0369a1'">
+            <div style="display:flex;align-items:center;gap:12px;flex:1">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
               </svg>
-              <span style="font-weight:700;font-size:14px">Manage Existing Trip</span>
+              <div>
+                <div style="font-weight:700;font-size:15px;margin:0">Manage Existing Trip</div>
+                <div style="font-size:12px;font-weight:500;opacity:0.9;margin-top:2px">Click back arrow to return</div>
+              </div>
             </div>
-            <span style="font-size:11px;font-weight:600;opacity:.8;white-space:nowrap">${ref}${tripDate?' · '+tripDate+(booking.time?' '+booking.time:''):''}</span>
+            <span style="font-size:11px;font-weight:600;opacity:.9;white-space:nowrap;text-align:right">${ref}<br>${tripDate?tripDate+(booking.time?' '+booking.time:''):''}</span>
           </div>
           <!-- Full-width scrollable body -->
           <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px">
@@ -569,7 +582,7 @@
       // Back button handler
       const backBtn=actions.querySelector('.nexus-manage-back');
       if(backBtn){
-        try{backBtn.addEventListener('click',()=>restoreBookingForm());}catch(e){console.warn('[Nexus] Back button error',e);}
+        try{backBtn.addEventListener('click',()=>restoreBookingForm());backBtn.style.transition='background 0.2s';}catch(e){console.warn('[Nexus] Back button error',e);}
       }
     }
     
