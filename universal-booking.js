@@ -354,10 +354,15 @@
       };
       actions.innerHTML=`
         <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:0;font-size:12px;box-sizing:border-box;display:flex;flex-direction:column">
-          <!-- Title bar -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#082f49;color:#fff;flex-shrink:0">
-            <span style="font-weight:700;font-size:13px">Manage Existing Trip</span>
-            <span style="font-size:12px;font-weight:600;opacity:.8">${ref}${tripDate?' · '+tripDate+(booking.time?' '+booking.time:''):''}</span>
+          <!-- Title bar with back arrow -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#082f49;color:#fff;flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" class="nexus-manage-back">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              <span style="font-weight:700;font-size:14px">Manage Existing Trip</span>
+            </div>
+            <span style="font-size:11px;font-weight:600;opacity:.8;white-space:nowrap">${ref}${tripDate?' · '+tripDate+(booking.time?' '+booking.time:''):''}</span>
           </div>
           <!-- Full-width scrollable body -->
           <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px">
@@ -394,12 +399,22 @@
                 </div>
               </div>
             </div>
-            <!-- Fare Calculator - Total Only -->
+            <!-- Fare Calculator with discount logic -->
             <div>
               <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Total Estimate</p>
-              <div style="padding:12px;border:2px solid #0369a1;border-radius:8px;background:#dbeafe;display:flex;justify-content:space-between;align-items:center">
-                <span style="font-weight:600;color:#082f49">Total Estimate</span>
-                <span style="font-weight:700;color:#0369a1;font-size:16px" data-fare="total">—</span>
+              <div style="padding:12px;border:2px solid #0369a1;border-radius:8px;background:#dbeafe;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-weight:600;color:#082f49">Subtotal</span>
+                  <span style="font-weight:600;color:#0369a1;font-size:14px" data-fare="subtotal">—</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center" data-discount-row style="display:none">
+                  <span style="font-weight:600;color:#059669">Discount (applied)</span>
+                  <span style="font-weight:600;color:#059669;font-size:14px" data-fare="discount">-—</span>
+                </div>
+                <div style="border-top:1px solid #0369a1;padding-top:8px;display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-weight:700;color:#082f49;font-size:13px">Total Estimate</span>
+                  <span style="font-weight:700;color:#0369a1;font-size:16px" data-fare="total">—</span>
+                </div>
               </div>
             </div>
             <!-- Live Route Map -->
@@ -414,11 +429,33 @@
               </div>
             </div>
           </div>
+          <!-- Payment Options Section -->
+          <div style="padding:16px;border-top:1px solid #dce6ee;background:#f9fafb">
+            <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Payment Options</p>
+            <div style="display:flex;gap:8px;flex-direction:column">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;border:1px solid #dce6ee;border-radius:6px;background:#fff">
+                <input type="radio" name="payment-option" value="deposit" style="cursor:pointer">
+                <div style="flex:1;font-size:12px">
+                  <span style="font-weight:600;color:#082f49">Pay 25% Reservation Fee</span><br>
+                  <span style="color:#62758a;font-size:11px">Reserve now, pay rest later</span>
+                </div>
+                <span style="font-weight:700;color:#0369a1" data-payment-deposit>—</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;border:1px solid #dce6ee;border-radius:6px;background:#fff">
+                <input type="radio" name="payment-option" value="full" style="cursor:pointer">
+                <div style="flex:1;font-size:12px">
+                  <span style="font-weight:600;color:#082f49">Pay Full Amount Now</span><br>
+                  <span style="color:#62758a;font-size:11px">Complete payment upfront</span>
+                </div>
+                <span style="font-weight:700;color:#0369a1" data-payment-full>—</span>
+              </label>
+            </div>
+          </div>
           <!-- Action buttons -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #dce6ee;flex-shrink:0">
-            <button type="button" data-nexus-action="cancel" style="padding:12px 8px;background:#fff;color:#e11d48;border:none;border-right:1px solid #dce6ee;font-weight:700;cursor:pointer;font-size:12px">Cancel</button>
-            <button type="button" data-nexus-action="update" style="padding:12px 8px;background:#0369a1;color:#fff;border:none;border-right:1px solid rgba(255,255,255,.15);font-weight:600;cursor:pointer;font-size:12px">Update Trip</button>
-            <button type="button" data-nexus-action="complete" style="padding:12px 8px;background:#059669;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:12px">Complete Trip</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid #dce6ee;flex-shrink:0">
+            <button type="button" data-nexus-action="cancel" style="padding:12px 8px;background:#dc2626;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:12px;transition:background 0.2s">Cancel</button>
+            <button type="button" data-nexus-action="update" style="padding:12px 8px;background:#0369a1;color:#fff;border:none;border-left:1px solid rgba(255,255,255,.2);border-right:1px solid rgba(255,255,255,.2);font-weight:600;cursor:pointer;font-size:12px;transition:background 0.2s">Update Trip</button>
+            <button type="button" data-nexus-action="complete" style="padding:12px 8px;background:#059669;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:12px;transition:background 0.2s">Complete Trip</button>
           </div>
         </div>
         <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
@@ -449,8 +486,40 @@
                 const leg=result.routes[0].legs[0];
                 const miles=leg.distance.value/1609.34;
                 const mileageCost=miles*2.5;
+                const baseTotal=5+mileageCost;
+                
+                // Calculate discount based on day and holidays
+                const tripDate=new Date(booking.date||new Date());
+                const dayOfWeek=tripDate.getDay();
+                const isWeekend=dayOfWeek===0||dayOfWeek===6;
+                const isHoliday=['01-01','07-04','11-28','12-25'].includes(tripDate.toISOString().slice(5,10));
+                let discountPercent=0;
+                if(isHoliday){discountPercent=10;}else if(!isWeekend){discountPercent=5;}
+                
+                const discountAmount=baseTotal*(discountPercent/100);
+                const finalTotal=baseTotal-discountAmount;
+                const depositAmount=finalTotal*0.25;
+                const fullAmount=finalTotal;
+                
+                // Update fare display
+                const subtotal=actions.querySelector('[data-fare="subtotal"]');
+                if(subtotal) subtotal.textContent='$'+baseTotal.toFixed(2);
+                
+                const discount=actions.querySelector('[data-fare="discount"]');
+                const discountRow=actions.querySelector('[data-discount-row]');
+                if(discount && discountPercent>0){
+                  discount.textContent='-$'+discountAmount.toFixed(2)+' ('+discountPercent+'%)';
+                  if(discountRow) discountRow.style.display='flex';
+                }
+                
                 const totalEst=actions.querySelector('[data-fare="total"]');
-                if(totalEst) totalEst.textContent='$'+(5+mileageCost).toFixed(2);
+                if(totalEst) totalEst.textContent='$'+finalTotal.toFixed(2);
+                
+                // Update payment options
+                const depositDisplay=actions.querySelector('[data-payment-deposit]');
+                if(depositDisplay) depositDisplay.textContent='$'+depositAmount.toFixed(2);
+                const fullDisplay=actions.querySelector('[data-payment-full]');
+                if(fullDisplay) fullDisplay.textContent='$'+fullAmount.toFixed(2);
               }else{
                 const mapPh=actions.querySelector('.nexus-map-ph');
                 if(mapPh){
@@ -464,32 +533,39 @@
         }catch(e){console.warn('[Nexus] Map unavailable',e);}
       }
       
-      // Button handlers
-      actions.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>doCancel(ref,phone,actions));
-      actions.querySelector('[data-nexus-action="update"]').addEventListener('click',()=>doUpdate(ref,phone,actions));
-      actions.querySelector('[data-nexus-action="draft"]').addEventListener('click',()=>showManageMsg('Draft saved.',true));
-      actions.querySelector('[data-nexus-action="dispatch"]').addEventListener('click',async()=>{
-        const btn=actions.querySelector('[data-nexus-action="dispatch"]');
-        btn.disabled=true;btn.textContent='Dispatching…';
-        try{
-          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/dispatch`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone})});
-          const data=await r.json();
-          if(!r.ok)throw new Error(data.error||'Dispatch failed');
-          showManageMsg('✓ Driver dispatched successfully.',true);
-        }catch(e){showManageMsg(e.message,false);}
-        btn.disabled=false;btn.textContent='Dispatch Driver';
-      });
-      actions.querySelector('[data-nexus-action="complete"]').addEventListener('click',async()=>{
-        const btn=actions.querySelector('[data-nexus-action="complete"]');
-        btn.disabled=true;btn.textContent='Completing…';
-        try{
-          const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/complete`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone})});
-          const data=await r.json();
-          if(!r.ok)throw new Error(data.error||'Complete failed');
-          showManageMsg('✓ Trip marked complete.',true);
-        }catch(e){showManageMsg(e.message,false);}
-        btn.disabled=false;btn.textContent='Complete Trip';
-      });
+      // Button handlers with null checks
+      const cancelBtn=actions.querySelector('[data-nexus-action="cancel"]');
+      if(cancelBtn){
+        cancelBtn.addEventListener('click',()=>{
+          if(confirm('Are you certain you want to cancel your trip?')){
+            doCancel(ref,phone,actions);
+          }
+        });
+      }
+      const updateBtn=actions.querySelector('[data-nexus-action="update"]');
+      if(updateBtn){
+        updateBtn.addEventListener('click',()=>doUpdate(ref,phone,actions));
+      }
+      const completeBtn=actions.querySelector('[data-nexus-action="complete"]');
+      if(completeBtn){
+        completeBtn.addEventListener('click',async()=>{
+          const btn=completeBtn;
+          btn.disabled=true;btn.textContent='Completing…';
+          try{
+            const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/complete`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone})});
+            const data=await r.json();
+            if(!r.ok)throw new Error(data.error||'Complete failed');
+            showManageMsg('✓ Trip marked complete.',true);
+          }catch(e){showManageMsg(e.message,false);}
+          btn.disabled=false;btn.textContent='Complete Trip';
+        });
+      }
+      
+      // Back button handler
+      const backBtn=actions.querySelector('.nexus-manage-back');
+      if(backBtn){
+        backBtn.addEventListener('click',()=>restoreBookingForm());
+      }
     }
     
     function doUpdate(ref,phone,actions){
