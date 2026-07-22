@@ -84,7 +84,23 @@
       try{
         await loadMaps(cfg.googleMapsBrowserKey);
         const ac=new google.maps.places.Autocomplete(input,{fields:['formatted_address','geometry','place_id','name'],componentRestrictions:{country:'us'},types:['geocode','establishment']});
-        ac.addListener('place_changed',()=>{const p=ac.getPlace();if(!p?.geometry)return;setAddress(input,p.formatted_address||p.name||input.value,{placeId:p.place_id,lat:p.geometry.location.lat(),lng:p.geometry.location.lng()});input.dispatchEvent(new CustomEvent('nexus:address-selected',{bubbles:true,detail:{field:input.name,address:input.value}}));});
+        ac.addListener('place_changed',()=>{
+          const p=ac.getPlace();
+          if(!p?.geometry)return;
+          setAddress(input,p.formatted_address||p.name||input.value,{placeId:p.place_id,lat:p.geometry.location.lat(),lng:p.geometry.location.lng()});
+          // Trigger blur to close autocomplete dropdown
+          input.blur();
+          setTimeout(()=>{input.focus();},50);
+          // Dispatch custom event for address selection
+          input.dispatchEvent(new CustomEvent('nexus:address-selected',{bubbles:true,detail:{field:input.name,address:input.value,lat:p.geometry.location.lat(),lng:p.geometry.location.lng()}}));
+          // Try to trigger fare calculation by clicking calculate button
+          setTimeout(()=>{
+            const calculateBtn=Array.from(document.querySelectorAll('button')).find(b=>b.textContent.toLowerCase().includes('calculate'));
+            if(calculateBtn&&!calculateBtn.disabled)calculateBtn.click();
+            // Also dispatch a custom event for React components listening
+            document.dispatchEvent(new CustomEvent('nexus:addressChanged',{bubbles:true,detail:{field:input.name,value:input.value,lat:p.geometry.location.lat(),lng:p.geometry.location.lng()}}));
+          },100);
+        });
       }catch(e){console.warn('[Nexus Booking] Google autocomplete unavailable; facility and browser suggestions remain active.',e);}
     }
     
