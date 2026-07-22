@@ -483,11 +483,12 @@
                 </div>
                 <div>
                   <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Pickup</label>
-                  <input type="text" data-field="pickup" value="${booking.pickup||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
+                  <div data-field-container="pickup" style="width:100%"></div>
                 </div>
                 <div>
                   <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Destination</label>
-                  <input type="text" data-field="destination" value="${booking.destination||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
+                  <div data-field-container="destination" style="width:100%"></div>
+                </div>
                 </div>
               </div>
             </div>
@@ -632,6 +633,50 @@
       if(backBtn){
         try{backBtn.addEventListener('click',()=>restoreBookingForm());backBtn.style.transition='background 0.2s';}catch(e){console.warn('[Nexus] Back button error',e);}
       }
+      
+      // Initialize Places Autocomplete for pickup and destination
+      (async()=>{
+        try{
+          const cfg=await config();
+          if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+            await loadMaps(cfg.googleMapsBrowserKey);
+            
+            // Create autocomplete elements
+            const pickupContainer=actions.querySelector('[data-field-container="pickup"]');
+            const destContainer=actions.querySelector('[data-field-container="destination"]');
+            
+            if(pickupContainer&&google.maps.places){
+              const pickupElement=new google.maps.places.PlaceAutocompleteElement({types:['geocode']});
+              pickupElement.value=booking.pickup||'';
+              pickupContainer.appendChild(pickupElement);
+              
+              pickupElement.addEventListener('gmp-placeselect',()=>{
+                const place=pickupElement.getPlace();
+                if(place){
+                  booking.pickup=place.formattedAddress||'';
+                  const pickupInput=actions.querySelector('[data-field="pickup"]');
+                  if(pickupInput) pickupInput.value=booking.pickup;
+                }
+              });
+            }
+            
+            if(destContainer&&google.maps.places){
+              const destElement=new google.maps.places.PlaceAutocompleteElement({types:['geocode']});
+              destElement.value=booking.destination||'';
+              destContainer.appendChild(destElement);
+              
+              destElement.addEventListener('gmp-placeselect',()=>{
+                const place=destElement.getPlace();
+                if(place){
+                  booking.destination=place.formattedAddress||'';
+                  const destInput=actions.querySelector('[data-field="destination"]');
+                  if(destInput) destInput.value=booking.destination;
+                }
+              });
+            }
+          }
+        }catch(e){console.warn('[Nexus] Places autocomplete init',e);}
+      })();
       
       // Initialize route map if pickup and destination exist
       if(booking.pickup&&booking.destination){
