@@ -20,6 +20,13 @@
   status = 200
   force = true
 
+# Exclude dist files from SPA redirect
+[[redirects]]
+  from = "/dist/*"
+  to = "/dist/:splat"
+  status = 200
+  force = false
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
