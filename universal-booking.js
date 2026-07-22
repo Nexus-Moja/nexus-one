@@ -353,100 +353,76 @@
         notifications:`<em style="color:#94a3b8">No notifications sent yet.</em>`
       };
       actions.innerHTML=`
-        <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:0;overflow:hidden;font-size:12px;box-sizing:border-box">
+        <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:0;font-size:12px;box-sizing:border-box;display:flex;flex-direction:column">
           <!-- Title bar -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#082f49;color:#fff">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#082f49;color:#fff;flex-shrink:0">
             <span style="font-weight:700;font-size:13px">Manage Existing Trip</span>
             <span style="font-size:12px;font-weight:600;opacity:.8">${ref}${tripDate?' · '+tripDate+(booking.time?' '+booking.time:''):''}</span>
           </div>
-          <!-- Full-width body -->
-          <div style="display:grid;grid-template-columns:1fr;border-bottom:1px solid #dce6ee">
-            <!-- Content column -->
-            <div style="display:flex;flex-direction:column">
-              <!-- Patient Information -->
-              <div style="padding:12px 14px;border-bottom:1px solid #f0f4f8">
-                <p style="margin:0 0 9px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Patient Information</p>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <div style="display:grid;grid-template-columns:80px 1fr;gap:4px">
-                    <span style="color:#94a3b8;font-weight:600">Name</span>
-                    <span style="color:#082f49;font-weight:600">${booking.name||'—'}</span>
-                  </div>
-                  <div style="display:grid;grid-template-columns:80px 1fr;gap:4px">
-                    <span style="color:#94a3b8;font-weight:600">Pickup</span>
-                    <span style="color:#082f49;word-break:break-word">${booking.pickup||'—'}</span>
-                  </div>
-                  <div style="display:grid;grid-template-columns:80px 1fr;gap:4px">
-                    <span style="color:#94a3b8;font-weight:600">Destination</span>
-                    <span style="color:#082f49;word-break:break-word">${booking.destination||'—'}</span>
-                  </div>
-                  <div style="display:grid;grid-template-columns:80px 1fr;gap:4px">
-                    <span style="color:#94a3b8;font-weight:600">Service</span>
-                    <span style="color:#082f49">${booking.service||'—'}</span>
-                  </div>
-                  <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:4px">
-                    <span style="color:#94a3b8;font-weight:600">Status</span>
-                    <span style="padding:2px 8px;border-radius:12px;background:${statusBg};color:${statusColor};font-weight:700;font-size:10px;display:inline-block">${statusLabel}</span>
-                  </div>
+          <!-- Full-width scrollable body -->
+          <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px">
+            <!-- Patient Information - Editable -->
+            <div>
+              <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Patient Information</p>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div>
+                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Name</label>
+                  <input type="text" data-field="name" value="${booking.name||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
                 </div>
-              </div>
-              <!-- Fare Calculator -->
-              <div style="padding:12px 14px;flex:1">
-                <p style="margin:0 0 9px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Fare Calculator</p>
-                <div style="display:flex;flex-direction:column;gap:5px">
-                  <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Distance</span><span style="font-weight:600;color:#082f49" data-fare="distance">—</span></div>
-                  <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Base Fare</span><span style="font-weight:600;color:#082f49">$5.00</span></div>
-                  <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Mileage</span><span style="font-weight:600;color:#082f49" data-fare="mileage">—</span></div>
-                  <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Waiting Time</span><span style="font-weight:600;color:#082f49">$0.00</span></div>
-                  <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Oxygen</span><span style="font-weight:600;color:#082f49">$0.00</span></div>
-                  <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Stretcher</span><span style="font-weight:600;color:#082f49">$0.00</span></div>
-                  <div style="height:1px;background:#f0f4f8;margin:3px 0"></div>
-                  <div style="display:flex;justify-content:space-between">
-                    <span style="font-weight:700;color:#082f49">Total</span>
-                    <span style="font-weight:700;color:#0369a1;font-size:13px" data-fare="total">—</span>
-                  </div>
+                <div>
+                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Pickup</label>
+                  <input type="text" data-field="pickup" value="${booking.pickup||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Destination</label>
+                  <input type="text" data-field="destination" value="${booking.destination||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Service</label>
+                  <input type="text" data-field="service" value="${booking.service||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Alternate Phone</label>
+                  <input type="tel" data-field="alt_phone" value="${booking.alt_phone||''}" placeholder="(555) 000-0000" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Alternate Email</label>
+                  <input type="email" data-field="alt_email" value="${booking.alt_email||''}" placeholder="email@example.com" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
+                </div>
+                <div style="padding:8px;border-radius:6px;background:${statusBg};color:${statusColor};font-weight:700;font-size:10px">
+                  Status: ${statusLabel}
                 </div>
               </div>
             </div>
-            <!-- Right column: Live Route Map -->
-            <div style="position:relative;min-height:320px;background:#f0f6ff">
-              <div id="${mapId}" style="width:100%;height:100%;min-height:320px"></div>
-              <div class="nexus-map-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-                <span style="font-size:11px;font-weight:600;color:#94a3b8">Loading route map…</span>
+            <!-- Fare Calculator - Total Only -->
+            <div>
+              <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Total Estimate</p>
+              <div style="padding:12px;border:2px solid #0369a1;border-radius:8px;background:#dbeafe;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-weight:600;color:#082f49">Total Estimate</span>
+                <span style="font-weight:700;color:#0369a1;font-size:16px" data-fare="total">—</span>
               </div>
             </div>
-          </div>
-          <!-- Tab bar -->
-          <div style="display:flex;border-bottom:1px solid #dce6ee;background:#f8fafc;overflow-x:auto">
-            ${['Timeline','Notes','Driver','Vehicle','Billing','Notifications'].map((t,i)=>`
-              <button type="button" data-tab="${t.toLowerCase()}" style="padding:8px 12px;background:none;border:none;border-bottom:2px solid ${i===0?'#0369a1':'transparent'};color:${i===0?'#0369a1':'#62758a'};font-weight:600;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0">${t}</button>
-            `).join('')}
-          </div>
-          <!-- Tab content -->
-          <div class="nexus-tab-panel" style="padding:10px 14px;min-height:52px;background:#fff;font-size:12px;color:#62758a">
-            <em style="color:#94a3b8">Select a tab to view details.</em>
+            <!-- Live Route Map -->
+            <div>
+              <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Route Map</p>
+              <div style="position:relative;width:100%;height:280px;background:#f0f6ff;border-radius:8px;overflow:hidden;border:1px solid #dce6ee">
+                <div id="${mapId}" style="width:100%;height:100%"></div>
+                <div class="nexus-map-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                  <span style="font-size:11px;font-weight:600;color:#94a3b8">Loading route map…</span>
+                </div>
+              </div>
+            </div>
           </div>
           <!-- Action buttons -->
-          <div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;border-top:1px solid #dce6ee">
-            <button type="button" data-nexus-action="cancel" style="padding:11px 14px;background:#fff;color:#e11d48;border:none;border-right:1px solid #dce6ee;font-weight:700;cursor:pointer;font-size:12px">Cancel</button>
-            <button type="button" data-nexus-action="draft" style="padding:11px 8px;background:#f8fafc;color:#082f49;border:none;border-right:1px solid #dce6ee;font-weight:600;cursor:pointer;font-size:11px">Save Draft</button>
-            <button type="button" data-nexus-action="dispatch" style="padding:11px 8px;background:#f8fafc;color:#082f49;border:none;border-right:1px solid #dce6ee;font-weight:600;cursor:pointer;font-size:11px">Dispatch Driver</button>
-            <button type="button" data-nexus-action="update" style="padding:11px 8px;background:#0369a1;color:#fff;border:none;border-right:1px solid rgba(255,255,255,.15);font-weight:600;cursor:pointer;font-size:11px">Update Trip</button>
-            <button type="button" data-nexus-action="complete" style="padding:11px 14px;background:#059669;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:12px">Complete Trip</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #dce6ee;flex-shrink:0">
+            <button type="button" data-nexus-action="cancel" style="padding:12px 8px;background:#fff;color:#e11d48;border:none;border-right:1px solid #dce6ee;font-weight:700;cursor:pointer;font-size:12px">Cancel</button>
+            <button type="button" data-nexus-action="update" style="padding:12px 8px;background:#0369a1;color:#fff;border:none;border-right:1px solid rgba(255,255,255,.15);font-weight:600;cursor:pointer;font-size:12px">Update Trip</button>
+            <button type="button" data-nexus-action="complete" style="padding:12px 8px;background:#059669;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:12px">Complete Trip</button>
           </div>
         </div>
         <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
-      
-      // Tabs
-      const tabPanel=actions.querySelector('.nexus-tab-panel');
-      actions.querySelectorAll('[data-tab]').forEach(tab=>{
-        tab.addEventListener('click',()=>{
-          actions.querySelectorAll('[data-tab]').forEach(t=>{t.style.borderBottomColor='transparent';t.style.color='#62758a';});
-          tab.style.borderBottomColor='#0369a1';tab.style.color='#0369a1';
-          tabPanel.innerHTML=tabContents[tab.dataset.tab]||'';
-        });
-      });
       
       // Load live route map + fare calculation
       const cfg=await config();
