@@ -1,4 +1,4 @@
-// @version 2.1.0 - Optimized layout deployment
+﻿// @version 2.1.0 - Optimized layout deployment
 (function(){
   'use strict';
   // Build v2.1 - Optimized layout deployed
@@ -28,9 +28,11 @@
         margin-bottom: 10px !important;
       }
       
-      /* Compact input fields */
+      /* Compact input fields (exclude radio/checkbox) */
       input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
-      textarea, select, [role="dialog"] input, [role="dialog"] textarea {
+      textarea, select,
+      [role="dialog"] input:not([type="radio"]):not([type="checkbox"]),
+      [role="dialog"] textarea {
         padding: 8px 12px !important;
         font-size: 11px !important;
         margin-top: 4px !important;
@@ -289,7 +291,7 @@
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
-    manageForm.style.cssText='display:none;margin:0;padding:0;background:#fff;border-radius:0;border:none;overflow:hidden;width:100%';
+    manageForm.style.cssText='display:none;margin:0;padding:0;background:#fff;border-radius:0;border:none;overflow:hidden;width:100%;grid-column:1/-1';
     
 
     // Create content container
@@ -488,14 +490,6 @@
                 <div>
                   <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Service</label>
                   <input type="text" data-field="service" value="${booking.service||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
-                </div>
-                <div>
-                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Alternate Phone</label>
-                  <input type="tel" data-field="alt_phone" value="${booking.alt_phone||''}" placeholder="(555) 000-0000" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
-                </div>
-                <div>
-                  <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Alternate Email</label>
-                  <input type="email" data-field="alt_email" value="${booking.alt_email||''}" placeholder="email@example.com" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box">
                 </div>
                 <div style="padding:8px;border-radius:6px;background:${statusBg};color:${statusColor};font-weight:700;font-size:10px">
                   Status: ${statusLabel}
