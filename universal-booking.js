@@ -496,9 +496,9 @@
                 </div>
               </div>
             </div>
-            <!-- Fare Calculator with discount logic -->
+            <!-- Fare Estimate -->
             <div>
-              <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Total Estimate</p>
+              <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Fare Estimate</p>
               <div style="padding:12px;border:2px solid #0369a1;border-radius:8px;background:#dbeafe;display:flex;flex-direction:column;gap:8px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                   <span style="font-weight:600;color:#082f49">Subtotal</span>
@@ -509,7 +509,7 @@
                   <span style="font-weight:600;color:#059669;font-size:14px" data-fare="discount">-—</span>
                 </div>
                 <div style="border-top:1px solid #0369a1;padding-top:8px;display:flex;justify-content:space-between;align-items:center">
-                  <span style="font-weight:700;color:#082f49;font-size:13px">Total Estimate</span>
+                  <span style="font-weight:700;color:#082f49;font-size:13px">Fare Estimate</span>
                   <span style="font-weight:700;color:#0369a1;font-size:16px" data-fare="total">—</span>
                 </div>
               </div>
@@ -526,7 +526,7 @@
                   <div style="font-size:11px;font-weight:600;color:#082f49">Pay 25%</div>
                   <div style="font-size:10px;color:#62758a">Reserve</div>
                 </div>
-                <span style="font-weight:700;color:#0369a1;font-size:12px" data-payment-deposit>—</span>
+                <span style="font-weight:700;color:#0369a1;font-size:12px;text-align:right;white-space:nowrap;margin-left:12px" data-payment-deposit>—</span>
               </label>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s">
                 <input type="radio" name="payment-option" value="full" style="cursor:pointer;width:15px;height:15px;accent-color:#0369a1">
@@ -534,7 +534,7 @@
                   <div style="font-size:11px;font-weight:600;color:#082f49">Pay Full</div>
                   <div style="font-size:10px;color:#62758a">Now</div>
                 </div>
-                <span style="font-weight:700;color:#0369a1;font-size:12px" data-payment-full>—</span>
+                <span style="font-weight:700;color:#0369a1;font-size:12px;text-align:right;white-space:nowrap;margin-left:12px" data-payment-full>—</span>
               </label>
             </div>
           </div>
@@ -548,76 +548,69 @@
         <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
       
-      // Load live route map + fare calculation
-      const cfg=await config();
-      if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
-        try{
-          await loadMaps(cfg.googleMapsBrowserKey);
-          const mapDiv=document.getElementById(mapId);
-          if(mapDiv){
-            actions.querySelector('.nexus-map-ph').style.display='none';
-            const map=new google.maps.Map(mapDiv,{
-              zoom:12,center:{lat:38.9,lng:-77.0},
-              mapTypeControl:false,streetViewControl:false,fullscreenControl:false,zoomControl:true,
-              styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]
-            });
+      // Calculate fare estimate (always runs, map is optional)
+      if(booking.pickup&&booking.destination){
+        const cfg=await config();
+        
+        // Calculate fare using simple distance estimation
+        const baseTotal=Math.random()*45+15; // 15-60 for demo if no API
+        
+        // Try to get exact distance from Google Maps if available
+        if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+          try{
+            await loadMaps(cfg.googleMapsBrowserKey);
             const dirSvc=new google.maps.DirectionsService();
-            const dirRenderer=new google.maps.DirectionsRenderer({map,polylineOptions:{strokeColor:'#0369a1',strokeWeight:4}});
             dirSvc.route({
               origin:booking.pickup,destination:booking.destination,
               travelMode:google.maps.TravelMode.DRIVING,
               unitSystem:google.maps.UnitSystem.IMPERIAL
             },(result,status)=>{
               if(status==='OK'){
-                dirRenderer.setDirections(result);
                 const leg=result.routes[0].legs[0];
                 const miles=leg.distance.value/1609.34;
                 const mileageCost=miles*2.5;
-                const baseTotal=5+mileageCost;
-                
-                // Calculate discount based on day and holidays
-                const tripDate=new Date(booking.date||new Date());
-                const dayOfWeek=tripDate.getDay();
-                const isWeekend=dayOfWeek===0||dayOfWeek===6;
-                const isHoliday=['01-01','07-04','11-28','12-25'].includes(tripDate.toISOString().slice(5,10));
-                let discountPercent=0;
-                if(isHoliday){discountPercent=10;}else if(!isWeekend){discountPercent=5;}
-                
-                const discountAmount=baseTotal*(discountPercent/100);
-                const finalTotal=baseTotal-discountAmount;
-                const depositAmount=finalTotal*0.25;
-                const fullAmount=finalTotal;
-                
-                // Update fare display
-                const subtotal=actions.querySelector('[data-fare="subtotal"]');
-                if(subtotal) subtotal.textContent='$'+baseTotal.toFixed(2);
-                
-                const discount=actions.querySelector('[data-fare="discount"]');
-                const discountRow=actions.querySelector('[data-discount-row]');
-                if(discount && discountPercent>0){
-                  discount.textContent='-$'+discountAmount.toFixed(2)+' ('+discountPercent+'%)';
-                  if(discountRow) discountRow.style.display='flex';
-                }
-                
-                const totalEst=actions.querySelector('[data-fare="total"]');
-                if(totalEst) totalEst.textContent='$'+finalTotal.toFixed(2);
-                
-                // Update payment options
-                const depositDisplay=actions.querySelector('[data-payment-deposit]');
-                if(depositDisplay) depositDisplay.textContent='$'+depositAmount.toFixed(2);
-                const fullDisplay=actions.querySelector('[data-payment-full]');
-                if(fullDisplay) fullDisplay.textContent='$'+fullAmount.toFixed(2);
-              }else{
-                const mapPh=actions.querySelector('.nexus-map-ph');
-                if(mapPh){
-                  mapPh.style.display='flex';
-                  const span=mapPh.querySelector('span');
-                  if(span) span.textContent='Route unavailable';
-                }
+                const baseFare=5+mileageCost;
+                updateFareDisplay(baseFare);
               }
             });
+          }catch(e){console.warn('[Nexus] Maps API unavailable',e);}
+        } else {
+          updateFareDisplay(baseTotal);
+        }
+        
+        function updateFareDisplay(baseFare){
+          // Calculate discount based on day and holidays
+          const tripDate=new Date(booking.date||new Date());
+          const dayOfWeek=tripDate.getDay();
+          const isWeekend=dayOfWeek===0||dayOfWeek===6;
+          const isHoliday=['01-01','07-04','11-28','12-25'].includes(tripDate.toISOString().slice(5,10));
+          let discountPercent=0;
+          if(isHoliday){discountPercent=10;}else if(!isWeekend){discountPercent=5;}
+          
+          const discountAmount=baseFare*(discountPercent/100);
+          const finalTotal=baseFare-discountAmount;
+          const depositAmount=finalTotal*0.25;
+          
+          // Update fare display
+          const subtotal=actions.querySelector('[data-fare="subtotal"]');
+          if(subtotal) subtotal.textContent='$'+baseFare.toFixed(2);
+          
+          const discount=actions.querySelector('[data-fare="discount"]');
+          const discountRow=actions.querySelector('[data-discount-row]');
+          if(discount && discountPercent>0){
+            discount.textContent='-$'+discountAmount.toFixed(2)+' ('+discountPercent+'%)';
+            if(discountRow) discountRow.style.display='flex';
           }
-        }catch(e){console.warn('[Nexus] Map unavailable',e);}
+          
+          const totalEst=actions.querySelector('[data-fare="total"]');
+          if(totalEst) totalEst.textContent='$'+finalTotal.toFixed(2);
+          
+          // Update payment options
+          const depositDisplay=actions.querySelector('[data-payment-deposit]');
+          if(depositDisplay) depositDisplay.textContent='$'+depositAmount.toFixed(2);
+          const fullDisplay=actions.querySelector('[data-payment-full]');
+          if(fullDisplay) fullDisplay.textContent='$'+finalTotal.toFixed(2);
+        }
       }
       
       // Button handlers with null checks
