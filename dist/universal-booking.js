@@ -527,24 +527,24 @@
             </div>
           </div>
           <!-- Payment Options Section -->
-          <div style="padding:12px 16px;border-top:1px solid #dce6ee;background:#f9fafb">
-            <p style="margin:0 0 8px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Payment Options</p>
+          <div style="padding:10px 16px;border-top:1px solid #dce6ee;background:#f9fafb">
+            <p style="margin:0 0 6px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Payment Method</p>
             <div style="display:flex;gap:6px;flex-direction:column">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px;border:1px solid #dce6ee;border-radius:6px;background:#fff">
-                <input type="radio" name="payment-option" value="deposit" style="cursor:pointer">
-                <div style="flex:1;font-size:11px">
-                  <span style="font-weight:600;color:#082f49">Pay 25%</span><br>
-                  <span style="color:#62758a;font-size:10px">Reserve now</span>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s">
+                <input type="radio" name="payment-option" value="deposit" checked style="cursor:pointer;width:15px;height:15px;accent-color:#0369a1">
+                <div style="flex:1">
+                  <div style="font-size:11px;font-weight:600;color:#082f49">Pay 25%</div>
+                  <div style="font-size:10px;color:#62758a">Reserve</div>
                 </div>
-                <span style="font-weight:700;color:#0369a1;font-size:11px" data-payment-deposit>—</span>
+                <span style="font-weight:700;color:#0369a1;font-size:12px" data-payment-deposit>—</span>
               </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px;border:1px solid #dce6ee;border-radius:6px;background:#fff">
-                <input type="radio" name="payment-option" value="full" style="cursor:pointer">
-                <div style="flex:1;font-size:11px">
-                  <span style="font-weight:600;color:#082f49">Pay Full</span><br>
-                  <span style="color:#62758a;font-size:10px">Now</span>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border:1.5px solid #dce6ee;border-radius:8px;background:#fff;transition:border-color 0.15s">
+                <input type="radio" name="payment-option" value="full" style="cursor:pointer;width:15px;height:15px;accent-color:#0369a1">
+                <div style="flex:1">
+                  <div style="font-size:11px;font-weight:600;color:#082f49">Pay Full</div>
+                  <div style="font-size:10px;color:#62758a">Now</div>
                 </div>
-                <span style="font-weight:700;color:#0369a1;font-size:11px" data-payment-full>—</span>
+                <span style="font-weight:700;color:#0369a1;font-size:12px" data-payment-full>—</span>
               </label>
             </div>
           </div>
@@ -552,7 +552,7 @@
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid #dce6ee;flex-shrink:0">
             <button type="button" data-nexus-action="cancel" style="padding:10px 6px;background:#dc2626;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:11px;transition:background 0.2s">Cancel</button>
             <button type="button" data-nexus-action="update" style="padding:10px 6px;background:#0369a1;color:#fff;border:none;border-left:1px solid rgba(255,255,255,.2);border-right:1px solid rgba(255,255,255,.2);font-weight:600;cursor:pointer;font-size:11px;transition:background 0.2s">Update</button>
-            <button type="button" data-nexus-action="complete" style="padding:10px 6px;background:#059669;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:11px;transition:background 0.2s">Complete</button>
+            <button type="button" data-nexus-action="complete" style="padding:10px 6px;background:#059669;color:#fff;border:none;font-weight:700;cursor:pointer;font-size:11px;transition:background 0.2s">Call In</button>
           </div>
         </div>
         <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
@@ -645,17 +645,9 @@
       }
       const completeBtn=actions.querySelector('[data-nexus-action="complete"]');
       if(completeBtn){
-        try{completeBtn.addEventListener('click',async()=>{
-          const btn=completeBtn;
-          btn.disabled=true;btn.textContent='Completing…';
-          try{
-            const r=await fetch(`/api/bookings/${encodeURIComponent(ref)}/complete`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({phone})});
-            const data=await r.json();
-            if(!r.ok)throw new Error(data.error||'Complete failed');
-            showManageMsg('✓ Trip marked complete.',true);
-          }catch(e){showManageMsg(e.message,false);}
-          btn.disabled=false;btn.textContent='Complete Trip';
-        });}catch(e){console.warn('[Nexus] Complete button error',e);}
+        try{completeBtn.addEventListener('click',()=>{
+          window.location.href='tel:+18887604990';
+        });}catch(e){console.warn('[Nexus] Call In button error',e);}
       }
       
       // Back button handler
