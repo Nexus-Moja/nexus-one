@@ -327,7 +327,7 @@
         notifications:`<em style="color:#94a3b8">No notifications sent yet.</em>`
       };
       actions.innerHTML=`
-        <div style="width:calc(100% + 1000px);margin-left:-500px;margin-right:-500px;background:#fff;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;font-size:12px;box-sizing:border-box">
+        <div style="width:calc(100% + 2000px);margin-left:-1000px;margin-right:-1000px;background:#fff;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;font-size:12px;box-sizing:border-box">
           <!-- Title bar -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#082f49;color:#fff">
             <span style="font-weight:700;font-size:13px">Manage Existing Trip</span>
