@@ -203,20 +203,22 @@
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
-    manageForm.style.cssText='display:none;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden';
+    manageForm.style.cssText='display:none;margin:0 -9999px;padding:0;background:#fff;border-radius:0;border:none;overflow:visible;padding:0 9999px';
     
 
     // Create content container
     const content=document.createElement('div');
-    content.style.cssText='padding:16px;background:#fff';
+    content.style.cssText='padding:0;background:#fff;border:1px solid #dce6ee;border-radius:0;margin:0;width:100%';
     content.innerHTML=`
-      <p style="font-size:13px;color:#62758a;margin:0 0 12px 0">Enter your trip reference number or name and phone to reschedule or cancel.</p>
-      <label style="display:block;margin-bottom:8px"><span style="font-size:13px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
-        <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
-      <label style="display:block;margin-bottom:12px"><span style="font-size:13px;font-weight:600;color:#082f49">Phone Number</span><br>
-        <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
-      <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
-      <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
+      <div style="padding:16px">
+        <p style="font-size:13px;color:#62758a;margin:0 0 12px 0">Enter your trip reference number or name and phone to reschedule or cancel.</p>
+        <label style="display:block;margin-bottom:8px"><span style="font-size:13px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
+          <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
+        <label style="display:block;margin-bottom:12px"><span style="font-size:13px;font-weight:600;color:#082f49">Phone Number</span><br>
+          <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
+        <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
+        <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
+      </div>
       <div class="nexusManageActions" style="display:none;margin:0 -9999px;padding:0 9999px;overflow:hidden"></div>`;
     manageForm.appendChild(content);
     
@@ -250,10 +252,8 @@
         manageForm.dataset.originalContentPadding=originalContentPadding;
       }
       // Remove padding from the content div inside manage form
-      const contentDiv=content;
-      const originalContentDivPadding=contentDiv.style.padding;
-      contentDiv.style.padding='0';
-      manageForm.dataset.originalContentDivPadding=originalContentDivPadding;
+      // (now padding is on an inner wrapper, so no need to remove from content div)
+      const originalContentDivPadding=null;
       console.log('[Nexus] Manage button clicked - formHeading:',formHeading?.tagName,formHeading?.textContent);
       // Swap form heading inside the dialog
       if(formHeading){
@@ -290,10 +290,6 @@
       const contentWrapper=formContainer.parentElement;
       if(contentWrapper&&manageForm.dataset.originalContentPadding){
         contentWrapper.style.padding=manageForm.dataset.originalContentPadding;
-      }
-      // Restore content div padding
-      if(manageForm.dataset.originalContentDivPadding){
-        content.style.padding=manageForm.dataset.originalContentDivPadding;
       }
       console.log('[Nexus] Back clicked - restoring heading to:',originalHeadingText);
       if(formHeading&&originalHeadingText){
