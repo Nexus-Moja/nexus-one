@@ -359,10 +359,10 @@
             <span style="font-weight:700;font-size:13px">Manage Existing Trip</span>
             <span style="font-size:12px;font-weight:600;opacity:.8">${ref}${tripDate?' · '+tripDate+(booking.time?' '+booking.time:''):''}</span>
           </div>
-          <!-- Two-column body -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #dce6ee">
-            <!-- Left column -->
-            <div style="border-right:1px solid #dce6ee;display:flex;flex-direction:column">
+          <!-- Full-width body -->
+          <div style="display:grid;grid-template-columns:1fr;border-bottom:1px solid #dce6ee">
+            <!-- Content column -->
+            <div style="display:flex;flex-direction:column">
               <!-- Patient Information -->
               <div style="padding:12px 14px;border-bottom:1px solid #f0f4f8">
                 <p style="margin:0 0 9px;font-size:10px;font-weight:700;color:#62758a;text-transform:uppercase;letter-spacing:.5px">Patient Information</p>
@@ -519,7 +519,7 @@
       const minDate=tomorrow.toISOString().slice(0,10);
       result.innerHTML=`
         <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#082f49">Update Trip Date / Time</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:8px">
           <label><span style="font-size:11px;font-weight:600;color:#62758a">New Date</span><br>
             <input type="date" name="date" min="${minDate}" style="width:100%;padding:7px 9px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:3px;font-size:12px"></label>
           <label><span style="font-size:11px;font-weight:600;color:#62758a">New Time</span><br>
