@@ -249,6 +249,11 @@
         contentWrapper.style.padding='0';
         manageForm.dataset.originalContentPadding=originalContentPadding;
       }
+      // Remove padding from the content div inside manage form
+      const contentDiv=content;
+      const originalContentDivPadding=contentDiv.style.padding;
+      contentDiv.style.padding='0';
+      manageForm.dataset.originalContentDivPadding=originalContentDivPadding;
       console.log('[Nexus] Manage button clicked - formHeading:',formHeading?.tagName,formHeading?.textContent);
       // Swap form heading inside the dialog
       if(formHeading){
@@ -285,6 +290,10 @@
       const contentWrapper=formContainer.parentElement;
       if(contentWrapper&&manageForm.dataset.originalContentPadding){
         contentWrapper.style.padding=manageForm.dataset.originalContentPadding;
+      }
+      // Restore content div padding
+      if(manageForm.dataset.originalContentDivPadding){
+        content.style.padding=manageForm.dataset.originalContentDivPadding;
       }
       console.log('[Nexus] Back clicked - restoring heading to:',originalHeadingText);
       if(formHeading&&originalHeadingText){
