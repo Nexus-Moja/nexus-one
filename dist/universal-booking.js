@@ -203,21 +203,23 @@
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
-    manageForm.style.cssText='display:none;padding:0;margin-bottom:16px;background:#fff;border-radius:8px;border:1px solid #dce6ee;overflow:hidden';
+    manageForm.style.cssText='display:none;margin:0 -9999px;padding:0;background:#fff;border-radius:0;border:none;overflow:visible;padding:0 9999px';
     
 
     // Create content container
     const content=document.createElement('div');
-    content.style.cssText='padding:16px;background:#fff';
+    content.style.cssText='padding:0;background:#fff;border:1px solid #dce6ee;border-radius:0;margin:0;width:100%';
     content.innerHTML=`
-      <p style="font-size:13px;color:#62758a;margin:0 0 12px 0">Enter your trip reference number or name and phone to reschedule or cancel.</p>
-      <label style="display:block;margin-bottom:8px"><span style="font-size:13px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
-        <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
-      <label style="display:block;margin-bottom:12px"><span style="font-size:13px;font-weight:600;color:#082f49">Phone Number</span><br>
-        <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
-      <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
-      <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
-      <div class="nexusManageActions" style="display:none;margin-top:12px;width:100%;overflow:visible"></div>`;
+      <div style="padding:16px">
+        <p style="font-size:13px;color:#62758a;margin:0 0 12px 0">Enter your trip reference number or name and phone to reschedule or cancel.</p>
+        <label style="display:block;margin-bottom:8px"><span style="font-size:13px;font-weight:600;color:#082f49">Trip Reference or Name</span><br>
+          <input type="text" placeholder="e.g., NMT-20260721-1234 or John Smith" maxlength="50" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
+        <label style="display:block;margin-bottom:12px"><span style="font-size:13px;font-weight:600;color:#082f49">Phone Number</span><br>
+          <input type="tel" placeholder="(555) 123-4567" maxlength="20" style="width:100%;padding:8px 12px;border:1px solid #dce6ee;border-radius:8px;box-sizing:border-box;margin-top:4px;font-size:14px"></label>
+        <button type="button" data-nexus-lookup style="width:100%;padding:10px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Look Up Trip</button>
+        <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
+      </div>
+      <div class="nexusManageActions" style="display:none;margin:0 -9999px;padding:0 9999px;overflow:hidden"></div>`;
     manageForm.appendChild(content);
     
     // Create "Manage Trip" button to show the manage form (replaces manage tab)
@@ -225,7 +227,7 @@
     manageButton.type='button';
     manageButton.textContent='Manage Existing Trip';
     manageButton.className='nexus-manage-btn';
-    manageButton.style.cssText='width:100%;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#0369a1;text-decoration:underline;margin-bottom:16px;transition:all 0.2s';
+    manageButton.style.cssText='grid-column:1/-1;width:100%;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#0369a1;text-decoration:underline;margin-bottom:16px;transition:all 0.2s';
     
     // Insert manage form and button at the very top of the form container
     formContainer.insertBefore(manageButton, formContainer.firstChild);
@@ -237,6 +239,21 @@
     manageButton.addEventListener('click',()=>{
       manageForm.style.display='block';
       manageButton.style.display='none';
+      // Remove padding from form container to allow full-width card
+      const originalPadding=formContainer.style.padding;
+      formContainer.style.padding='0';
+      manageForm.dataset.originalPadding=originalPadding;
+      // Also remove padding from dialog or parent container
+      const dialog=formContainer.closest('dialog')||formContainer.closest('[role="dialog"]');
+      const contentWrapper=formContainer.parentElement;
+      if(contentWrapper){
+        const originalContentPadding=contentWrapper.style.padding;
+        contentWrapper.style.padding='0';
+        manageForm.dataset.originalContentPadding=originalContentPadding;
+      }
+      // Remove padding from the content div inside manage form
+      // (now padding is on an inner wrapper, so no need to remove from content div)
+      const originalContentDivPadding=null;
       console.log('[Nexus] Manage button clicked - formHeading:',formHeading?.tagName,formHeading?.textContent);
       // Swap form heading inside the dialog
       if(formHeading){
@@ -265,6 +282,15 @@
     function restoreBookingForm(){
       manageForm.style.display='none';
       manageButton.style.display='block';
+      // Restore form container padding
+      if(manageForm.dataset.originalPadding){
+        formContainer.style.padding=manageForm.dataset.originalPadding;
+      }
+      // Restore parent content wrapper padding
+      const contentWrapper=formContainer.parentElement;
+      if(contentWrapper&&manageForm.dataset.originalContentPadding){
+        contentWrapper.style.padding=manageForm.dataset.originalContentPadding;
+      }
       console.log('[Nexus] Back clicked - restoring heading to:',originalHeadingText);
       if(formHeading&&originalHeadingText){
         formHeading.textContent=originalHeadingText;
@@ -327,7 +353,7 @@
         notifications:`<em style="color:#94a3b8">No notifications sent yet.</em>`
       };
       actions.innerHTML=`
-        <div style="width:calc(100% + 2000px);margin-left:-1000px;margin-right:-1000px;background:#fff;border:1px solid #dce6ee;border-radius:10px;overflow:hidden;font-size:12px;box-sizing:border-box">
+        <div style="width:100%;background:#fff;border:1px solid #dce6ee;border-radius:0;overflow:hidden;font-size:12px;box-sizing:border-box">
           <!-- Title bar -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#082f49;color:#fff">
             <span style="font-weight:700;font-size:13px">Manage Existing Trip</span>

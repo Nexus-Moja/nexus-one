@@ -227,7 +227,7 @@
     manageButton.type='button';
     manageButton.textContent='Manage Existing Trip';
     manageButton.className='nexus-manage-btn';
-    manageButton.style.cssText='width:100%;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#0369a1;text-decoration:underline;margin-bottom:16px;transition:all 0.2s';
+    manageButton.style.cssText='grid-column:1/-1;width:100%;padding:12px;background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#0369a1;text-decoration:underline;margin-bottom:16px;transition:all 0.2s';
     
     // Insert manage form and button at the very top of the form container
     formContainer.insertBefore(manageButton, formContainer.firstChild);
