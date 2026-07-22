@@ -585,7 +585,9 @@
         </div>
         <button type="button" data-nexus-do-update style="padding:8px 16px;background:#0369a1;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px">Confirm Update</button>`;
       result.style.display='block';
-      result.querySelector('[data-nexus-do-update]').addEventListener('click',async()=>{
+      const updateBtn=result.querySelector('[data-nexus-do-update]');
+      if(updateBtn){
+        updateBtn.addEventListener('click',async()=>{
         const date=result.querySelector('[name="date"]').value;
         const time=result.querySelector('[name="time"]').value;
         if(!date||!time){showManageMsg('Please select both date and time.',false);return;}
@@ -598,7 +600,8 @@
           showManageMsg(`✓ Trip updated to ${date} at ${time}. Confirmation sent.`,true);
           result.style.display='none';
         }catch(e){showManageMsg(e.message,false);btn.disabled=false;btn.textContent='Confirm Update';}
-      });
+        });
+      }
     }
     
     function doCancel(ref,phone,actions){
@@ -607,7 +610,9 @@
         <textarea placeholder="e.g., Found alternative transport" maxlength="200" style="width:100%;height:60px;padding:8px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px;resize:none"></textarea></label>
         <button type="button" data-nexus-do-cancel style="width:100%;padding:8px;background:#e11d48;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Confirm Cancellation</button>`;
       result.style.display='block';
-      result.querySelector('[data-nexus-do-cancel]').addEventListener('click',async()=>{
+      const cancelBtn2=result.querySelector('[data-nexus-do-cancel]');
+      if(cancelBtn2){
+        cancelBtn2.addEventListener('click',async()=>{
         const reason=result.querySelector('textarea').value.trim();
         const btn=result.querySelector('[data-nexus-do-cancel]');
         btn.disabled=true;btn.textContent='Cancelling...';
@@ -631,7 +636,9 @@
         <input type="time" name="time" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;box-sizing:border-box;margin-top:4px;font-size:13px"></label>
         <button type="button" data-nexus-do-reschedule style="width:100%;padding:8px;background:#0369a1;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Confirm Reschedule</button>`;
       result.style.display='block';
-      result.querySelector('[data-nexus-do-reschedule]').addEventListener('click',async()=>{
+      const reschedBtn=result.querySelector('[data-nexus-do-reschedule]');
+      if(reschedBtn){
+        reschedBtn.addEventListener('click',async()=>{
         const date=result.querySelector('[name="date"]').value;
         const time=result.querySelector('[name="time"]').value;
         if(!date||!time){const msg=document.createElement('div');msg.textContent='Please fill in date and time.';msg.style.cssText='padding:8px;background:#fff1f2;color:#e11d48;border-radius:6px;margin-bottom:8px;font-size:12px;font-weight:600';result.insertBefore(msg,result.firstChild);return;}
@@ -682,7 +689,9 @@
         <input type="tel" placeholder="202-555-0123" maxlength="20" style="padding:9px 12px;border:1px solid #dce6ee;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box">`;
       return w;
     }
-    section.querySelector('[data-nexus-action="cancel"]').addEventListener('click',()=>{
+    const cancelActionBtn=section.querySelector('[data-nexus-action="cancel"]');
+    if(cancelActionBtn){
+      cancelActionBtn.addEventListener('click',()=>{
       const form=section.querySelector('.nexusManageForm');
       form.style.display='block';
       form.innerHTML='';
@@ -704,9 +713,12 @@
         }catch(e){showMsg(e.message,false);btn.disabled=false;btn.textContent='Confirm Cancellation';}
       };
       form.appendChild(pf);form.appendChild(btn);
-    });
+      });
+    }
 
-    section.querySelector('[data-nexus-action="reschedule"]').addEventListener('click',()=>{
+    const reschedActionBtn=section.querySelector('[data-nexus-action="reschedule"]');
+    if(reschedActionBtn){
+      reschedActionBtn.addEventListener('click',()=>{
       const form=section.querySelector('.nexusManageForm');
       form.style.display='block';
       form.innerHTML='';
@@ -722,7 +734,9 @@
           <input type="time" name="time" style="padding:9px 12px;border:1px solid #dce6ee;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box">
           <button type="button" data-nexus-submit style="padding:10px 16px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;margin-top:4px">Confirm Reschedule</button>
         </div>`;
-      form.querySelector('[data-nexus-submit]').addEventListener('click',async()=>{
+      const submitBtn2=form.querySelector('[data-nexus-submit]');
+      if(submitBtn2){
+        submitBtn2.addEventListener('click',async()=>{
         const phone=form.querySelector('[name="phone"]').value.trim();
         const date=form.querySelector('[name="date"]').value;
         const time=form.querySelector('[name="time"]').value;
@@ -737,8 +751,10 @@
           showMsg(`✓ Trip rescheduled to ${date} at ${time}. A confirmation text/email has been sent.`,true);
           section.querySelectorAll('[data-nexus-action]').forEach(b=>b.style.display='none');
         }catch(e){showMsg(e.message,false);btn2.disabled=false;btn2.textContent='Confirm Reschedule';}
+        });
+      }
       });
-    });
+    }
   }
 
   // Watch for React forms and success screens
