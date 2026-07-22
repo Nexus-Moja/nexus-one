@@ -171,6 +171,8 @@
             if(calculateBtn&&!calculateBtn.disabled)calculateBtn.click();
             // Also dispatch a custom event for React components listening
             document.dispatchEvent(new CustomEvent('nexus:addressChanged',{bubbles:true,detail:{field:input.name,value:input.value,lat:p.geometry.location.lat(),lng:p.geometry.location.lng()}}));
+            // Update Book a Ride live route map if both addresses filled
+            tryShowBookingRouteMap(cfg.googleMapsBrowserKey);
           },100);
         });
       }catch(e){console.warn('[Nexus Booking] Google autocomplete unavailable; facility and browser suggestions remain active.',e);}
@@ -239,6 +241,34 @@
   }
   
   function scan(){normalizeBookLinks();document.querySelectorAll(SELECTOR).forEach(enhance);document.querySelectorAll('input[name="phone"],input[type="tel"],input[placeholder*="phone" i]').forEach(enhancePhoneField);document.querySelectorAll('input[name="email"],input[type="email"],input[placeholder*="email" i]').forEach(enhanceEmailField);injectManageTrip();}
+
+  async function tryShowBookingRouteMap(apiKey){
+    const pickupInput=document.querySelector('input[name="pickup"],input[placeholder*="pickup" i]');
+    const destInput=document.querySelector('input[name="destination"],input[placeholder*="destination" i]');
+    if(!pickupInput||!destInput)return;
+    const pickup=pickupInput.value.trim();
+    const destination=destInput.value.trim();
+    if(!pickup||!destination)return;
+    let mapWrap=document.getElementById('nexusBookingRouteMap');
+    if(!mapWrap){
+      mapWrap=document.createElement('div');
+      mapWrap.id='nexusBookingRouteMap';
+      mapWrap.style.cssText='height:220px;border:1px solid #dce6ee;border-radius:8px;overflow:hidden;margin-top:10px;background:#f5f5f5';
+      const destParent=destInput.closest('div,fieldset,label')||destInput.parentElement;
+      destParent.insertAdjacentElement('afterend',mapWrap);
+    }
+    const key=apiKey||'';
+    if(!key)return;
+    const origin=encodeURIComponent(pickup);
+    const dest=encodeURIComponent(destination);
+    mapWrap.innerHTML='';
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='width:100%;height:100%;border:0';
+    iframe.loading='lazy';
+    iframe.referrerPolicy='no-referrer-when-downgrade';
+    iframe.src=`https://www.google.com/maps/embed/v1/directions?key=${encodeURIComponent(key)}&origin=${origin}&destination=${dest}&mode=driving`;
+    mapWrap.appendChild(iframe);
+  }
   new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',scan);
   setTimeout(scan,500);setTimeout(scan,1500);setTimeout(scan,3000);
@@ -697,7 +727,7 @@
         }catch(e){console.warn('[Nexus] Places autocomplete init',e);}
       })();
       
-      // Initialize route map if pickup and destination exist
+      // Initialize route map using Embed API for reliable route display
       if(booking.pickup&&booking.destination){
         const mapContainer=actions.querySelector('#nexusRouteMap');
         if(mapContainer){
@@ -705,21 +735,17 @@
             try{
               const cfg=await config();
               if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
-                await loadMaps(cfg.googleMapsBrowserKey);
-                if(!mapContainer.parentElement) return; // Element removed
-                const map=new google.maps.Map(mapContainer,{zoom:13,center:{lat:40.7128,lng:-74.0060}});
-                const dirRenderer=new google.maps.DirectionsRenderer({map});
-                const dirSvc=new google.maps.DirectionsService();
-                dirSvc.route({
-                  origin:booking.pickup,destination:booking.destination,
-                  travelMode:google.maps.TravelMode.DRIVING,unitSystem:google.maps.UnitSystem.IMPERIAL
-                },(result,status)=>{
-                  if(status==='OK'&&mapContainer.parentElement){
-                    dirRenderer.setDirections(result);
-                  }else if(mapContainer.parentElement){
-                    mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Unable to load route</div>';
-                  }
-                });
+                mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#62758a;font-size:12px">Loading route…</div>';
+                const origin=encodeURIComponent(booking.pickup);
+                const dest=encodeURIComponent(booking.destination);
+                const key=encodeURIComponent(cfg.googleMapsBrowserKey);
+                const iframe=document.createElement('iframe');
+                iframe.style.cssText='width:100%;height:100%;border:0';
+                iframe.loading='lazy';
+                iframe.referrerPolicy='no-referrer-when-downgrade';
+                iframe.src=`https://www.google.com/maps/embed/v1/directions?key=${key}&origin=${origin}&destination=${dest}&mode=driving`;
+                mapContainer.innerHTML='';
+                mapContainer.appendChild(iframe);
               }else if(mapContainer.parentElement){
                 mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Maps not available</div>';
               }

@@ -35,4 +35,4 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "script-src 'self' https://maps.googleapis.com https://maps.gstatic.com; img-src 'self' https://maps.googleapis.com https://maps.gstatic.com data:; connect-src 'self' https://maps.googleapis.com; style-src 'self' 'unsafe-inline'"
+    Content-Security-Policy = "script-src 'self' https://maps.googleapis.com https://maps.gstatic.com; img-src 'self' https://maps.googleapis.com https://maps.gstatic.com data:; connect-src 'self' https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; frame-src https://www.google.com"
