@@ -411,6 +411,9 @@
         </div>
         <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
+      actions.style.padding='0';
+      actions.style.margin='0';
+      actions.style.overflow='visible';
       
       // Tabs
       const tabPanel=actions.querySelector('.nexus-tab-panel');
