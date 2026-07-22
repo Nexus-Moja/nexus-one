@@ -64,6 +64,15 @@
       [role="dialog"], form, fieldset, [class*="Form"] {
         gap: 10px !important;
       }
+      
+      /* Prevent horizontal overflow */
+      [role="dialog"], [role="dialog"] *, form, form *, fieldset, fieldset * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      [role="dialog"] {
+        overflow-x: hidden !important;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -280,7 +289,7 @@
     // Create manage form with header
     const manageForm=document.createElement('div');
     manageForm.className='nexusManagedTrip';
-    manageForm.style.cssText='display:none;margin:0 -9999px;padding:0;background:#fff;border-radius:0;border:none;overflow:visible;padding:0 9999px';
+    manageForm.style.cssText='display:none;margin:0;padding:0;background:#fff;border-radius:0;border:none;overflow:hidden;width:100%';
     
 
     // Create content container
@@ -296,7 +305,7 @@
         <button type="button" data-nexus-lookup style="width:100%;padding:8px;background:#0369a1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:11px">Look Up Trip</button>
         <div class="nexusLookupMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>
       </div>
-      <div class="nexusManageActions" style="display:none;margin:0 -9999px;padding:0 9999px;overflow:hidden"></div>`;
+      <div class="nexusManageActions" style="display:none;overflow:hidden;width:100%"></div>`;
     manageForm.appendChild(content);
     
     // Create "Manage Trip" button to show the manage form (replaces manage tab)
