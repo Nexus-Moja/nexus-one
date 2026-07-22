@@ -247,7 +247,7 @@
     manageButton.style.cssText='grid-column:1/-1;width:100%;padding:18px 16px;background:#0369a1;border:2px solid #0369a1;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700;color:#fff;margin-bottom:16px;transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;gap:12px';
     manageButton.innerHTML=`
       <div style="text-align:left">
-        <div style="font-size:15px;font-weight:700">Manage Existing Trip</div>
+        <div style="font-size:15px;font-weight:700">Manage Trip</div>
         <div style="font-size:13px;font-weight:500;opacity:0.95;margin-top:4px">Need to make changes? Click here</div>
       </div>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
@@ -285,8 +285,8 @@
       console.log('[Nexus] Manage button clicked - formHeading:',formHeading?.tagName,formHeading?.textContent);
       // Swap form heading inside the dialog
       if(formHeading){
-        console.log('[Nexus] Swapping heading text to: ← Manage Existing Trip');
-        formHeading.textContent='← Manage Existing Trip';
+        console.log('[Nexus] Swapping heading text to: ← Manage Trip');
+        formHeading.textContent='← Manage Trip';
       }else{
         console.log('[Nexus] WARNING: formHeading is null or undefined');
       }
