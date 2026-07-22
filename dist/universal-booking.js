@@ -449,12 +449,15 @@
                 const leg=result.routes[0].legs[0];
                 const miles=leg.distance.value/1609.34;
                 const mileageCost=miles*2.5;
-                actions.querySelector('[data-fare="distance"]').textContent=leg.distance.text;
-                actions.querySelector('[data-fare="mileage"]').textContent='$'+mileageCost.toFixed(2);
-                actions.querySelector('[data-fare="total"]').textContent='$'+(5+mileageCost).toFixed(2);
+                const totalEst=actions.querySelector('[data-fare="total"]');
+                if(totalEst) totalEst.textContent='$'+(5+mileageCost).toFixed(2);
               }else{
-                actions.querySelector('.nexus-map-ph').style.display='flex';
-                actions.querySelector('.nexus-map-ph span').textContent='Route unavailable';
+                const mapPh=actions.querySelector('.nexus-map-ph');
+                if(mapPh){
+                  mapPh.style.display='flex';
+                  const span=mapPh.querySelector('span');
+                  if(span) span.textContent='Route unavailable';
+                }
               }
             });
           }
