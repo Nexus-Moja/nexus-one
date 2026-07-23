@@ -1,5 +1,5 @@
 const crypto=require('crypto');
-const {query}=require('./_shared/db.cjs');
+const {query,getPool}=require('./_shared/db.cjs');
 const {json,parseBody,bearer,routePath}=require('./_shared/http.cjs');
 const {digest,safeUser,requireUser,audit}=require('./_shared/auth.cjs');
 const STATUS_FLOW={SUBMITTED:'SCHEDULED',REQUESTED:'SCHEDULED',SCHEDULED:'ASSIGNED',ASSIGNED:'EN_ROUTE',EN_ROUTE:'ARRIVED',ARRIVED:'IN_TRANSIT',IN_TRANSIT:'COMPLETED'};
@@ -20,6 +20,10 @@ async function sendEmail(to,subject,html){
  if(!envEnabled('SENDGRID_API_KEY')||!envEnabled('SENDGRID_FROM_EMAIL')||!to)return {status:'skipped'};
  const r=await fetch('https://api.sendgrid.com/v3/mail/send',{method:'POST',headers:{authorization:`Bearer ${process.env.SENDGRID_API_KEY}`,'content-type':'application/json'},body:JSON.stringify({personalizations:[{to:[{email:to}]}],from:{email:process.env.SENDGRID_FROM_EMAIL,name:'Nexus Medical Transit'},subject,content:[{type:'text/html',value:html}]})});
  if(!r.ok)throw new Error(`SendGrid request failed (${r.status})`);return {status:'sent'};
+}
+function setupLink(token){
+  const base=String(process.env.SITE_URL||process.env.URL||process.env.DEPLOY_PRIME_URL||'https://nexusmt.com').replace(/\/$/,'');
+  return `${base}/set-password.html?token=${encodeURIComponent(token)}`;
 }
 async function notifyBooking(b){
  const text=`Nexus Medical Transit request ${b.reference} received for ${b.date} at ${b.time}. This request is pending confirmation.`;
@@ -163,6 +167,38 @@ async function handler(event){
   }
   if(p[0]==='auth'&&p[1]==='me'&&method==='GET'){const u=await requireUser(bearer(event));return json(200,{user:safeUser(u)})}
   if(p[0]==='auth'&&p[1]==='logout'&&method==='POST'){const token=bearer(event);if(token)await query('UPDATE sessions SET revoked_at=now() WHERE token_digest=$1',[digest(token)]);return json(200,{ok:true})}
+  if(p[0]==='auth'&&p[1]==='password-setup'&&method==='POST'){
+   const b=parseBody(event);
+   const token=clean(b.token);
+   const password=String(b.password||'');
+   if(!token)return json(400,{error:'Setup token is required'});
+   if(password.length<12)return json(400,{error:'Password must be at least 12 characters'});
+   const tokenHash=digest(token);
+   const pool=getPool();
+   const client=await pool.connect();
+   let row;
+   try{
+     const tokenResult=await client.query('SELECT pst.user_id,u.email FROM password_setup_tokens pst JOIN users u ON u.id=pst.user_id WHERE pst.token_digest=$1 AND pst.used_at IS NULL AND pst.expires_at>now() LIMIT 1',[tokenHash]);
+     row=tokenResult.rows[0];
+     if(!row)return json(400,{error:'This setup link is invalid or expired'});
+     const passwordHash=crypto.createHash('sha256').update(password).digest('hex');
+     await client.query('BEGIN');
+     try{
+      await client.query('UPDATE users SET password_hash=$2, active=true, updated_at=now() WHERE id=$1',[row.user_id,passwordHash]);
+      await client.query('UPDATE password_setup_tokens SET used_at=now() WHERE token_digest=$1',[tokenHash]);
+      await audit('USER',String(row.user_id),'PASSWORD_SET',{email:row.email});
+      await client.query('COMMIT');
+     }catch(err){
+      await client.query('ROLLBACK').catch(()=>{});
+      throw err;
+     }
+   }catch(err){
+     throw err;
+   }finally{
+     client.release();
+   }
+   return json(200,{ok:true,message:'Password saved'});
+  }
   if(p[0]==='auth'&&p[1]==='login'&&method==='POST'){
    try{
      const b=parseBody(event);
@@ -284,7 +320,7 @@ async function handler(event){
    const booking=mapBooking(updated.rows[0]);
    return json(200,{booking,message:'Trip details updated successfully'});
   }
-  if(p[0]==='ready'&&method==='GET'){const r=await query("SELECT version FROM schema_migrations WHERE version IN ('040.001','041.001','042.001','043.001') ORDER BY version");return json(r.rowCount===4?200:503,{ready:r.rowCount===4,migrations:r.rows.map(x=>x.version)})}
+  if(p[0]==='ready'&&method==='GET'){const r=await query("SELECT version FROM schema_migrations WHERE version IN ('040.001','041.001','042.001','044.001') ORDER BY version");return json(r.rowCount===4?200:503,{ready:r.rowCount===4,migrations:r.rows.map(x=>x.version)})}
   return json(404,{error:'Route not found'});
  }catch(err){console.error(err);return json(err.statusCode||500,{error:err.statusCode?err.message:'Internal server error',requestId:crypto.randomUUID()})}
 }

@@ -592,69 +592,95 @@
         <div class="nexusManageResult" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;font-weight:600"></div>`;
       actions.style.display='block';
       
-      // Calculate fare estimate (always runs, map is optional)
-      if(booking.pickup&&booking.destination){
-        const cfg=await config();
-        
-        // Calculate fare using simple distance estimation
-        const baseTotal=Math.random()*45+15; // 15-60 for demo if no API
-        
-        // Try to get exact distance from Google Maps if available
-        if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
-          try{
-            await loadMaps(cfg.googleMapsBrowserKey);
-            const dirSvc=new google.maps.DirectionsService();
-            dirSvc.route({
-              origin:booking.pickup,destination:booking.destination,
-              travelMode:google.maps.TravelMode.DRIVING,
-              unitSystem:google.maps.UnitSystem.IMPERIAL
-            },(result,status)=>{
-              if(status==='OK'){
-                const leg=result.routes[0].legs[0];
-                const miles=leg.distance.value/1609.34;
-                const mileageCost=miles*2.5;
-                const baseFare=5+mileageCost;
-                updateFareDisplay(baseFare);
-              }
-            });
-          }catch(e){console.warn('[Nexus] Maps API unavailable',e);}
-        } else {
-          updateFareDisplay(baseTotal);
-        }
-        
-        function updateFareDisplay(baseFare){
-          // Calculate discount based on day and holidays
-          const tripDate=new Date(booking.date||new Date());
-          const dayOfWeek=tripDate.getDay();
-          const isWeekend=dayOfWeek===0||dayOfWeek===6;
-          const isHoliday=['01-01','07-04','11-28','12-25'].includes(tripDate.toISOString().slice(5,10));
-          let discountPercent=0;
-          if(isHoliday){discountPercent=10;}else if(!isWeekend){discountPercent=5;}
-          
-          const discountAmount=baseFare*(discountPercent/100);
-          const finalTotal=baseFare-discountAmount;
-          const depositAmount=finalTotal*0.25;
-          
-          // Update fare display
-          const subtotal=actions.querySelector('[data-fare="subtotal"]');
-          if(subtotal) subtotal.textContent='$'+baseFare.toFixed(2);
-          
-          const discount=actions.querySelector('[data-fare="discount"]');
-          const discountRow=actions.querySelector('[data-discount-row]');
-          if(discount && discountPercent>0){
-            discount.textContent='-$'+discountAmount.toFixed(2)+' ('+discountPercent+'%)';
-            if(discountRow) discountRow.style.display='flex';
+      const pricing=window.NexusCore?.getPricing?.()||{};
+      const routeService=String(booking.service||'ambulatory').toLowerCase();
+      const rate=pricing[routeService]||window.NexusCore?.DEFAULT?.[routeService]||window.NexusCore?.DEFAULT?.ambulatory||{base:65,includedMiles:5,perMile:3.25,waitPer15:20};
+
+      const applyFareEstimate=(miles)=>{
+        const distanceMiles=Math.max(0,Number(miles)||0);
+        const billableMiles=Math.max(0,distanceMiles-Number(rate.includedMiles||0));
+        const baseFare=Number(rate.base||0)+(billableMiles*Number(rate.perMile||0));
+        const tripDate=new Date(booking.date||new Date());
+        const dayOfWeek=tripDate.getDay();
+        const isWeekend=dayOfWeek===0||dayOfWeek===6;
+        const isHoliday=['01-01','07-04','11-28','12-25'].includes(tripDate.toISOString().slice(5,10));
+        const discountPercent=isHoliday?10:(!isWeekend?5:0);
+        const discountAmount=baseFare*(discountPercent/100);
+        const finalTotal=baseFare-discountAmount;
+        const depositAmount=finalTotal*0.25;
+
+        const subtotal=actions.querySelector('[data-fare="subtotal"]');
+        if(subtotal) subtotal.textContent=`$${baseFare.toFixed(2)}${distanceMiles?` (${distanceMiles.toFixed(1)} mi)`:''}`;
+
+        const discount=actions.querySelector('[data-fare="discount"]');
+        const discountRow=actions.querySelector('[data-discount-row]');
+        if(discountRow) discountRow.style.display=discountPercent>0?'flex':'none';
+        if(discount) discount.textContent=discountPercent>0?`-$${discountAmount.toFixed(2)} (${discountPercent}%)`:'-$0.00';
+
+        const totalEst=actions.querySelector('[data-fare="total"]');
+        if(totalEst) totalEst.textContent=`$${finalTotal.toFixed(2)}`;
+
+        const depositDisplay=actions.querySelector('[data-payment-deposit]');
+        if(depositDisplay) depositDisplay.textContent=`$${depositAmount.toFixed(2)}`;
+        const fullDisplay=actions.querySelector('[data-payment-full]');
+        if(fullDisplay) fullDisplay.textContent=`$${finalTotal.toFixed(2)}`;
+      };
+
+      const refreshRouteAndFare=async()=>{
+        const pickup=booking.pickup?.trim();
+        const destination=booking.destination?.trim();
+        if(!pickup||!destination)return;
+
+        let miles=Number(booking.distanceMiles||0);
+        if(!(miles>0)){
+          const cfg=await config();
+          if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+            try{
+              await loadMaps(cfg.googleMapsBrowserKey);
+              const dirSvc=new google.maps.DirectionsService();
+              const result=await new Promise((resolve,reject)=>{
+                dirSvc.route({
+                  origin:pickup,
+                  destination,
+                  travelMode:google.maps.TravelMode.DRIVING,
+                  unitSystem:google.maps.UnitSystem.IMPERIAL
+                },(r,status)=>status==='OK'?resolve(r):reject(new Error(status)));
+              });
+              miles=Number(result.routes?.[0]?.legs?.[0]?.distance?.value||0)/1609.34;
+            }catch(e){
+              console.warn('[Nexus] Route distance unavailable, using stored estimate.',e);
+            }
           }
-          
-          const totalEst=actions.querySelector('[data-fare="total"]');
-          if(totalEst) totalEst.textContent='$'+finalTotal.toFixed(2);
-          
-          // Update payment options
-          const depositDisplay=actions.querySelector('[data-payment-deposit]');
-          if(depositDisplay) depositDisplay.textContent='$'+depositAmount.toFixed(2);
-          const fullDisplay=actions.querySelector('[data-payment-full]');
-          if(fullDisplay) fullDisplay.textContent='$'+finalTotal.toFixed(2);
         }
+
+        if(!(miles>0)){
+          miles=Number(booking.distanceMiles||0);
+        }
+        applyFareEstimate(miles);
+
+        const mapContainer=actions.querySelector('#nexusRouteMap');
+        if(mapContainer){
+          const cfg=await config().catch(()=>({googleMapsEnabled:false}));
+          if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
+            mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#62758a;font-size:12px">Loading route…</div>';
+            const origin=encodeURIComponent(pickup);
+            const dest=encodeURIComponent(destination);
+            const key=encodeURIComponent(cfg.googleMapsBrowserKey);
+            const iframe=document.createElement('iframe');
+            iframe.style.cssText='width:100%;height:100%;border:0';
+            iframe.loading='lazy';
+            iframe.referrerPolicy='no-referrer-when-downgrade';
+            iframe.src=`https://www.google.com/maps/embed/v1/directions?key=${key}&origin=${origin}&destination=${dest}&mode=driving`;
+            mapContainer.innerHTML='';
+            mapContainer.appendChild(iframe);
+          }else if(mapContainer.parentElement){
+            mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Maps not available</div>';
+          }
+        }
+      };
+
+      if(booking.pickup&&booking.destination){
+        refreshRouteAndFare().catch(e=>console.warn('[Nexus] Fare/route refresh failed',e));
       }
       
       // Button handlers with null checks
@@ -705,6 +731,7 @@
                   booking.pickup=place.formattedAddress||'';
                   const pickupInput=actions.querySelector('[data-field="pickup"]');
                   if(pickupInput) pickupInput.value=booking.pickup;
+                  refreshRouteAndFare().catch(e=>console.warn('[Nexus] Fare refresh after pickup change failed',e));
                 }
               });
             }
@@ -720,39 +747,21 @@
                   booking.destination=place.formattedAddress||'';
                   const destInput=actions.querySelector('[data-field="destination"]');
                   if(destInput) destInput.value=booking.destination;
+                  refreshRouteAndFare().catch(e=>console.warn('[Nexus] Fare refresh after destination change failed',e));
                 }
               });
             }
           }
         }catch(e){console.warn('[Nexus] Places autocomplete init',e);}
       })();
-      
-      // Initialize route map using Embed API for reliable route display
-      if(booking.pickup&&booking.destination){
-        const mapContainer=actions.querySelector('#nexusRouteMap');
-        if(mapContainer){
-          (async()=>{
-            try{
-              const cfg=await config();
-              if(cfg.googleMapsEnabled&&cfg.googleMapsBrowserKey){
-                mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#62758a;font-size:12px">Loading route…</div>';
-                const origin=encodeURIComponent(booking.pickup);
-                const dest=encodeURIComponent(booking.destination);
-                const key=encodeURIComponent(cfg.googleMapsBrowserKey);
-                const iframe=document.createElement('iframe');
-                iframe.style.cssText='width:100%;height:100%;border:0';
-                iframe.loading='lazy';
-                iframe.referrerPolicy='no-referrer-when-downgrade';
-                iframe.src=`https://www.google.com/maps/embed/v1/directions?key=${key}&origin=${origin}&destination=${dest}&mode=driving`;
-                mapContainer.innerHTML='';
-                mapContainer.appendChild(iframe);
-              }else if(mapContainer.parentElement){
-                mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Maps not available</div>';
-              }
-            }catch(e){console.warn('[Nexus] Map init',e);}
-          })();
-        }
-      }
+
+      const pickupInput=actions.querySelector('[data-field="pickup"]');
+      const destinationInput=actions.querySelector('[data-field="destination"]');
+      [pickupInput,destinationInput].forEach(input=>{
+        if(!input)return;
+        input.addEventListener('change',()=>{booking[input.dataset.field]=input.value.trim();refreshRouteAndFare().catch(e=>console.warn('[Nexus] Fare refresh after input change failed',e));});
+        input.addEventListener('input',()=>{booking[input.dataset.field]=input.value.trim();});
+      });
     }
     
     function doUpdate(ref,phone,actions){
