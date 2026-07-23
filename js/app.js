@@ -201,7 +201,12 @@ function renderFleet(data,role,mode){
 
  async function loadPreview(){
   try{
-   const data=await request('/api/auth/preview-access',{cache:'no-store'});
+   let data;
+   try{
+    data=await request('/api/auth/preview-access',{cache:'no-store'});
+   }catch(primaryErr){
+    data=await request('/.netlify/functions/api/auth/preview-access',{cache:'no-store'});
+   }
    preview=data;
    if(!preview.enabled)return;
    $('#previewAccess').hidden=false;
