@@ -533,10 +533,12 @@
                 </div>
                 <div>
                   <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Pickup</label>
+                  <input type="text" data-field="pickup" value="${booking.pickup||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box;margin-bottom:6px" placeholder="Enter pickup address">
                   <div data-field-container="pickup" style="width:100%"></div>
                 </div>
                 <div>
                   <label style="display:block;font-size:10px;font-weight:600;color:#62758a;margin-bottom:4px">Destination</label>
+                  <input type="text" data-field="destination" value="${booking.destination||''}" style="width:100%;padding:8px;border:1px solid #dce6ee;border-radius:6px;font-size:12px;box-sizing:border-box;margin-bottom:6px" placeholder="Enter destination address">
                   <div data-field-container="destination" style="width:100%"></div>
                 </div>
                 </div>
@@ -631,7 +633,14 @@
       const refreshRouteAndFare=async()=>{
         const pickup=booking.pickup?.trim();
         const destination=booking.destination?.trim();
-        if(!pickup||!destination)return;
+        if(!pickup||!destination){
+          applyFareEstimate(Number(booking.distanceMiles||0));
+          const mapContainer=actions.querySelector('#nexusRouteMap');
+          if(mapContainer){
+            mapContainer.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:13px">Enter pickup and destination to calculate route</div>';
+          }
+          return;
+        }
 
         let miles=Number(booking.distanceMiles||0);
         if(!(miles>0)){
@@ -681,9 +690,7 @@
         }
       };
 
-      if(booking.pickup&&booking.destination){
-        refreshRouteAndFare().catch(e=>console.warn('[Nexus] Fare/route refresh failed',e));
-      }
+      refreshRouteAndFare().catch(e=>console.warn('[Nexus] Fare/route refresh failed',e));
       
       // Button handlers with null checks
       const cancelBtn=actions.querySelector('[data-nexus-action="cancel"]');
