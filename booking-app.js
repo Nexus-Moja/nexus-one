@@ -31,6 +31,19 @@
     als2:{label:'ALS II Ambulance',base:1350,includedMiles:0,perMile:23,waitPer15:75}
   };
 
+  const DEFAULT_FARE_RULES = {
+    minimumFare: 0,
+    afterHoursSurchargePct: 0,
+    weekendSurchargePct: 0,
+    holidaySurchargePct: 10,
+    cancellationFee: 30,
+    noShowFee: 50,
+    freeWaitMinutes: 15,
+    mileageRoundingRule: 'TENTH_MILE',
+    telemetryRefreshSeconds: 20,
+    maxBookingDistanceMiles: 125
+  };
+
   let mapsReadyPromise = null;
   let mapsEnabled = false;
   let mapsBrowserKey = '';
@@ -41,6 +54,8 @@
   let telemetryMarkers = new Map();
   let telemetryTimer = null;
   let isAdminUser = false;
+  let platformPricing = null;
+  let fareRules = { ...DEFAULT_FARE_RULES };
 
   function setStatus(message, type){
     statusMsg.textContent = message;
@@ -71,37 +86,47 @@
 
   function getPricing(service){
     const svc = normalizeService(service);
-    const fromCore = window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
+    const fromCore = platformPricing || window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
     return fromCore[svc] || FALLBACK_PRICING[svc] || FALLBACK_PRICING.ambulatory;
   }
 
   function getAllPricing(){
-    return window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
+    return platformPricing || window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
   }
 
-  function saveAllPricing(pricing){
-    if(window.NexusCore?.savePricing){
-      window.NexusCore.savePricing(pricing);
-      return;
-    }
-    localStorage.setItem('nexusPricing', JSON.stringify(pricing));
-  }
-
-  function calculateFare(service, miles, dateStr){
+  function calculateFare(service, miles, dateStr, timeStr){
     const rate = getPricing(service);
     const distance = Math.max(0, Number(miles) || 0);
     const billable = Math.max(0, distance - Number(rate.includedMiles || 0));
-    const subtotal = Number(rate.base || 0) + billable * Number(rate.perMile || 0);
+    let subtotal = Number(rate.base || 0) + billable * Number(rate.perMile || 0);
 
     const tripDate = new Date(dateStr || new Date());
     const day = tripDate.getDay();
     const isWeekend = day === 0 || day === 6;
     const md = tripDate.toISOString().slice(5,10);
     const isHoliday = ['01-01','07-04','11-28','12-25'].includes(md);
-    const discountPct = isHoliday ? 10 : (!isWeekend ? 5 : 0);
-    const discount = subtotal * (discountPct / 100);
+    const hour = Number(String(timeStr || '00:00').split(':')[0]);
+    const isAfterHours = Number.isFinite(hour) && (hour >= 22 || hour < 5);
 
-    return Math.max(0, subtotal - discount);
+    if(isHoliday) subtotal += subtotal * (Number(fareRules.holidaySurchargePct || 0) / 100);
+    if(isWeekend) subtotal += subtotal * (Number(fareRules.weekendSurchargePct || 0) / 100);
+    if(isAfterHours) subtotal += subtotal * (Number(fareRules.afterHoursSurchargePct || 0) / 100);
+
+    return Math.max(Number(fareRules.minimumFare || 0), subtotal);
+  }
+
+  async function loadPlatformSettings(){
+    try{
+      const r = await fetch('/api/settings/public', { cache: 'no-store' });
+      if(!r.ok) return;
+      const data = await r.json();
+      if(data?.pricing && typeof data.pricing === 'object'){
+        platformPricing = data.pricing;
+      }
+      if(data?.fareRules && typeof data.fareRules === 'object'){
+        fareRules = { ...DEFAULT_FARE_RULES, ...data.fareRules };
+      }
+    }catch{}
   }
 
   async function loadIntegrationConfig(){
@@ -164,7 +189,7 @@
       return;
     }
     const svc = normalizeService($('service').value);
-    const pricing = getAllPricing();
+    const pricing = { ...getAllPricing() };
     const current = pricing[svc] || FALLBACK_PRICING[svc] || FALLBACK_PRICING.ambulatory;
     pricing[svc] = {
       ...current,
@@ -173,14 +198,28 @@
       perMile: Math.max(0, Number(ratePerMile.value || 0)),
       waitPer15: Math.max(0, Number(rateWait.value || 0))
     };
-    saveAllPricing(pricing);
-    renderRateEditor(svc);
-    if(estimateState.miles > 0){
-      const fare = calculateFare(svc, estimateState.miles, $('tripDate').value);
-      estimateState.fare = fare;
-      estFare.textContent = `$${fare.toFixed(2)}`;
-    }
-    setStatus('Rate updated for selected service.', 'ok');
+    const token = sessionStorage.getItem('nexusAccessToken');
+    fetch('/api/admin/settings', {
+      method: 'PATCH',
+      headers: {
+        authorization: `Bearer ${token || ''}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ pricing })
+    }).then(async (r) => {
+      const data = await r.json().catch(() => ({}));
+      if(!r.ok) throw new Error(data.error || 'Failed to save pricing');
+      platformPricing = data.settings?.pricing || pricing;
+      renderRateEditor(svc);
+      if(estimateState.miles > 0){
+        const fare = calculateFare(svc, estimateState.miles, $('tripDate').value, $('tripTime').value);
+        estimateState.fare = fare;
+        estFare.textContent = `$${fare.toFixed(2)}`;
+      }
+      setStatus('Rate updated for selected service.', 'ok');
+    }).catch((err) => {
+      setStatus(err.message, 'err');
+    });
   }
 
   function resetCurrentServiceRate(){
@@ -189,18 +228,29 @@
       return;
     }
     const svc = normalizeService($('service').value);
-    const stored = JSON.parse(localStorage.getItem('nexusPricing') || '{}');
-    if(stored && Object.prototype.hasOwnProperty.call(stored, svc)){
-      delete stored[svc];
-      localStorage.setItem('nexusPricing', JSON.stringify(stored));
-    }
-    renderRateEditor(svc);
-    if(estimateState.miles > 0){
-      const fare = calculateFare(svc, estimateState.miles, $('tripDate').value);
-      estimateState.fare = fare;
-      estFare.textContent = `$${fare.toFixed(2)}`;
-    }
-    setStatus('Rate reset to default for selected service.', 'ok');
+    const pricing = { ...getAllPricing(), [svc]: { ...FALLBACK_PRICING[svc] } };
+    const token = sessionStorage.getItem('nexusAccessToken');
+    fetch('/api/admin/settings', {
+      method: 'PATCH',
+      headers: {
+        authorization: `Bearer ${token || ''}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ pricing })
+    }).then(async (r) => {
+      const data = await r.json().catch(() => ({}));
+      if(!r.ok) throw new Error(data.error || 'Failed to reset pricing');
+      platformPricing = data.settings?.pricing || pricing;
+      renderRateEditor(svc);
+      if(estimateState.miles > 0){
+        const fare = calculateFare(svc, estimateState.miles, $('tripDate').value, $('tripTime').value);
+        estimateState.fare = fare;
+        estFare.textContent = `$${fare.toFixed(2)}`;
+      }
+      setStatus('Rate reset to default for selected service.', 'ok');
+    }).catch((err) => {
+      setStatus(err.message, 'err');
+    });
   }
 
   function wireGoogleAutocomplete(){
@@ -275,7 +325,7 @@
     const tripDate = $('tripDate').value;
 
     if(!pickup || !destination){
-      const fare = calculateFare(service, 0, tripDate);
+      const fare = calculateFare(service, 0, tripDate, $('tripTime').value);
       estimateState = { miles: 0, durationText: '', fare };
       estMiles.textContent = '0.0 mi';
       estDuration.textContent = '-';
@@ -302,7 +352,7 @@
       miles = Number(leg?.distance?.value || 0) / 1609.34;
       durationText = String(leg?.duration?.text || '');
     }catch(err){
-      const fallbackFare = calculateFare(service, 0, tripDate);
+      const fallbackFare = calculateFare(service, 0, tripDate, $('tripTime').value);
       estimateState = { miles: 0, durationText: '', fare: fallbackFare };
       estMiles.textContent = '0.0 mi';
       estDuration.textContent = '-';
@@ -311,7 +361,7 @@
       return estimateState;
     }
 
-    const fare = calculateFare(service, miles, tripDate);
+    const fare = calculateFare(service, miles, tripDate, $('tripTime').value);
     estimateState = { miles, durationText, fare };
 
     estMiles.textContent = `${miles.toFixed(1)} mi`;
@@ -336,7 +386,7 @@
       chip.setAttribute('aria-pressed', String(active));
     });
     if(estimateState.miles > 0){
-      const fare = calculateFare(clean, estimateState.miles, $('tripDate').value);
+      const fare = calculateFare(clean, estimateState.miles, $('tripDate').value, $('tripTime').value);
       estimateState.fare = fare;
       estFare.textContent = `$${fare.toFixed(2)}`;
     }
@@ -425,7 +475,7 @@
         fullscreenControl: false
       });
       await loadTelemetry();
-      telemetryTimer = setInterval(loadTelemetry, 20000);
+      telemetryTimer = setInterval(loadTelemetry, Math.max(5000, Number(fareRules.telemetryRefreshSeconds || 20) * 1000));
     }catch(err){
       telemetryStatus.textContent = `Live map failed to load: ${err.message}`;
     }
@@ -524,6 +574,7 @@
     $('tripTime').value = `${hh}:${mm}`;
 
     await loadIntegrationConfig();
+    await loadPlatformSettings();
     await initAddressAutocomplete();
     await resolveAdminAccess();
     applyRateVisibility();
@@ -547,7 +598,7 @@
     ['tripDate','pickup','destination'].forEach((id) => {
       $(id).addEventListener('change', () => {
         if(id === 'tripDate' && estimateState.miles > 0){
-          const fare = calculateFare(normalizeService($('service').value), estimateState.miles, $('tripDate').value);
+          const fare = calculateFare(normalizeService($('service').value), estimateState.miles, $('tripDate').value, $('tripTime').value);
           estimateState.fare = fare;
           estFare.textContent = `$${fare.toFixed(2)}`;
           return;

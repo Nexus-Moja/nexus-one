@@ -9,6 +9,116 @@ const clean=v=>String(v??'').trim();
 const required=(body,fields)=>{for(const f of fields)if(!clean(body[f]))throw Object.assign(new Error(`${f} is required`),{statusCode:400})};
 const reference=()=>`NMT-${new Date().toISOString().slice(0,10).replaceAll('-','')}-${crypto.randomInt(1000,9999)}`;
 
+const DEFAULT_PRICING={
+ wheelchair:{label:'Wheelchair Transportation',base:95,includedMiles:10,perMile:4.25,waitPer15:25},
+ ambulatory:{label:'Ambulatory Transportation',base:65,includedMiles:5,perMile:3.25,waitPer15:20},
+ broda:{label:'Broda Chair Transportation',base:145,includedMiles:10,perMile:5.25,waitPer15:25},
+ stretcher:{label:'Stretcher Transportation',base:260,includedMiles:10,perMile:7.5,waitPer15:35},
+ bariatric:{label:'Bariatric Transportation',base:385,includedMiles:10,perMile:9.5,waitPer15:45},
+ bls:{label:'BLS Ambulance',base:725,includedMiles:0,perMile:17.5,waitPer15:55},
+ als1:{label:'ALS I Ambulance',base:925,includedMiles:0,perMile:20,waitPer15:65},
+ als2:{label:'ALS II Ambulance',base:1350,includedMiles:0,perMile:23,waitPer15:75}
+};
+
+const DEFAULT_PLATFORM_SETTINGS={
+ pricing:DEFAULT_PRICING,
+ fareRules:{
+  minimumFare:0,
+  afterHoursSurchargePct:0,
+  weekendSurchargePct:0,
+  holidaySurchargePct:10,
+  cancellationFee:30,
+  noShowFee:50,
+  freeWaitMinutes:15,
+  mileageRoundingRule:'TENTH_MILE',
+  telemetryRefreshSeconds:20,
+  maxBookingDistanceMiles:125
+ },
+ organization:{
+  name:'Nexus Medical Transit',
+  phone:'(888) 760-4990',
+  email:'contact@nexusmt.com',
+  website:'https://nexusmt.com'
+ },
+ activeServices:['AMBULANCE','WHEELCHAIR','STRETCHER','HOSPITAL_DISCHARGE']
+};
+
+async function ensureSettingsTable(){
+ await query(`CREATE TABLE IF NOT EXISTS system_settings (
+  key text PRIMARY KEY,
+  value jsonb NOT NULL DEFAULT '{}'::jsonb,
+  updated_by uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+ )`);
+}
+
+const n=(v,d=0)=>{const x=Number(v);return Number.isFinite(x)?x:d};
+const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
+
+function mergePricing(input){
+ const base=JSON.parse(JSON.stringify(DEFAULT_PRICING));
+ if(!input||typeof input!=='object')return base;
+ for(const key of Object.keys(base)){
+  const src=input[key]||{};
+  base[key]={
+   label:clean(src.label)||base[key].label,
+   base:n(src.base,base[key].base),
+   includedMiles:n(src.includedMiles,base[key].includedMiles),
+   perMile:n(src.perMile,base[key].perMile),
+   waitPer15:n(src.waitPer15,base[key].waitPer15)
+  };
+ }
+ return base;
+}
+
+function mergePlatformSettings(raw){
+ const src=raw&&typeof raw==='object'?raw:{};
+ const fareSrc=src.fareRules&&typeof src.fareRules==='object'?src.fareRules:{};
+ const orgSrc=src.organization&&typeof src.organization==='object'?src.organization:{};
+ const services=Array.isArray(src.activeServices)?src.activeServices:DEFAULT_PLATFORM_SETTINGS.activeServices;
+ return {
+  pricing:mergePricing(src.pricing),
+  fareRules:{
+   minimumFare:clamp(n(fareSrc.minimumFare,DEFAULT_PLATFORM_SETTINGS.fareRules.minimumFare),0,10000),
+   afterHoursSurchargePct:clamp(n(fareSrc.afterHoursSurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.afterHoursSurchargePct),0,100),
+   weekendSurchargePct:clamp(n(fareSrc.weekendSurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.weekendSurchargePct),0,100),
+   holidaySurchargePct:clamp(n(fareSrc.holidaySurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.holidaySurchargePct),0,100),
+   cancellationFee:clamp(n(fareSrc.cancellationFee,DEFAULT_PLATFORM_SETTINGS.fareRules.cancellationFee),0,10000),
+   noShowFee:clamp(n(fareSrc.noShowFee,DEFAULT_PLATFORM_SETTINGS.fareRules.noShowFee),0,10000),
+   freeWaitMinutes:clamp(n(fareSrc.freeWaitMinutes,DEFAULT_PLATFORM_SETTINGS.fareRules.freeWaitMinutes),0,180),
+   mileageRoundingRule:['EXACT','TENTH_MILE','WHOLE_MILE'].includes(String(fareSrc.mileageRoundingRule||''))?String(fareSrc.mileageRoundingRule):DEFAULT_PLATFORM_SETTINGS.fareRules.mileageRoundingRule,
+   telemetryRefreshSeconds:clamp(n(fareSrc.telemetryRefreshSeconds,DEFAULT_PLATFORM_SETTINGS.fareRules.telemetryRefreshSeconds),5,120),
+   maxBookingDistanceMiles:clamp(n(fareSrc.maxBookingDistanceMiles,DEFAULT_PLATFORM_SETTINGS.fareRules.maxBookingDistanceMiles),5,500)
+  },
+  organization:{
+   name:clean(orgSrc.name)||DEFAULT_PLATFORM_SETTINGS.organization.name,
+   phone:clean(orgSrc.phone)||DEFAULT_PLATFORM_SETTINGS.organization.phone,
+   email:clean(orgSrc.email)||DEFAULT_PLATFORM_SETTINGS.organization.email,
+   website:clean(orgSrc.website)||DEFAULT_PLATFORM_SETTINGS.organization.website
+  },
+  activeServices:services.map(x=>String(x||'').toUpperCase()).filter(Boolean)
+ };
+}
+
+async function readPlatformSettings(){
+ await ensureSettingsTable();
+ const r=await query(`SELECT value FROM system_settings WHERE key='platform' LIMIT 1`);
+ if(!r.rows[0]){
+  const merged=mergePlatformSettings(DEFAULT_PLATFORM_SETTINGS);
+  await query(`INSERT INTO system_settings(key,value) VALUES('platform',$1::jsonb)`,[JSON.stringify(merged)]);
+  return merged;
+ }
+ return mergePlatformSettings(r.rows[0].value);
+}
+
+async function writePlatformSettings(payload,userId){
+ const merged=mergePlatformSettings(payload);
+ await ensureSettingsTable();
+ await query(`INSERT INTO system_settings(key,value,updated_by,updated_at) VALUES('platform',$1::jsonb,$2,now()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_by=EXCLUDED.updated_by,updated_at=now()`,[JSON.stringify(merged),userId||null]);
+ return merged;
+}
+
 async function sendSms(to,body){
  if(!envEnabled('TWILIO_ACCOUNT_SID')||!envEnabled('TWILIO_AUTH_TOKEN')||!envEnabled('TWILIO_PHONE_NUMBER')||!to)return {status:'skipped'};
  const form=new URLSearchParams({To:to,From:process.env.TWILIO_PHONE_NUMBER,Body:body});
@@ -73,6 +183,29 @@ async function handler(event){
   }
   if(p.join('/')==='integrations/config'&&method==='GET')return json(200,{build:'042',googleMapsEnabled:envEnabled('GOOGLE_MAPS_BROWSER_KEY'),googleMapsBrowserKey:process.env.GOOGLE_MAPS_BROWSER_KEY||'',stripeEnabled:envEnabled('STRIPE_PUBLISHABLE_KEY'),stripePublishableKey:process.env.STRIPE_PUBLISHABLE_KEY||''});
   if(p.join('/')==='integrations/health'&&method==='GET')return json(200,{googleMaps:envEnabled('GOOGLE_MAPS_BROWSER_KEY')?'configured':'not-configured',twilio:envEnabled('TWILIO_ACCOUNT_SID')&&envEnabled('TWILIO_AUTH_TOKEN')&&envEnabled('TWILIO_PHONE_NUMBER')?'configured':'not-configured',sendGrid:envEnabled('SENDGRID_API_KEY')&&envEnabled('SENDGRID_FROM_EMAIL')?'configured':'not-configured',stripe:envEnabled('STRIPE_SECRET_KEY')&&envEnabled('STRIPE_PUBLISHABLE_KEY')?'configured':'not-configured',gps:'enabled',checkedAt:new Date().toISOString()});
+  if(p[0]==='settings'&&p[1]==='public'&&method==='GET'){
+   const settings=await readPlatformSettings();
+   return json(200,{pricing:settings.pricing,fareRules:settings.fareRules,activeServices:settings.activeServices,organization:settings.organization});
+  }
+  if(p[0]==='admin'&&p[1]==='settings'&&method==='GET'){
+   await requireUser(bearer(event),['ADMIN','DISPATCHER']);
+   const settings=await readPlatformSettings();
+   return json(200,{settings});
+  }
+  if(p[0]==='admin'&&p[1]==='settings'&&method==='PATCH'){
+   const me=await requireUser(bearer(event),['ADMIN']);
+   const body=parseBody(event);
+   const current=await readPlatformSettings();
+   const next=writePlatformSettings({
+    pricing:body.pricing||current.pricing,
+    fareRules:body.fareRules||current.fareRules,
+    organization:body.organization||current.organization,
+    activeServices:body.activeServices||current.activeServices
+   },me.id);
+   const saved=await next;
+   await audit('SETTINGS','platform','UPDATED',{by:me.email,sections:Object.keys(body||{})});
+   return json(200,{settings:saved});
+  }
   if(p.join('/')==='locations/search'&&method==='GET'){
    const q=clean(event.queryStringParameters?.q);if(q.length<2)return json(200,{locations:[]});
    const r=await query(`SELECT facility_code AS id,name,address,'facility' AS type FROM facilities WHERE active=true AND (name ILIKE $1 OR address ILIKE $1) ORDER BY CASE WHEN name ILIKE $2 THEN 0 ELSE 1 END,name LIMIT 12`,[`%${q}%`,`${q}%`]);
