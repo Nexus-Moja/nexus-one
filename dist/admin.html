@@ -182,13 +182,14 @@
     <small id="refreshFuelIndexMsg" style="color:var(--muted)"></small>
   </div>
   <div class="formRow" style="margin-top:14px">
-    <div class="formField"><label for="afterHoursSurchargePct">After-hours surcharge (%)</label><input id="afterHoursSurchargePct" type="number" min="0" max="100" step="0.1" value="0"></div>
+    <div class="formField"><label for="afterHoursSurchargePct">After-hours surcharge (%) (7:01 PM - 6:59 AM)</label><input id="afterHoursSurchargePct" type="number" min="0" max="100" step="0.1" value="0"></div>
     <div class="formField"><label for="weekendSurchargePct">Weekend surcharge (%)</label><input id="weekendSurchargePct" type="number" min="0" max="100" step="0.1" value="0"></div>
   </div>
   <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="holidaySurchargePct">Holiday surcharge (%)</label><input id="holidaySurchargePct" type="number" min="0" max="100" step="0.1" value="10"></div>
     <div class="formField"><label for="cancellationFee">Cancellation fee ($)</label><input id="cancellationFee" type="number" min="0" step="0.01" value="30"></div>
   </div>
+  <p style="margin:8px 0 0;color:var(--muted);font-size:12px">Holidays: New Year, MLK Day, President's Day, Memorial Day, Juneteenth, Independence Day, Labor Day, Columbus / Indigenous Peoples' Day, Veterans Day, Thanksgiving Day, Christmas Day.</p>
   <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="cancellationWindowHours">Cancellation window (hours before trip)</label><input id="cancellationWindowHours" type="number" min="0" max="240" step="1" value="24"></div>
     <div class="formField"><label for="cancellationLeadHours">Minimum booking lead (hours before trip)</label><input id="cancellationLeadHours" type="number" min="0" max="720" step="1" value="72"></div>

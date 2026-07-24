@@ -600,6 +600,37 @@
       const routeService=String(booking.service||'ambulatory').toLowerCase();
       const rate=pricing[routeService]||window.NexusCore?.DEFAULT?.[routeService]||window.NexusCore?.DEFAULT?.ambulatory||{base:65,includedMiles:5,perMile:3.25,waitPer15:20};
 
+      const getNthWeekdayOfMonth=(year,monthIndex,weekday,nth)=>{
+        const first=new Date(year,monthIndex,1);
+        const offset=(weekday-first.getDay()+7)%7;
+        return new Date(year,monthIndex,1+offset+((nth-1)*7));
+      };
+      const getLastWeekdayOfMonth=(year,monthIndex,weekday)=>{
+        const last=new Date(year,monthIndex+1,0);
+        const offset=(last.getDay()-weekday+7)%7;
+        return new Date(year,monthIndex,last.getDate()-offset);
+      };
+      const sameCalendarDate=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+      const isFederalHoliday=(dateInput)=>{
+        const d=new Date(dateInput||new Date());
+        d.setHours(12,0,0,0);
+        const y=d.getFullYear();
+        const holidays=[
+          new Date(y,0,1),
+          getNthWeekdayOfMonth(y,0,1,3),
+          getNthWeekdayOfMonth(y,1,1,3),
+          getLastWeekdayOfMonth(y,4,1),
+          new Date(y,5,19),
+          new Date(y,6,4),
+          getNthWeekdayOfMonth(y,8,1,1),
+          getNthWeekdayOfMonth(y,9,1,2),
+          new Date(y,10,11),
+          getNthWeekdayOfMonth(y,10,4,4),
+          new Date(y,11,25)
+        ];
+        return holidays.some((h)=>sameCalendarDate(h,d));
+      };
+
       const applyFareEstimate=(miles)=>{
         const distanceMiles=Math.max(0,Number(miles)||0);
         const billableMiles=Math.max(0,distanceMiles-Number(rate.includedMiles||0));
@@ -607,7 +638,7 @@
         const tripDate=new Date(booking.date||new Date());
         const dayOfWeek=tripDate.getDay();
         const isWeekend=dayOfWeek===0||dayOfWeek===6;
-        const isHoliday=['01-01','07-04','11-28','12-25'].includes(tripDate.toISOString().slice(5,10));
+        const isHoliday=isFederalHoliday(tripDate);
         const discountPercent=isHoliday?10:(!isWeekend?5:0);
         const discountAmount=baseFare*(discountPercent/100);
         const finalTotal=baseFare-discountAmount;

@@ -123,6 +123,51 @@
     return policies[key] || {};
   }
 
+  function getNthWeekdayOfMonth(year, monthIndex, weekday, nth){
+    const first = new Date(year, monthIndex, 1);
+    const offset = (weekday - first.getDay() + 7) % 7;
+    return new Date(year, monthIndex, 1 + offset + ((nth - 1) * 7));
+  }
+
+  function getLastWeekdayOfMonth(year, monthIndex, weekday){
+    const last = new Date(year, monthIndex + 1, 0);
+    const offset = (last.getDay() - weekday + 7) % 7;
+    return new Date(year, monthIndex, last.getDate() - offset);
+  }
+
+  function sameCalendarDate(a, b){
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  function isFederalHoliday(dateInput){
+    const d = new Date(dateInput || new Date());
+    d.setHours(12, 0, 0, 0);
+    const y = d.getFullYear();
+    const holidays = [
+      new Date(y, 0, 1),
+      getNthWeekdayOfMonth(y, 0, 1, 3),
+      getNthWeekdayOfMonth(y, 1, 1, 3),
+      getLastWeekdayOfMonth(y, 4, 1),
+      new Date(y, 5, 19),
+      new Date(y, 6, 4),
+      getNthWeekdayOfMonth(y, 8, 1, 1),
+      getNthWeekdayOfMonth(y, 9, 1, 2),
+      new Date(y, 10, 11),
+      getNthWeekdayOfMonth(y, 10, 4, 4),
+      new Date(y, 11, 25)
+    ];
+    return holidays.some((h) => sameCalendarDate(h, d));
+  }
+
+  function isAfterHoursTime(timeStr){
+    const parts = String(timeStr || '00:00').split(':');
+    const hour = Number(parts[0]);
+    const minute = Number(parts[1] || 0);
+    if(!Number.isFinite(hour) || !Number.isFinite(minute)) return true;
+    const totalMinutes = (hour * 60) + minute;
+    return totalMinutes < (7 * 60) || totalMinutes > (19 * 60);
+  }
+
   function calculateFare(service, miles, dateStr, timeStr, routeMetrics = {}){
     const rate = getPricing(service);
     const policy = getServicePolicy(service);
@@ -130,7 +175,7 @@
     const includedMiles = Number(rate.includedMiles || 0);
     const outboundBillable = Math.max(0, distance - includedMiles);
     const returnThreshold = Math.max(0, Number(fareRules.returnMilesThreshold || 0));
-    const returnPct = Math.max(0, Number(policy.returnMilesInclusionPct ?? fareRules.returnMilesInclusionPct || 0)) / 100;
+    const returnPct = Math.max(0, Number((policy.returnMilesInclusionPct ?? fareRules.returnMilesInclusionPct) ?? 0)) / 100;
     const returnMiles = distance > returnThreshold ? (distance * returnPct) : 0;
     const totalChargedMiles = distance + returnMiles;
     const billable = outboundBillable + returnMiles;
@@ -143,21 +188,19 @@
     const graceMinutes = Math.max(0, Number(fareRules.trafficOverageGraceMinutes || 0));
     const overageMinutes = Math.max(0, trafficMinutes - scheduledMinutes - graceMinutes);
     if(overageMinutes > 0){
-      const trafficRate = Math.max(0, Number(policy.trafficOverageFeePerHour ?? fareRules.trafficOverageFeePerHour || 0));
+      const trafficRate = Math.max(0, Number((policy.trafficOverageFeePerHour ?? fareRules.trafficOverageFeePerHour) ?? 0));
       subtotal += (overageMinutes / 60) * trafficRate;
     }
 
     const tripDate = new Date(dateStr || new Date());
     const day = tripDate.getDay();
     const isWeekend = day === 0 || day === 6;
-    const md = tripDate.toISOString().slice(5,10);
-    const isHoliday = ['01-01','07-04','11-28','12-25'].includes(md);
-    const hour = Number(String(timeStr || '00:00').split(':')[0]);
-    const isAfterHours = Number.isFinite(hour) && (hour >= 22 || hour < 5);
+    const isHoliday = isFederalHoliday(tripDate);
+    const isAfterHours = isAfterHoursTime(timeStr);
 
-    if(isHoliday) subtotal += subtotal * (Number(policy.holidaySurchargePct ?? fareRules.holidaySurchargePct || 0) / 100);
-    if(isWeekend) subtotal += subtotal * (Number(policy.weekendSurchargePct ?? fareRules.weekendSurchargePct || 0) / 100);
-    if(isAfterHours) subtotal += subtotal * (Number(policy.afterHoursSurchargePct ?? fareRules.afterHoursSurchargePct || 0) / 100);
+    if(isHoliday) subtotal += subtotal * (Number((policy.holidaySurchargePct ?? fareRules.holidaySurchargePct) ?? 0) / 100);
+    if(isWeekend) subtotal += subtotal * (Number((policy.weekendSurchargePct ?? fareRules.weekendSurchargePct) ?? 0) / 100);
+    if(isAfterHours) subtotal += subtotal * (Number((policy.afterHoursSurchargePct ?? fareRules.afterHoursSurchargePct) ?? 0) / 100);
 
     return Math.max(Number(fareRules.minimumFare || 0), subtotal);
   }
