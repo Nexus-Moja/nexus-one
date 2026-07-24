@@ -160,6 +160,7 @@
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" value="WHEELCHAIR" checked> Wheelchair</label>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" value="STRETCHER" checked> Stretcher</label>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" value="HOSPITAL_DISCHARGE" checked> Hospital discharge</label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" value="FACILITY_TRANSFER" checked> Facility-to-Facility transfer</label>
   </div></div>
   <div class="formRow" style="margin-top:18px">
     <div class="formField"><label for="minimumFare">Minimum fare ($)</label><input id="minimumFare" type="number" min="0" step="0.01" value="0"></div>
@@ -215,6 +216,7 @@
   </div>
   <div style="margin-top:18px">
     <p style="margin:0 0 10px;font-weight:750">Per-service policy overrides</p>
+    <p style="margin:0 0 10px;color:var(--muted);font-size:12px">Industry baseline for Facility-to-Facility transfers: include handoff wait/documentation time, assign higher cancellation/no-show than standard ambulatory, and keep return-mile plus traffic-overage charges enabled due to round-trip positioning.</p>
     <div class="tableWrap">
       <table class="table configTable" aria-label="Per-service policy overrides">
         <thead><tr><th>Service</th><th>Cancellation ($)</th><th>No-show ($)</th><th>Traffic ($/hour)</th><th>Return miles (%)</th><th>After-hours (%)</th><th>Weekend (%)</th><th>Holiday (%)</th></tr></thead>

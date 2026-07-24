@@ -12,6 +12,7 @@ const reference=()=>`NMT-${new Date().toISOString().slice(0,10).replaceAll('-','
 const DEFAULT_PRICING={
  wheelchair:{label:'Wheelchair Transportation',base:95,includedMiles:10,perMile:4.25,waitPer15:25},
  ambulatory:{label:'Ambulatory Transportation',base:65,includedMiles:5,perMile:3.25,waitPer15:20},
+ facility_transfer:{label:'Facility-to-Facility Transfer',base:180,includedMiles:8,perMile:5.5,waitPer15:35},
  broda:{label:'Broda Chair Transportation',base:145,includedMiles:10,perMile:5.25,waitPer15:25},
  stretcher:{label:'Stretcher Transportation',base:260,includedMiles:10,perMile:7.5,waitPer15:35},
  bariatric:{label:'Bariatric Transportation',base:385,includedMiles:10,perMile:9.5,waitPer15:45},
@@ -23,6 +24,7 @@ const DEFAULT_PRICING={
 const DEFAULT_SERVICE_POLICIES={
  wheelchair:{cancellationFee:40,noShowFee:60,trafficOverageFeePerHour:25,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
  ambulatory:{cancellationFee:35,noShowFee:50,trafficOverageFeePerHour:20,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ facility_transfer:{cancellationFee:90,noShowFee:120,trafficOverageFeePerHour:45,returnMilesInclusionPct:100,afterHoursSurchargePct:5,weekendSurchargePct:3,holidaySurchargePct:12},
  broda:{cancellationFee:75,noShowFee:95,trafficOverageFeePerHour:35,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
  stretcher:{cancellationFee:120,noShowFee:150,trafficOverageFeePerHour:50,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
  bariatric:{cancellationFee:160,noShowFee:200,trafficOverageFeePerHour:65,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
@@ -67,7 +69,7 @@ const DEFAULT_PLATFORM_SETTINGS={
   email:'contact@nexusmt.com',
   website:'https://nexusmt.com'
  },
- activeServices:['AMBULANCE','WHEELCHAIR','STRETCHER','HOSPITAL_DISCHARGE']
+ activeServices:['AMBULANCE','WHEELCHAIR','STRETCHER','HOSPITAL_DISCHARGE','FACILITY_TRANSFER']
 };
 
 async function ensureSettingsTable(){
@@ -121,6 +123,8 @@ function resolveServicePolicyKey(service){
  const raw=String(service||'').trim().toLowerCase();
  if(!raw)return 'ambulatory';
  if(DEFAULT_SERVICE_POLICIES[raw])return raw;
+ if(raw.includes('facility')&&raw.includes('transfer'))return 'facility_transfer';
+ if(raw.includes('interfacility')||raw==='ift')return 'facility_transfer';
  if(raw.includes('wheel'))return 'wheelchair';
  if(raw.includes('ambul'))return 'ambulatory';
  if(raw.includes('broda'))return 'broda';
@@ -137,6 +141,8 @@ function mergePlatformSettings(raw){
  const fareSrc=src.fareRules&&typeof src.fareRules==='object'?src.fareRules:{};
  const orgSrc=src.organization&&typeof src.organization==='object'?src.organization:{};
  const services=Array.isArray(src.activeServices)?src.activeServices:DEFAULT_PLATFORM_SETTINGS.activeServices;
+ const normalizedServices=services.map(x=>String(x||'').toUpperCase()).filter(Boolean);
+ if(!normalizedServices.includes('FACILITY_TRANSFER')) normalizedServices.push('FACILITY_TRANSFER');
  return {
   pricing:mergePricing(src.pricing),
   fareRules:{
@@ -173,7 +179,7 @@ function mergePlatformSettings(raw){
    email:clean(orgSrc.email)||DEFAULT_PLATFORM_SETTINGS.organization.email,
    website:clean(orgSrc.website)||DEFAULT_PLATFORM_SETTINGS.organization.website
   },
-  activeServices:services.map(x=>String(x||'').toUpperCase()).filter(Boolean)
+  activeServices:normalizedServices
  };
 }
 
