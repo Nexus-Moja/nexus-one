@@ -10,7 +10,7 @@
   '/billing.html':['BILLING','ADMIN'],
   '/qa.html':['QA','ADMIN'],
   '/executive.html':['EXECUTIVE','ADMIN'],
-  '/admin.html':['ADMIN'],
+  '/admin.html':['ADMIN','DISPATCHER'],
   '/ai-operations.html':['DISPATCHER','ADMIN'],
   '/operations.html':['DISPATCHER','ADMIN']
  };

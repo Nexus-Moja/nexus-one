@@ -287,6 +287,53 @@ header .nav .navCta,header .nav .bookRide{background:linear-gradient(135deg,#ef3
 .roleErrorPanel{padding:30px}
 @media(max-width:700px){.roleWorkspace{padding-top:50px}}
 
+/* ── Global mobile optimizations ─────────────────────────────── */
+@media(max-width:560px){
+  /* General layout */
+  .shell{padding-left:16px;padding-right:16px}
+  .moduleMain{padding-top:32px}
+  /* Role cards single column */
+  .roleCards{grid-template-columns:1fr!important}
+  /* Secure panels full width */
+  .securePanel{margin:24px 0;border-radius:16px}
+  /* KPI panels 1 column */
+  .facilityKpis{grid-template-columns:1fr!important}
+  /* Livecare map smaller on phone so story content is visible first */
+  .mapOnlyShell,.mapOnlyShell .liveFleetMap{min-height:320px!important}
+  /* Panel headers stack */
+  .facilityPanelHeader{flex-direction:column;align-items:flex-start;gap:8px}
+  /* Status header stacks */
+  .statusHeader{flex-direction:column;gap:12px}
+  .eta{text-align:left}
+  /* Trip summary single column */
+  .summary{grid-template-columns:1fr!important}
+  /* Toolbar stacks */
+  .toolbar{display:flex;flex-direction:column;gap:8px}
+  .toolbar .button,.toolbar a{width:100%;text-align:center;text-decoration:none}
+  /* Form panel full-width buttons */
+  .panelHeader{flex-direction:column;gap:8px}
+  .formGrid button[type=submit]{width:100%}
+  /* Map service strip wraps fully */
+  .mapServiceStrip{flex-wrap:wrap;margin:0 0 12px}
+  .mapServiceStrip button,.mapServiceStrip span{flex:1 1 50%!important;min-width:0}
+  /* Livecare role buttons single column */
+  .livecareRoleButtons{grid-template-columns:1fr!important}
+  /* Livecare actions full width */
+  .livecareStoryActions{flex-direction:column}
+  .livecareStoryActions .button,.livecareStoryActions a{width:100%!important}
+  /* Login block spacing */
+  .livecareLoginBlock{gap:12px}
+  /* Footer grid stacks */
+  .footerGrid{gap:24px}
+  /* Section headings smaller */
+  .sectionHeading h2{font-size:clamp(26px,8vw,38px)}
+  /* Workspace header stacks */
+  .facilityWorkspaceHeader{flex-direction:column;gap:12px;align-items:flex-start}
+  .facilityWorkspaceActions{flex-direction:column;width:100%}
+  .facilityWorkspaceActions .button{width:100%;text-align:center}
+  /* Book a ride CTA full width on mobile */
+  .navCta{padding:10px 14px}
+}
 
 /* Build 027: compact homepage-aligned Livecare hero */
 :root{

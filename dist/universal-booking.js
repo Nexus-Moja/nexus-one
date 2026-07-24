@@ -254,6 +254,7 @@
       mapWrap=document.createElement('div');
       mapWrap.id='nexusBookingRouteMap';
       mapWrap.style.cssText='height:220px;border:1px solid #dce6ee;border-radius:8px;overflow:hidden;margin-top:10px;background:#f5f5f5';
+      // Insert after the destination field
       const destParent=destInput.closest('div,fieldset,label')||destInput.parentElement;
       destParent.insertAdjacentElement('afterend',mapWrap);
     }
@@ -561,6 +562,7 @@
                 </div>
               </div>
             </div>
+          </div>
           </div>
           <!-- Payment Options Section -->
           <div style="padding:16px;border-top:1px solid #dce6ee;background:#f9fafb;margin:0.5rem">
