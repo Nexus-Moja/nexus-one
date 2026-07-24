@@ -8,7 +8,7 @@ function toNum(v,fallback=0){
 }
 
 async function fetchEiaWeeklyPrice(){
-  const qs=new URLSearchParams({
+  const buildQs=(apiKey)=>new URLSearchParams({
     frequency:'weekly',
     'data[0]':'value',
     'facets[duoarea][]':'NUS',
@@ -16,16 +16,30 @@ async function fetchEiaWeeklyPrice(){
     'sort[0][column]':'period',
     'sort[0][direction]':'desc',
     offset:'0',
-    length:'1'
+    length:'1',
+    api_key:apiKey
   });
-  qs.set('api_key',process.env.EIA_API_KEY||'DEMO_KEY');
-  const url=`https://api.eia.gov/v2/petroleum/pri/gnd/data/?${qs.toString()}`;
-  const r=await fetch(url,{headers:{accept:'application/json'}});
-  if(!r.ok)throw new Error(`EIA request failed (${r.status})`);
-  const data=await r.json();
-  const value=toNum(data?.response?.data?.[0]?.value,NaN);
-  if(!Number.isFinite(value)||value<=0)throw new Error('EIA did not return a usable fuel price');
-  return {pricePerGallon:value,sourceUrl:url};
+  const keys=[];
+  if(process.env.EIA_API_KEY)keys.push(process.env.EIA_API_KEY);
+  if(!keys.includes('DEMO_KEY'))keys.push('DEMO_KEY');
+
+  let lastError=null;
+  for(const k of keys){
+    const qs=buildQs(k);
+    const url=`https://api.eia.gov/v2/petroleum/pri/gnd/data/?${qs.toString()}`;
+    const r=await fetch(url,{headers:{accept:'application/json'}});
+    if(!r.ok){
+      lastError=new Error(`EIA request failed (${r.status})`);
+      continue;
+    }
+    const data=await r.json();
+    const value=toNum(data?.response?.data?.[0]?.value,NaN);
+    if(Number.isFinite(value)&&value>0){
+      return {pricePerGallon:value,sourceUrl:url};
+    }
+    lastError=new Error('EIA did not return a usable fuel price');
+  }
+  throw (lastError||new Error('EIA request failed'));
 }
 
 exports.handler=async()=>{
