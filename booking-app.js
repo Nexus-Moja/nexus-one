@@ -34,6 +34,12 @@
   const DEFAULT_FARE_RULES = {
     minimumFare: 0,
     fuelSurchargePerMile: 0,
+    fuelPricingMode: 'MANUAL',
+    fuelIndexPricePerGallon: 0,
+    fuelBaselinePricePerGallon: 3.25,
+    fuelEfficiencyMpg: 10,
+    fuelOperationalBufferPct: 20,
+    fuelLastUpdatedAt: null,
     afterHoursSurchargePct: 0,
     weekendSurchargePct: 0,
     holidaySurchargePct: 10,

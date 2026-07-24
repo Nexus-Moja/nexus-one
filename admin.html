@@ -153,6 +153,22 @@
     <div class="formField"><label for="fuelSurchargePerMile">Fuel surcharge ($/mile)</label><input id="fuelSurchargePerMile" type="number" min="0" step="0.01" value="0"></div>
   </div>
   <div class="formRow" style="margin-top:14px">
+    <div class="formField"><label for="fuelPricingMode">Fuel pricing mode</label><select id="fuelPricingMode"><option value="MANUAL">Manual override</option><option value="AUTO">Auto weekly update</option></select></div>
+    <div class="formField"><label for="fuelIndexPricePerGallon">Fuel index price ($/gallon)</label><input id="fuelIndexPricePerGallon" type="number" min="0" step="0.001" value="0"></div>
+  </div>
+  <div class="formRow" style="margin-top:14px">
+    <div class="formField"><label for="fuelBaselinePricePerGallon">Baseline fuel price ($/gallon)</label><input id="fuelBaselinePricePerGallon" type="number" min="0" step="0.001" value="3.25"></div>
+    <div class="formField"><label for="fuelEfficiencyMpg">Fleet fuel efficiency (MPG)</label><input id="fuelEfficiencyMpg" type="number" min="1" max="50" step="0.1" value="10"></div>
+  </div>
+  <div class="formRow" style="margin-top:14px">
+    <div class="formField"><label for="fuelOperationalBufferPct">Fuel ops buffer (%)</label><input id="fuelOperationalBufferPct" type="number" min="0" max="200" step="0.1" value="20"></div>
+    <div class="formField"><label for="fuelLastUpdatedAt">Fuel index last updated</label><input id="fuelLastUpdatedAt" type="text" value="Not updated" readonly></div>
+  </div>
+  <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+    <button class="button" id="refreshFuelIndexBtn" type="button">Refresh fuel index now</button>
+    <small id="refreshFuelIndexMsg" style="color:var(--muted)"></small>
+  </div>
+  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="afterHoursSurchargePct">After-hours surcharge (%)</label><input id="afterHoursSurchargePct" type="number" min="0" max="100" step="0.1" value="0"></div>
     <div class="formField"><label for="weekendSurchargePct">Weekend surcharge (%)</label><input id="weekendSurchargePct" type="number" min="0" max="100" step="0.1" value="0"></div>
   </div>
@@ -350,6 +366,11 @@ function readSettingsForm(){
     fareRules:{
       minimumFare:Number(document.getElementById('minimumFare').value||0),
       fuelSurchargePerMile:Number(document.getElementById('fuelSurchargePerMile').value||0),
+      fuelPricingMode:document.getElementById('fuelPricingMode').value,
+      fuelIndexPricePerGallon:Number(document.getElementById('fuelIndexPricePerGallon').value||0),
+      fuelBaselinePricePerGallon:Number(document.getElementById('fuelBaselinePricePerGallon').value||3.25),
+      fuelEfficiencyMpg:Number(document.getElementById('fuelEfficiencyMpg').value||10),
+      fuelOperationalBufferPct:Number(document.getElementById('fuelOperationalBufferPct').value||20),
       afterHoursSurchargePct:Number(document.getElementById('afterHoursSurchargePct').value||0),
       weekendSurchargePct:Number(document.getElementById('weekendSurchargePct').value||0),
       holidaySurchargePct:Number(document.getElementById('holidaySurchargePct').value||0),
@@ -363,6 +384,15 @@ function readSettingsForm(){
   };
 }
 
+function applyFuelModeUi(){
+  const mode=(document.getElementById('fuelPricingMode').value||'MANUAL').toUpperCase();
+  const isAuto=mode==='AUTO';
+  document.getElementById('fuelSurchargePerMile').disabled=isAuto;
+  document.getElementById('fuelIndexPricePerGallon').disabled=isAuto;
+  const btn=document.getElementById('refreshFuelIndexBtn');
+  if(btn) btn.disabled=!canEditSettings();
+}
+
 function applySettingsToForm(settings){
   if(!settings)return;
   const org=settings.organization||{};
@@ -373,6 +403,12 @@ function applySettingsToForm(settings){
   document.getElementById('orgWebsite').value=org.website||'https://nexusmt.com';
   document.getElementById('minimumFare').value=Number(fare.minimumFare||0);
   document.getElementById('fuelSurchargePerMile').value=Number(fare.fuelSurchargePerMile||0);
+  document.getElementById('fuelPricingMode').value=(fare.fuelPricingMode||'MANUAL').toUpperCase()==='AUTO'?'AUTO':'MANUAL';
+  document.getElementById('fuelIndexPricePerGallon').value=Number(fare.fuelIndexPricePerGallon||0);
+  document.getElementById('fuelBaselinePricePerGallon').value=Number(fare.fuelBaselinePricePerGallon||3.25);
+  document.getElementById('fuelEfficiencyMpg').value=Number(fare.fuelEfficiencyMpg||10);
+  document.getElementById('fuelOperationalBufferPct').value=Number(fare.fuelOperationalBufferPct||20);
+  document.getElementById('fuelLastUpdatedAt').value=fare.fuelLastUpdatedAt?new Date(fare.fuelLastUpdatedAt).toLocaleString():'Not updated';
   document.getElementById('afterHoursSurchargePct').value=Number(fare.afterHoursSurchargePct||0);
   document.getElementById('weekendSurchargePct').value=Number(fare.weekendSurchargePct||0);
   document.getElementById('holidaySurchargePct').value=Number(fare.holidaySurchargePct||0);
@@ -384,6 +420,7 @@ function applySettingsToForm(settings){
   document.getElementById('maxBookingDistanceMiles').value=Number(fare.maxBookingDistanceMiles||125);
   const active=new Set((settings.activeServices||[]).map(x=>String(x).toUpperCase()));
   document.querySelectorAll('#activeServicesGroup input[type="checkbox"]').forEach(i=>{i.checked=active.has(String(i.value).toUpperCase());});
+  applyFuelModeUi();
 }
 
 async function loadPlatformSettings(){
@@ -421,6 +458,26 @@ document.getElementById('saveSettings').addEventListener('click',async()=>{
   setTimeout(()=>msg.style.display='none',3000);
 });
 
+document.getElementById('fuelPricingMode').addEventListener('change',applyFuelModeUi);
+
+document.getElementById('refreshFuelIndexBtn').addEventListener('click',async()=>{
+  const msg=document.getElementById('refreshFuelIndexMsg');
+  if(!canEditSettings()){
+    msg.textContent='Admin access required.';
+    return;
+  }
+  msg.textContent='Refreshing fuel index...';
+  try{
+    const r=await fetch('/.netlify/functions/fuel-index-refresh',{method:'POST'});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.error||'Refresh failed');
+    msg.textContent=data.updated?`Updated: $${Number(data.fuelIndexPricePerGallon||0).toFixed(3)}/gal, surcharge $${Number(data.fuelSurchargePerMile||0).toFixed(2)}/mile`:(data.reason||'No update');
+    await loadPlatformSettings();
+  }catch(e){
+    msg.textContent=e.message;
+  }
+});
+
 function applyRoleRestrictions(){
   if(canEditSettings()) return;
   const userSection=document.getElementById('userSection');
@@ -430,6 +487,7 @@ function applyRoleRestrictions(){
   document.getElementById('savePricing').disabled=true;
   document.getElementById('resetPricing').disabled=true;
   document.getElementById('saveSettings').disabled=true;
+  document.getElementById('refreshFuelIndexBtn').disabled=true;
 }
 
 // ── LOAD TRIPS STAT ─────────────────────────────────────────────────────────

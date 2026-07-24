@@ -1,0 +1,111 @@
+const {query}=require('./_shared/db.cjs');
+
+const PLATFORM_KEY='platform';
+
+function toNum(v,fallback=0){
+  const n=Number(v);
+  return Number.isFinite(n)?n:fallback;
+}
+
+function deriveSeriesFacet(seriesId){
+  const text=String(seriesId||'PET.EMM_EPM0_PTE_SUS_DPG.W').trim();
+  const parts=text.split('.');
+  if(parts.length>=2){
+    if(parts[0].toUpperCase()==='PET'&&parts[parts.length-1].toUpperCase()==='W'){
+      return parts.slice(1,-1).join('_');
+    }
+  }
+  return text.replaceAll('.','_').replace(/_W$/i,'');
+}
+
+async function fetchEiaWeeklyPrice(seriesId){
+  const facet=deriveSeriesFacet(seriesId);
+  const qs=new URLSearchParams({
+    frequency:'weekly',
+    'data[0]':'value',
+    'facets[series][]':facet,
+    'sort[0][column]':'period',
+    'sort[0][direction]':'desc',
+    offset:'0',
+    length:'1'
+  });
+  if(process.env.EIA_API_KEY){
+    qs.set('api_key',process.env.EIA_API_KEY);
+  }
+  const url=`https://api.eia.gov/v2/petroleum/pri/gnd/data/?${qs.toString()}`;
+  const r=await fetch(url,{headers:{accept:'application/json'}});
+  if(!r.ok)throw new Error(`EIA request failed (${r.status})`);
+  const data=await r.json();
+  const value=toNum(data?.response?.data?.[0]?.value,NaN);
+  if(!Number.isFinite(value)||value<=0)throw new Error('EIA did not return a usable fuel price');
+  return {pricePerGallon:value,sourceUrl:url};
+}
+
+exports.handler=async()=>{
+  try{
+    const row=await query(`SELECT value FROM system_settings WHERE key=$1 LIMIT 1`,[PLATFORM_KEY]);
+    if(!row.rows[0]) return {statusCode:404,body:JSON.stringify({error:'platform settings missing'})};
+
+    const settings=row.rows[0].value||{};
+    const fareRules=settings.fareRules||{};
+    const mode=String(fareRules.fuelPricingMode||'MANUAL').toUpperCase();
+    if(mode!=='AUTO'){
+      return {statusCode:200,body:JSON.stringify({updated:false,reason:'fuelPricingMode is MANUAL'})};
+    }
+
+    let indexPrice=0;
+    let source='EIA';
+    let sourceUrl='';
+    try{
+      const eia=await fetchEiaWeeklyPrice(fareRules.fuelIndexSeriesId);
+      indexPrice=eia.pricePerGallon;
+      source='EIA';
+      sourceUrl=eia.sourceUrl;
+    }catch(err){
+      const fallback=toNum(process.env.NEXUS_FUEL_INDEX_DEFAULT,NaN);
+      if(Number.isFinite(fallback)&&fallback>0){
+        indexPrice=fallback;
+        source='ENV_FALLBACK';
+      }else{
+        throw err;
+      }
+    }
+
+    const mpg=Math.max(1,toNum(fareRules.fuelEfficiencyMpg,10));
+    const baseline=Math.max(0,toNum(fareRules.fuelBaselinePricePerGallon,3.25));
+    const bufferPct=Math.max(0,toNum(fareRules.fuelOperationalBufferPct,20));
+
+    const basePerMile=baseline/mpg;
+    const currentPerMile=indexPrice/mpg;
+    const delta=Math.max(0,currentPerMile-basePerMile);
+    const surcharge=Math.round((delta*(1+(bufferPct/100)))*100)/100;
+
+    const nextFareRules={
+      ...fareRules,
+      fuelIndexPricePerGallon:Math.round(indexPrice*1000)/1000,
+      fuelSurchargePerMile:surcharge,
+      fuelLastUpdatedAt:new Date().toISOString(),
+      fuelIndexSource:source
+    };
+
+    await query(
+      `UPDATE system_settings SET value=$2::jsonb, updated_at=now() WHERE key=$1`,
+      [PLATFORM_KEY,JSON.stringify({...settings,fareRules:nextFareRules})]
+    );
+
+    return {
+      statusCode:200,
+      body:JSON.stringify({
+        updated:true,
+        fuelIndexPricePerGallon:nextFareRules.fuelIndexPricePerGallon,
+        fuelSurchargePerMile:nextFareRules.fuelSurchargePerMile,
+        fuelIndexSource:nextFareRules.fuelIndexSource,
+        fuelLastUpdatedAt:nextFareRules.fuelLastUpdatedAt,
+        sourceUrl
+      })
+    };
+  }catch(err){
+    console.error('[fuel-index-refresh] Error:',err.message);
+    return {statusCode:500,body:JSON.stringify({error:err.message})};
+  }
+};
