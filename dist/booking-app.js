@@ -20,6 +20,11 @@
   const telemetryStatus = $('telemetryStatus');
   const telemetryList = $('telemetryList');
   const focusMyRouteOnly = $('focusMyRouteOnly');
+  const paymentSection = $('paymentSection');
+  const paymentSummary = $('paymentSummary');
+  const paymentStatusMsg = $('paymentStatusMsg');
+  const payStripeBtn = $('payStripeBtn');
+  const paySquareBtn = $('paySquareBtn');
 
   const FALLBACK_PRICING = {
     wheelchair:{label:'Wheelchair Transportation',base:95,includedMiles:10,perMile:4.25,waitPer15:25},
@@ -75,6 +80,8 @@
   let mapsReadyPromise = null;
   let mapsEnabled = false;
   let mapsBrowserKey = '';
+  let stripeEnabled = false;
+  let squareEnabled = false;
   let estimateState = { miles: 0, durationText: '', durationMinutes: 0, trafficDurationMinutes: 0, fare: 0 };
   let pickupAutocomplete = null;
   let destinationAutocomplete = null;
@@ -88,6 +95,8 @@
   let isAdminUser = false;
   let platformPricing = null;
   let fareRules = { ...DEFAULT_FARE_RULES };
+  let currentBookingReference = '';
+  let currentBookingFare = 0;
   const autoEstimate = debounce(async() => {
     const pickup = $('pickup').value.trim();
     const destination = $('destination').value.trim();
@@ -108,6 +117,12 @@
   function clearStatus(){
     statusMsg.textContent = '';
     statusMsg.className = 'msg';
+  }
+
+  function setPaymentMessage(message, isError = false){
+    if(!paymentStatusMsg) return;
+    paymentStatusMsg.textContent = message || '';
+    paymentStatusMsg.style.color = isError ? 'var(--err)' : 'var(--muted)';
   }
 
   function setBusy(button, isBusy, busyText, idleText){
@@ -251,8 +266,12 @@
       const cfg = await r.json();
       mapsEnabled = !!cfg.googleMapsEnabled;
       mapsBrowserKey = String(cfg.googleMapsBrowserKey || '').trim();
+      stripeEnabled = !!cfg.stripeEnabled;
+      squareEnabled = !!cfg.squareEnabled;
     }catch{
       mapsEnabled = false;
+      stripeEnabled = false;
+      squareEnabled = false;
     }
   }
 
@@ -278,6 +297,57 @@
     estDuration.textContent = '-';
     estFare.textContent = '-';
     clearCustomerRoute();
+  }
+
+  function hidePaymentOptions(){
+    currentBookingReference = '';
+    currentBookingFare = 0;
+    if(paymentSection) paymentSection.hidden = true;
+    setPaymentMessage('');
+  }
+
+  function showPaymentOptions(reference, fare){
+    currentBookingReference = String(reference || '').trim();
+    currentBookingFare = Number(fare || 0);
+    if(!paymentSection || !currentBookingReference) return;
+    paymentSection.hidden = false;
+    paymentSummary.textContent = `Booking ${currentBookingReference} is ready for payment. Estimated amount: $${currentBookingFare.toFixed(2)}.`;
+    payStripeBtn.hidden = !stripeEnabled;
+    paySquareBtn.hidden = !squareEnabled;
+    payStripeBtn.disabled = !stripeEnabled;
+    paySquareBtn.disabled = !squareEnabled;
+    if(!stripeEnabled && !squareEnabled){
+      setPaymentMessage('Online payment is not currently configured.', true);
+      return;
+    }
+    setPaymentMessage('Choose Stripe or Square to pay using the saved booking fare.');
+  }
+
+  async function startHostedPayment(provider){
+    if(!currentBookingReference){
+      setPaymentMessage('Create a booking before starting payment.', true);
+      return;
+    }
+    const button = provider === 'stripe' ? payStripeBtn : paySquareBtn;
+    const idleText = provider === 'stripe' ? 'Pay with Stripe' : 'Pay with Square';
+    const busyText = provider === 'stripe' ? 'Opening Stripe...' : 'Opening Square...';
+    setBusy(button, true, busyText, idleText);
+    setPaymentMessage(`Preparing ${provider === 'stripe' ? 'Stripe' : 'Square'} checkout...`);
+    try{
+      const r = await fetch(`/api/payments/${provider}/checkout`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ bookingReference: currentBookingReference, amount: currentBookingFare })
+      });
+      const data = await r.json().catch(() => ({}));
+      if(!r.ok) throw new Error(data.error || `Failed to start ${provider} checkout`);
+      if(!data.url) throw new Error(`${provider} checkout URL was not returned`);
+      window.location.href = data.url;
+    }catch(err){
+      setPaymentMessage(err.message, true);
+      setBusy(button, false, busyText, idleText);
+      return;
+    }
   }
 
   function clearCustomerRoute(){
@@ -767,6 +837,7 @@
 
       const ref = data.booking?.reference || data.booking?.id || 'N/A';
       setStatus(`Booking created. Reference: ${ref}`, 'ok');
+      showPaymentOptions(ref, Number(data.booking?.estimatedFare ?? payload.estimatedFare ?? 0));
       form.reset();
       resetEstimateUi();
       selectService('ambulatory');
@@ -835,7 +906,10 @@
       try{ await estimateRouteAndFare(); }
       finally{ setBusy(estimateBtn, false, 'Estimating...', 'Estimate Fare'); }
     });
+    if(payStripeBtn) payStripeBtn.addEventListener('click', () => startHostedPayment('stripe'));
+    if(paySquareBtn) paySquareBtn.addEventListener('click', () => startHostedPayment('square'));
     form.addEventListener('submit', submitBooking);
+    hidePaymentOptions();
 
     ['tripDate','tripTime','pickup','destination'].forEach((id) => {
       ['change','input'].forEach((evt) => {

@@ -146,6 +146,9 @@
     .telemetryList.dimmed{opacity:.45;filter:grayscale(1)}
     .telemetryItem{padding:9px 10px;border:1px solid #d9e5ec;border-radius:10px;background:#fff;display:flex;justify-content:space-between;gap:8px;font-size:13px}
     .telemetryItem b{font-family:Manrope,sans-serif;font-size:12px;color:#1d4a63}
+    .paymentActions{display:grid;gap:8px}
+    .paymentActions button{width:100%}
+    .paymentActions .secondaryPay{background:#111827;color:#fff}
     .bottomBar{
       position:fixed;
       left:0;
@@ -286,6 +289,16 @@
         </div>
         <div class="msg" id="statusMsg"></div>
         <p class="subtle">This app submits directly to <strong>/api/bookings</strong>.</p>
+      </section>
+
+      <section class="section" id="paymentSection" hidden>
+        <h2>Complete Payment</h2>
+        <p class="subtle" id="paymentSummary">Choose how you want to pay for this booking.</p>
+        <div class="paymentActions">
+          <button type="button" class="primary" id="payStripeBtn">Pay with Stripe</button>
+          <button type="button" class="secondaryPay" id="paySquareBtn">Pay with Square</button>
+        </div>
+        <p class="subtle" id="paymentStatusMsg"></p>
       </section>
 
       <div class="bottomBar">

@@ -234,6 +234,48 @@ async function createStripeIntent(amountCents,metadata){
  const r=await fetch('https://api.stripe.com/v1/payment_intents',{method:'POST',headers:{authorization:`Bearer ${process.env.STRIPE_SECRET_KEY}`,'content-type':'application/x-www-form-urlencoded','idempotency-key':metadata?.bookingReference||crypto.randomUUID()},body:form});
  const data=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(data.error?.message||'Stripe request failed'),{statusCode:502});return data;
 }
+function siteBase(){
+ return String(process.env.SITE_URL||process.env.URL||process.env.DEPLOY_PRIME_URL||'https://nexusmt.com').replace(/\/$/,'');
+}
+async function createStripeCheckoutSession(amountCents,metadata){
+ if(!envEnabled('STRIPE_SECRET_KEY'))throw Object.assign(new Error('Stripe is not configured'),{statusCode:503});
+ const bookingReference=clean(metadata?.bookingReference)||crypto.randomUUID();
+ const form=new URLSearchParams();
+ form.set('mode','payment');
+ form.set('success_url',`${siteBase()}/booking-app.html?payment=success&bookingReference=${encodeURIComponent(bookingReference)}`);
+ form.set('cancel_url',`${siteBase()}/booking-app.html?payment=cancelled&bookingReference=${encodeURIComponent(bookingReference)}`);
+ form.set('line_items[0][price_data][currency]','usd');
+ form.set('line_items[0][price_data][product_data][name]',`Nexus Medical Transit Booking ${bookingReference}`);
+ form.set('line_items[0][price_data][unit_amount]',String(amountCents));
+ form.set('line_items[0][quantity]','1');
+ for(const [k,v] of Object.entries(metadata||{}))if(v!=null)form.set(`metadata[${k}]`,String(v).slice(0,500));
+ const r=await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{authorization:`Bearer ${process.env.STRIPE_SECRET_KEY}`,'content-type':'application/x-www-form-urlencoded','idempotency-key':`checkout-${bookingReference}`},body:form});
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok)throw Object.assign(new Error(data.error?.message||'Stripe checkout request failed'),{statusCode:502});
+ return data;
+}
+async function createSquarePaymentLink(amountCents,metadata){
+ if(!envEnabled('SQUARE_ACCESS_TOKEN')||!envEnabled('SQUARE_LOCATION_ID'))throw Object.assign(new Error('Square is not configured'),{statusCode:503});
+ const bookingReference=clean(metadata?.bookingReference)||crypto.randomUUID();
+ const body={
+  idempotency_key:`square-${bookingReference}`,
+  quick_pay:{
+   name:`Nexus Medical Transit Booking ${bookingReference}`,
+   price_money:{amount:amountCents,currency:'USD'},
+   location_id:process.env.SQUARE_LOCATION_ID
+  },
+  checkout_options:{
+   redirect_url:`${siteBase()}/booking-app.html?payment=success&provider=square&bookingReference=${encodeURIComponent(bookingReference)}`
+  },
+  pre_populated_data:{
+   buyer_email:clean(metadata?.email)||undefined
+  }
+ };
+ const r=await fetch('https://connect.squareup.com/v2/online-checkout/payment-links',{method:'POST',headers:{authorization:`Bearer ${process.env.SQUARE_ACCESS_TOKEN}`,'content-type':'application/json','Square-Version':'2026-07-15'},body:JSON.stringify(body)});
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok)throw Object.assign(new Error(data?.errors?.[0]?.detail||'Square payment link request failed'),{statusCode:502});
+ return data;
+}
 
 async function handler(event){
  try{
@@ -268,8 +310,8 @@ async function handler(event){
      }
    });
   }
-  if(p.join('/')==='integrations/config'&&method==='GET')return json(200,{build:'042',googleMapsEnabled:envEnabled('GOOGLE_MAPS_BROWSER_KEY'),googleMapsBrowserKey:process.env.GOOGLE_MAPS_BROWSER_KEY||'',stripeEnabled:envEnabled('STRIPE_PUBLISHABLE_KEY'),stripePublishableKey:process.env.STRIPE_PUBLISHABLE_KEY||''});
-  if(p.join('/')==='integrations/health'&&method==='GET')return json(200,{googleMaps:envEnabled('GOOGLE_MAPS_BROWSER_KEY')?'configured':'not-configured',twilio:envEnabled('TWILIO_ACCOUNT_SID')&&envEnabled('TWILIO_AUTH_TOKEN')&&envEnabled('TWILIO_PHONE_NUMBER')?'configured':'not-configured',sendGrid:envEnabled('SENDGRID_API_KEY')&&envEnabled('SENDGRID_FROM_EMAIL')?'configured':'not-configured',stripe:envEnabled('STRIPE_SECRET_KEY')&&envEnabled('STRIPE_PUBLISHABLE_KEY')?'configured':'not-configured',gps:'enabled',checkedAt:new Date().toISOString()});
+  if(p.join('/')==='integrations/config'&&method==='GET')return json(200,{build:'042',googleMapsEnabled:envEnabled('GOOGLE_MAPS_BROWSER_KEY'),googleMapsBrowserKey:process.env.GOOGLE_MAPS_BROWSER_KEY||'',stripeEnabled:envEnabled('STRIPE_PUBLISHABLE_KEY')&&envEnabled('STRIPE_SECRET_KEY'),stripePublishableKey:process.env.STRIPE_PUBLISHABLE_KEY||'',squareEnabled:envEnabled('SQUARE_ACCESS_TOKEN')&&envEnabled('SQUARE_LOCATION_ID')});
+  if(p.join('/')==='integrations/health'&&method==='GET')return json(200,{googleMaps:envEnabled('GOOGLE_MAPS_BROWSER_KEY')?'configured':'not-configured',twilio:envEnabled('TWILIO_ACCOUNT_SID')&&envEnabled('TWILIO_AUTH_TOKEN')&&envEnabled('TWILIO_PHONE_NUMBER')?'configured':'not-configured',sendGrid:envEnabled('SENDGRID_API_KEY')&&envEnabled('SENDGRID_FROM_EMAIL')?'configured':'not-configured',stripe:envEnabled('STRIPE_SECRET_KEY')&&envEnabled('STRIPE_PUBLISHABLE_KEY')?'configured':'not-configured',square:envEnabled('SQUARE_ACCESS_TOKEN')&&envEnabled('SQUARE_LOCATION_ID')?'configured':'not-configured',gps:'enabled',checkedAt:new Date().toISOString()});
   if(p[0]==='settings'&&p[1]==='public'&&method==='GET'){
    const settings=await readPlatformSettings();
    return json(200,{pricing:settings.pricing,fareRules:settings.fareRules,activeServices:settings.activeServices,organization:settings.organization});
@@ -395,6 +437,24 @@ async function handler(event){
    const amount=Math.round(Number(b.amount||r.rows[0].estimated_fare||0)*100);if(amount<50)return json(400,{error:'A valid payment amount is required'});
    const pi=await createStripeIntent(amount,{bookingReference:r.rows[0].reference});await query('UPDATE bookings SET stripe_payment_intent_id=$2,payment_status=$3,updated_at=now() WHERE reference=$1',[r.rows[0].reference,pi.id,'PENDING']);
    return json(200,{clientSecret:pi.client_secret,paymentIntentId:pi.id,amount});
+  }
+  if(p.join('/')==='payments/stripe/checkout'&&method==='POST'){
+   const b=parseBody(event);required(b,['bookingReference']);
+   const r=await query('SELECT reference,email,estimated_fare,payment_status FROM bookings WHERE reference=$1',[b.bookingReference]);
+   if(!r.rows[0])return json(404,{error:'Booking not found'});
+   const amount=Math.round(Number(b.amount||r.rows[0].estimated_fare||0)*100);if(amount<50)return json(400,{error:'A valid payment amount is required'});
+   const session=await createStripeCheckoutSession(amount,{bookingReference:r.rows[0].reference,email:r.rows[0].email||undefined});
+   await query('UPDATE bookings SET stripe_checkout_session_id=$2,payment_status=$3,updated_at=now() WHERE reference=$1',[r.rows[0].reference,session.id,'PENDING']);
+   return json(200,{provider:'stripe',url:session.url,sessionId:session.id,amount});
+  }
+  if(p.join('/')==='payments/square/checkout'&&method==='POST'){
+   const b=parseBody(event);required(b,['bookingReference']);
+   const r=await query('SELECT reference,email,estimated_fare,payment_status FROM bookings WHERE reference=$1',[b.bookingReference]);
+   if(!r.rows[0])return json(404,{error:'Booking not found'});
+   const amount=Math.round(Number(b.amount||r.rows[0].estimated_fare||0)*100);if(amount<50)return json(400,{error:'A valid payment amount is required'});
+   const square=await createSquarePaymentLink(amount,{bookingReference:r.rows[0].reference,email:r.rows[0].email||undefined});
+   await query('UPDATE bookings SET square_payment_link_id=$2,square_order_id=$3,payment_status=$4,updated_at=now() WHERE reference=$1',[r.rows[0].reference,square.payment_link?.id||null,square.payment_link?.order_id||square.related_resources?.orders?.[0]?.id||null,'PENDING']);
+   return json(200,{provider:'square',url:square.payment_link?.url,linkId:square.payment_link?.id||null,amount});
   }
   if(p.join('/')==='gps/positions'&&method==='POST'){
    const u=await requireUser(bearer(event),['DRIVER','ADMIN','DISPATCHER']);const b=parseBody(event);required(b,['vehicleUnit','latitude','longitude']);
