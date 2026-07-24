@@ -218,6 +218,46 @@ document.getElementById('refreshAudit').addEventListener('click',loadAudit);
 document.getElementById('applyAuditFilter').addEventListener('click',loadAudit);
 
 // Settings
+const SERVICE_POLICY_ORDER=['wheelchair','ambulatory','broda','stretcher','bariatric','bls','als1','als2'];
+
+function renderServicePolicyRows(settings){
+  const rowsEl=document.getElementById('servicePolicyRows');
+  if(!rowsEl)return;
+  const pricing=settings?.pricing||currentSettings?.pricing||window.NexusCore?.getPricing?.()||{};
+  const rules=settings?.fareRules||currentSettings?.fareRules||{};
+  const policies=rules.servicePolicies||{};
+  const keys=Object.keys(pricing).length?Object.keys(pricing):SERVICE_POLICY_ORDER;
+  const ordered=[...SERVICE_POLICY_ORDER.filter(k=>keys.includes(k)),...keys.filter(k=>!SERVICE_POLICY_ORDER.includes(k))];
+  rowsEl.innerHTML=ordered.map((key)=>{
+    const label=pricing[key]?.label||key.toUpperCase();
+    const p=policies[key]||{};
+    return `<tr data-service-policy="${key}">
+      <td><strong>${label}</strong></td>
+      <td><input type="number" step="0.01" min="0" data-field="cancellationFee" value="${Number(p.cancellationFee||0)}" style="width:95px;padding:8px;border:1px solid #c5d3dd;border-radius:8px"></td>
+      <td><input type="number" step="0.01" min="0" data-field="noShowFee" value="${Number(p.noShowFee||0)}" style="width:95px;padding:8px;border:1px solid #c5d3dd;border-radius:8px"></td>
+      <td><input type="number" step="0.01" min="0" data-field="trafficOverageFeePerHour" value="${Number(p.trafficOverageFeePerHour||0)}" style="width:95px;padding:8px;border:1px solid #c5d3dd;border-radius:8px"></td>
+      <td><input type="number" step="1" min="0" max="100" data-field="returnMilesInclusionPct" value="${Number(p.returnMilesInclusionPct||0)}" style="width:95px;padding:8px;border:1px solid #c5d3dd;border-radius:8px"></td>
+      <td><input type="number" step="0.1" min="0" max="100" data-field="afterHoursSurchargePct" value="${Number(p.afterHoursSurchargePct||0)}" style="width:95px;padding:8px;border:1px solid #c5d3dd;border-radius:8px"></td>
+      <td><input type="number" step="0.1" min="0" max="100" data-field="weekendSurchargePct" value="${Number(p.weekendSurchargePct||0)}" style="width:95px;padding:8px;border:1px solid #c5d3dd;border-radius:8px"></td>
+      <td><input type="number" step="0.1" min="0" max="100" data-field="holidaySurchargePct" value="${Number(p.holidaySurchargePct||0)}" style="width:95px;padding:8px;border:1px solid #c5d3dd;border-radius:8px"></td>
+    </tr>`;
+  }).join('');
+}
+
+function readServicePoliciesFromTable(){
+  const out={};
+  document.querySelectorAll('#servicePolicyRows tr[data-service-policy]').forEach((tr)=>{
+    const key=tr.getAttribute('data-service-policy');
+    if(!key)return;
+    const row={};
+    tr.querySelectorAll('input[data-field]').forEach((input)=>{
+      row[input.getAttribute('data-field')]=Number(input.value||0);
+    });
+    out[key]=row;
+  });
+  return out;
+}
+
 function readSettingsForm(){
   const serviceInputs=Array.from(document.querySelectorAll('#activeServicesGroup input[type="checkbox"]'));
   const activeServices=serviceInputs.filter(i=>i.checked).map(i=>i.value);
@@ -241,6 +281,8 @@ function readSettingsForm(){
       weekendSurchargePct:Number(document.getElementById('weekendSurchargePct').value||0),
       holidaySurchargePct:Number(document.getElementById('holidaySurchargePct').value||0),
       cancellationFee:Number(document.getElementById('cancellationFee').value||0),
+      cancellationWindowHours:Number(document.getElementById('cancellationWindowHours').value||24),
+      cancellationLeadHours:Number(document.getElementById('cancellationLeadHours').value||72),
       noShowFee:Number(document.getElementById('noShowFee').value||0),
       freeWaitMinutes:Number(document.getElementById('freeWaitMinutes').value||0),
       mileageRoundingRule:document.getElementById('mileageRoundingRule').value,
@@ -249,7 +291,8 @@ function readSettingsForm(){
       returnMilesThreshold:Number(document.getElementById('returnMilesThreshold').value||10),
       returnMilesInclusionPct:Number(document.getElementById('returnMilesInclusionPct').value||100),
       trafficOverageFeePerHour:Number(document.getElementById('trafficOverageFeePerHour').value||0),
-      trafficOverageGraceMinutes:Number(document.getElementById('trafficOverageGraceMinutes').value||0)
+      trafficOverageGraceMinutes:Number(document.getElementById('trafficOverageGraceMinutes').value||0),
+      servicePolicies:readServicePoliciesFromTable()
     }
   };
 }
@@ -283,6 +326,8 @@ function applySettingsToForm(settings){
   document.getElementById('weekendSurchargePct').value=Number(fare.weekendSurchargePct||0);
   document.getElementById('holidaySurchargePct').value=Number(fare.holidaySurchargePct||0);
   document.getElementById('cancellationFee').value=Number(fare.cancellationFee||0);
+  document.getElementById('cancellationWindowHours').value=Number(fare.cancellationWindowHours||24);
+  document.getElementById('cancellationLeadHours').value=Number(fare.cancellationLeadHours||72);
   document.getElementById('noShowFee').value=Number(fare.noShowFee||0);
   document.getElementById('freeWaitMinutes').value=Number(fare.freeWaitMinutes||15);
   document.getElementById('mileageRoundingRule').value=fare.mileageRoundingRule||'TENTH_MILE';
@@ -292,6 +337,7 @@ function applySettingsToForm(settings){
   document.getElementById('returnMilesInclusionPct').value=Number(fare.returnMilesInclusionPct||100);
   document.getElementById('trafficOverageFeePerHour').value=Number(fare.trafficOverageFeePerHour||0);
   document.getElementById('trafficOverageGraceMinutes').value=Number(fare.trafficOverageGraceMinutes||0);
+  renderServicePolicyRows(settings);
   const active=new Set((settings.activeServices||[]).map(x=>String(x).toUpperCase()));
   document.querySelectorAll('#activeServicesGroup input[type="checkbox"]').forEach(i=>{i.checked=active.has(String(i.value).toUpperCase());});
   applyFuelModeUi();

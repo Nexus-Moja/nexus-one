@@ -20,6 +20,17 @@ const DEFAULT_PRICING={
  als2:{label:'ALS II Ambulance',base:1350,includedMiles:0,perMile:23,waitPer15:75}
 };
 
+const DEFAULT_SERVICE_POLICIES={
+ wheelchair:{cancellationFee:40,noShowFee:60,trafficOverageFeePerHour:25,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ ambulatory:{cancellationFee:35,noShowFee:50,trafficOverageFeePerHour:20,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ broda:{cancellationFee:75,noShowFee:95,trafficOverageFeePerHour:35,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ stretcher:{cancellationFee:120,noShowFee:150,trafficOverageFeePerHour:50,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ bariatric:{cancellationFee:160,noShowFee:200,trafficOverageFeePerHour:65,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ bls:{cancellationFee:200,noShowFee:260,trafficOverageFeePerHour:85,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ als1:{cancellationFee:250,noShowFee:325,trafficOverageFeePerHour:95,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+ als2:{cancellationFee:300,noShowFee:390,trafficOverageFeePerHour:110,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10}
+};
+
 const DEFAULT_PLATFORM_SETTINGS={
  pricing:DEFAULT_PRICING,
  fareRules:{
@@ -37,6 +48,8 @@ const DEFAULT_PLATFORM_SETTINGS={
   weekendSurchargePct:0,
   holidaySurchargePct:10,
   cancellationFee:30,
+  cancellationWindowHours:24,
+  cancellationLeadHours:72,
   noShowFee:50,
   freeWaitMinutes:15,
   mileageRoundingRule:'TENTH_MILE',
@@ -45,7 +58,8 @@ const DEFAULT_PLATFORM_SETTINGS={
   returnMilesThreshold:10,
   returnMilesInclusionPct:100,
   trafficOverageFeePerHour:0,
-  trafficOverageGraceMinutes:0
+  trafficOverageGraceMinutes:0,
+  servicePolicies:DEFAULT_SERVICE_POLICIES
  },
  organization:{
   name:'Nexus Medical Transit',
@@ -85,6 +99,39 @@ function mergePricing(input){
  return base;
 }
 
+function mergeServicePolicies(input){
+ const base=JSON.parse(JSON.stringify(DEFAULT_SERVICE_POLICIES));
+ if(!input||typeof input!=='object')return base;
+ for(const key of Object.keys(base)){
+  const src=input[key]||{};
+  base[key]={
+   cancellationFee:clamp(n(src.cancellationFee,base[key].cancellationFee),0,10000),
+   noShowFee:clamp(n(src.noShowFee,base[key].noShowFee),0,10000),
+   trafficOverageFeePerHour:clamp(n(src.trafficOverageFeePerHour,base[key].trafficOverageFeePerHour),0,1000),
+   returnMilesInclusionPct:clamp(n(src.returnMilesInclusionPct,base[key].returnMilesInclusionPct),0,100),
+   afterHoursSurchargePct:clamp(n(src.afterHoursSurchargePct,base[key].afterHoursSurchargePct),0,100),
+   weekendSurchargePct:clamp(n(src.weekendSurchargePct,base[key].weekendSurchargePct),0,100),
+   holidaySurchargePct:clamp(n(src.holidaySurchargePct,base[key].holidaySurchargePct),0,100)
+  };
+ }
+ return base;
+}
+
+function resolveServicePolicyKey(service){
+ const raw=String(service||'').trim().toLowerCase();
+ if(!raw)return 'ambulatory';
+ if(DEFAULT_SERVICE_POLICIES[raw])return raw;
+ if(raw.includes('wheel'))return 'wheelchair';
+ if(raw.includes('ambul'))return 'ambulatory';
+ if(raw.includes('broda'))return 'broda';
+ if(raw.includes('stretcher'))return 'stretcher';
+ if(raw.includes('bariatric'))return 'bariatric';
+ if(raw.includes('als ii')||raw.includes('als2'))return 'als2';
+ if(raw.includes('als i')||raw.includes('als1'))return 'als1';
+ if(raw.includes('bls'))return 'bls';
+ return 'ambulatory';
+}
+
 function mergePlatformSettings(raw){
  const src=raw&&typeof raw==='object'?raw:{};
  const fareSrc=src.fareRules&&typeof src.fareRules==='object'?src.fareRules:{};
@@ -107,6 +154,8 @@ function mergePlatformSettings(raw){
    weekendSurchargePct:clamp(n(fareSrc.weekendSurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.weekendSurchargePct),0,100),
    holidaySurchargePct:clamp(n(fareSrc.holidaySurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.holidaySurchargePct),0,100),
    cancellationFee:clamp(n(fareSrc.cancellationFee,DEFAULT_PLATFORM_SETTINGS.fareRules.cancellationFee),0,10000),
+  cancellationWindowHours:clamp(n(fareSrc.cancellationWindowHours,DEFAULT_PLATFORM_SETTINGS.fareRules.cancellationWindowHours),0,240),
+  cancellationLeadHours:clamp(n(fareSrc.cancellationLeadHours,DEFAULT_PLATFORM_SETTINGS.fareRules.cancellationLeadHours),0,720),
    noShowFee:clamp(n(fareSrc.noShowFee,DEFAULT_PLATFORM_SETTINGS.fareRules.noShowFee),0,10000),
    freeWaitMinutes:clamp(n(fareSrc.freeWaitMinutes,DEFAULT_PLATFORM_SETTINGS.fareRules.freeWaitMinutes),0,180),
    mileageRoundingRule:['EXACT','TENTH_MILE','WHOLE_MILE'].includes(String(fareSrc.mileageRoundingRule||''))?String(fareSrc.mileageRoundingRule):DEFAULT_PLATFORM_SETTINGS.fareRules.mileageRoundingRule,
@@ -115,7 +164,8 @@ function mergePlatformSettings(raw){
   returnMilesThreshold:clamp(n(fareSrc.returnMilesThreshold,DEFAULT_PLATFORM_SETTINGS.fareRules.returnMilesThreshold),0,500),
   returnMilesInclusionPct:clamp(n(fareSrc.returnMilesInclusionPct,DEFAULT_PLATFORM_SETTINGS.fareRules.returnMilesInclusionPct),0,100),
   trafficOverageFeePerHour:clamp(n(fareSrc.trafficOverageFeePerHour,DEFAULT_PLATFORM_SETTINGS.fareRules.trafficOverageFeePerHour),0,1000),
-  trafficOverageGraceMinutes:clamp(n(fareSrc.trafficOverageGraceMinutes,DEFAULT_PLATFORM_SETTINGS.fareRules.trafficOverageGraceMinutes),0,180)
+  trafficOverageGraceMinutes:clamp(n(fareSrc.trafficOverageGraceMinutes,DEFAULT_PLATFORM_SETTINGS.fareRules.trafficOverageGraceMinutes),0,180),
+  servicePolicies:mergeServicePolicies(fareSrc.servicePolicies)
   },
   organization:{
    name:clean(orgSrc.name)||DEFAULT_PLATFORM_SETTINGS.organization.name,
@@ -280,9 +330,26 @@ async function handler(event){
    const r=await query('SELECT * FROM bookings WHERE reference=$1 AND regexp_replace(phone,\'\\D\',\'\',\'g\')=regexp_replace($2,\'\\D\',\'\',\'g\')',[ref,phone]);
    if(!r.rows[0])return json(404,{error:'Booking not found or phone number does not match'});
    if(['CANCELLED','COMPLETED','IN_TRANSIT','ARRIVED'].includes(r.rows[0].status))return json(400,{error:`Cannot cancel a booking with status: ${r.rows[0].status}`});
-   const updated=await query('UPDATE bookings SET status=$2,cancelled_at=now(),cancel_reason=$3,updated_at=now() WHERE reference=$1 RETURNING *',[ref,'CANCELLED',clean(b.reason)||'Cancelled by passenger']);
+    const settings=await readPlatformSettings();
+    const fareRules=settings.fareRules||{};
+    const tripAt=new Date(`${String(r.rows[0].trip_date||'')}T${String(r.rows[0].trip_time||'00:00:00')}`);
+    const createdAt=new Date(r.rows[0].created_at||Date.now());
+    const now=new Date();
+    const hoursUntilTrip=(tripAt.getTime()-now.getTime())/36e5;
+    const bookingLeadHours=(tripAt.getTime()-createdAt.getTime())/36e5;
+    const windowHours=Math.max(0,Number(fareRules.cancellationWindowHours||24));
+    const leadHours=Math.max(0,Number(fareRules.cancellationLeadHours||72));
+    const applyWindow=Number.isFinite(hoursUntilTrip)&&hoursUntilTrip<=windowHours;
+    const applyLead=Number.isFinite(bookingLeadHours)&&bookingLeadHours>=leadHours;
+    const policyKey=resolveServicePolicyKey(r.rows[0].service);
+    const servicePolicy=fareRules.servicePolicies?.[policyKey]||{};
+    const serviceCancellationFee=Math.max(0,Number(servicePolicy.cancellationFee??fareRules.cancellationFee||0));
+    const cancellationFeeApplied=Boolean(applyWindow&&applyLead&&serviceCancellationFee>0);
+    const cancellationFeeAmount=cancellationFeeApplied?serviceCancellationFee:0;
+    const ruleSnapshot={policyKey,cancellationWindowHours:windowHours,cancellationLeadHours:leadHours,hoursUntilTrip:Number.isFinite(hoursUntilTrip)?Number(hoursUntilTrip.toFixed(2)):null,bookingLeadHours:Number.isFinite(bookingLeadHours)?Number(bookingLeadHours.toFixed(2)):null,applied:cancellationFeeApplied};
+    const updated=await query('UPDATE bookings SET status=$2,cancelled_at=now(),cancel_reason=$3,cancellation_fee_amount=$4,cancellation_fee_applied=$5,cancellation_rule_snapshot=$6::jsonb,payment_status=CASE WHEN $5 THEN $7 ELSE payment_status END,updated_at=now() WHERE reference=$1 RETURNING *',[ref,'CANCELLED',clean(b.reason)||'Cancelled by passenger',cancellationFeeAmount,cancellationFeeApplied,JSON.stringify(ruleSnapshot),cancellationFeeApplied?'DUE':'UNPAID']);
    await query('INSERT INTO trip_status_history(booking_reference,status,status_label,note,actor) VALUES($1,$2,$3,$4,$5)',[ref,'CANCELLED','cancelled',clean(b.reason)||'Cancelled by passenger','PASSENGER']);
-   await audit('BOOKING',ref,'CANCELLED',{reason:clean(b.reason)||'Passenger request'});
+    await audit('BOOKING',ref,'CANCELLED',{reason:clean(b.reason)||'Passenger request',cancellationFeeAmount,cancellationFeeApplied,policyKey});
    const booking=mapBooking(updated.rows[0]);
    // Notify passenger and company of cancellation
    await Promise.allSettled([
@@ -290,7 +357,7 @@ async function handler(event){
      booking.email?sendEmail(booking.email,`Trip ${ref} cancelled`,`<h2>Your trip has been cancelled</h2><p>Reference <strong>${ref}</strong> has been cancelled as requested.</p><p>Call <strong>(888) 760-4990</strong> or visit nexusmt.com to book a new trip.</p>`):Promise.resolve(),
      process.env.COMPANY_EMAIL?sendEmail(process.env.COMPANY_EMAIL,`Trip cancellation: ${ref}`,`<h2>Trip Cancelled</h2><p><strong>Reference:</strong> ${ref}</p><p><strong>Passenger:</strong> ${booking.name} (${booking.phone})</p><p><strong>Route:</strong> ${booking.pickup} → ${booking.destination}</p><p><strong>Original Date/Time:</strong> ${booking.date} at ${booking.time}</p><p><strong>Reason:</strong> ${clean(b.reason)||'Passenger request'}</p>`):Promise.resolve()
    ]);
-   return json(200,{booking,message:'Booking cancelled successfully'});
+  return json(200,{booking,cancellationFee:{applied:cancellationFeeApplied,amount:cancellationFeeAmount,policyKey,windowHours,leadHours},message:'Booking cancelled successfully'});
   }
   // Reschedule booking
   if(p[0]==='bookings'&&p[1]&&p[2]==='reschedule'&&method==='POST'){
@@ -480,9 +547,9 @@ async function handler(event){
    const booking=mapBooking(updated.rows[0]);
    return json(200,{booking,message:'Trip details updated successfully'});
   }
-  if(p[0]==='ready'&&method==='GET'){const r=await query("SELECT version FROM schema_migrations WHERE version IN ('040.001','041.001','042.001','044.001') ORDER BY version");return json(r.rowCount===4?200:503,{ready:r.rowCount===4,migrations:r.rows.map(x=>x.version)})}
+  if(p[0]==='ready'&&method==='GET'){const r=await query("SELECT version FROM schema_migrations WHERE version IN ('040.001','041.001','042.001','044.001','045.001','046.001') ORDER BY version");return json(r.rowCount===6?200:503,{ready:r.rowCount===6,migrations:r.rows.map(x=>x.version)})}
   return json(404,{error:'Route not found'});
  }catch(err){console.error(err);return json(err.statusCode||500,{error:err.statusCode?err.message:'Internal server error',requestId:crypto.randomUUID()})}
 }
-function mapBooking(b){return {id:b.reference,reference:b.reference,name:b.name,phone:b.phone,email:b.email,alternatePhone:b.alternate_phone,alternateEmail:b.alternate_email,service:b.service,pickup:b.pickup,destination:b.destination,date:b.trip_date,time:String(b.trip_time||'').slice(0,5),status:statusLabel(b.status),statusLabel:statusLabel(b.status).replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()),driver:b.driver_name,driverName:b.driver_name,vehicle:b.vehicle_unit,vehicleUnit:b.vehicle_unit,facilityId:b.facility_id,distanceMiles:b.distance_miles?Number(b.distance_miles):null,estimatedDuration:b.estimated_duration,estimatedFare:b.estimated_fare?Number(b.estimated_fare):null,paymentStatus:b.payment_status||'UNPAID',lastUpdatedBy:b.last_updated_by,lastUpdatedAt:b.last_updated_at} }
+function mapBooking(b){return {id:b.reference,reference:b.reference,name:b.name,phone:b.phone,email:b.email,alternatePhone:b.alternate_phone,alternateEmail:b.alternate_email,service:b.service,pickup:b.pickup,destination:b.destination,date:b.trip_date,time:String(b.trip_time||'').slice(0,5),status:statusLabel(b.status),statusLabel:statusLabel(b.status).replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()),driver:b.driver_name,driverName:b.driver_name,vehicle:b.vehicle_unit,vehicleUnit:b.vehicle_unit,facilityId:b.facility_id,distanceMiles:b.distance_miles?Number(b.distance_miles):null,estimatedDuration:b.estimated_duration,estimatedFare:b.estimated_fare?Number(b.estimated_fare):null,paymentStatus:b.payment_status||'UNPAID',cancellationFeeAmount:b.cancellation_fee_amount?Number(b.cancellation_fee_amount):0,cancellationFeeApplied:Boolean(b.cancellation_fee_applied),cancellationRuleSnapshot:b.cancellation_rule_snapshot||null,lastUpdatedBy:b.last_updated_by,lastUpdatedAt:b.last_updated_at} }
 exports.handler=handler;

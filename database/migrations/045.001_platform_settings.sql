@@ -28,6 +28,8 @@ VALUES (
       'weekendSurchargePct', 0,
       'holidaySurchargePct', 10,
       'cancellationFee', 30,
+      'cancellationWindowHours', 24,
+      'cancellationLeadHours', 72,
       'noShowFee', 50,
       'freeWaitMinutes', 15,
       'mileageRoundingRule', 'TENTH_MILE',
@@ -36,7 +38,17 @@ VALUES (
       'returnMilesThreshold', 10,
       'returnMilesInclusionPct', 100,
       'trafficOverageFeePerHour', 0,
-      'trafficOverageGraceMinutes', 0
+      'trafficOverageGraceMinutes', 0,
+      'servicePolicies', jsonb_build_object(
+        'wheelchair', jsonb_build_object('cancellationFee', 40, 'noShowFee', 60, 'trafficOverageFeePerHour', 25, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10),
+        'ambulatory', jsonb_build_object('cancellationFee', 35, 'noShowFee', 50, 'trafficOverageFeePerHour', 20, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10),
+        'broda', jsonb_build_object('cancellationFee', 75, 'noShowFee', 95, 'trafficOverageFeePerHour', 35, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10),
+        'stretcher', jsonb_build_object('cancellationFee', 120, 'noShowFee', 150, 'trafficOverageFeePerHour', 50, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10),
+        'bariatric', jsonb_build_object('cancellationFee', 160, 'noShowFee', 200, 'trafficOverageFeePerHour', 65, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10),
+        'bls', jsonb_build_object('cancellationFee', 200, 'noShowFee', 260, 'trafficOverageFeePerHour', 85, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10),
+        'als1', jsonb_build_object('cancellationFee', 250, 'noShowFee', 325, 'trafficOverageFeePerHour', 95, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10),
+        'als2', jsonb_build_object('cancellationFee', 300, 'noShowFee', 390, 'trafficOverageFeePerHour', 110, 'returnMilesInclusionPct', 100, 'afterHoursSurchargePct', 0, 'weekendSurchargePct', 0, 'holidaySurchargePct', 10)
+      )
     ),
     'organization', jsonb_build_object(
       'name', 'Nexus Medical Transit',

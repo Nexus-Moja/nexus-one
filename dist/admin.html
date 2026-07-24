@@ -190,6 +190,10 @@
     <div class="formField"><label for="cancellationFee">Cancellation fee ($)</label><input id="cancellationFee" type="number" min="0" step="0.01" value="30"></div>
   </div>
   <div class="formRow" style="margin-top:14px">
+    <div class="formField"><label for="cancellationWindowHours">Cancellation window (hours before trip)</label><input id="cancellationWindowHours" type="number" min="0" max="240" step="1" value="24"></div>
+    <div class="formField"><label for="cancellationLeadHours">Minimum booking lead (hours before trip)</label><input id="cancellationLeadHours" type="number" min="0" max="720" step="1" value="72"></div>
+  </div>
+  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="noShowFee">No-show fee ($)</label><input id="noShowFee" type="number" min="0" step="0.01" value="50"></div>
     <div class="formField"><label for="freeWaitMinutes">Free wait minutes</label><input id="freeWaitMinutes" type="number" min="0" max="180" step="1" value="15"></div>
   </div>
@@ -207,6 +211,15 @@
   <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="trafficOverageFeePerHour">Traffic overage fee ($/hour)</label><input id="trafficOverageFeePerHour" type="number" min="0" max="1000" step="0.01" value="0"></div>
     <div class="formField"><label for="trafficOverageGraceMinutes">Traffic overage grace (minutes)</label><input id="trafficOverageGraceMinutes" type="number" min="0" max="180" step="1" value="0"></div>
+  </div>
+  <div style="margin-top:18px">
+    <p style="margin:0 0 10px;font-weight:750">Per-service policy overrides</p>
+    <div class="tableWrap">
+      <table class="table configTable" aria-label="Per-service policy overrides">
+        <thead><tr><th>Service</th><th>Cancellation ($)</th><th>No-show ($)</th><th>Traffic ($/hour)</th><th>Return miles (%)</th><th>After-hours (%)</th><th>Weekend (%)</th><th>Holiday (%)</th></tr></thead>
+        <tbody id="servicePolicyRows"></tbody>
+      </table>
+    </div>
   </div>
   <div style="margin-top:22px"><button class="button primary" id="saveSettings">Save settings</button><span id="settingsSavedMsg" style="margin-left:12px;color:var(--green);font-weight:700;display:none">Settings saved.</span></div>
 </section>

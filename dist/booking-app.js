@@ -44,6 +44,8 @@
     weekendSurchargePct: 0,
     holidaySurchargePct: 10,
     cancellationFee: 30,
+    cancellationWindowHours: 24,
+    cancellationLeadHours: 72,
     noShowFee: 50,
     freeWaitMinutes: 15,
     mileageRoundingRule: 'TENTH_MILE',
@@ -52,7 +54,17 @@
     returnMilesThreshold: 10,
     returnMilesInclusionPct: 100,
     trafficOverageFeePerHour: 0,
-    trafficOverageGraceMinutes: 0
+    trafficOverageGraceMinutes: 0,
+    servicePolicies: {
+      wheelchair:{cancellationFee:40,noShowFee:60,trafficOverageFeePerHour:25,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+      ambulatory:{cancellationFee:35,noShowFee:50,trafficOverageFeePerHour:20,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+      broda:{cancellationFee:75,noShowFee:95,trafficOverageFeePerHour:35,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+      stretcher:{cancellationFee:120,noShowFee:150,trafficOverageFeePerHour:50,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+      bariatric:{cancellationFee:160,noShowFee:200,trafficOverageFeePerHour:65,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+      bls:{cancellationFee:200,noShowFee:260,trafficOverageFeePerHour:85,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+      als1:{cancellationFee:250,noShowFee:325,trafficOverageFeePerHour:95,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10},
+      als2:{cancellationFee:300,noShowFee:390,trafficOverageFeePerHour:110,returnMilesInclusionPct:100,afterHoursSurchargePct:0,weekendSurchargePct:0,holidaySurchargePct:10}
+    }
   };
 
   let mapsReadyPromise = null;
@@ -105,13 +117,20 @@
     return platformPricing || window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
   }
 
+  function getServicePolicy(service){
+    const key = normalizeService(service);
+    const policies = fareRules?.servicePolicies || {};
+    return policies[key] || {};
+  }
+
   function calculateFare(service, miles, dateStr, timeStr, routeMetrics = {}){
     const rate = getPricing(service);
+    const policy = getServicePolicy(service);
     const distance = Math.max(0, Number(miles) || 0);
     const includedMiles = Number(rate.includedMiles || 0);
     const outboundBillable = Math.max(0, distance - includedMiles);
     const returnThreshold = Math.max(0, Number(fareRules.returnMilesThreshold || 0));
-    const returnPct = Math.max(0, Number(fareRules.returnMilesInclusionPct || 0)) / 100;
+    const returnPct = Math.max(0, Number(policy.returnMilesInclusionPct ?? fareRules.returnMilesInclusionPct || 0)) / 100;
     const returnMiles = distance > returnThreshold ? (distance * returnPct) : 0;
     const totalChargedMiles = distance + returnMiles;
     const billable = outboundBillable + returnMiles;
@@ -124,7 +143,8 @@
     const graceMinutes = Math.max(0, Number(fareRules.trafficOverageGraceMinutes || 0));
     const overageMinutes = Math.max(0, trafficMinutes - scheduledMinutes - graceMinutes);
     if(overageMinutes > 0){
-      subtotal += (overageMinutes / 60) * Math.max(0, Number(fareRules.trafficOverageFeePerHour || 0));
+      const trafficRate = Math.max(0, Number(policy.trafficOverageFeePerHour ?? fareRules.trafficOverageFeePerHour || 0));
+      subtotal += (overageMinutes / 60) * trafficRate;
     }
 
     const tripDate = new Date(dateStr || new Date());
@@ -135,9 +155,9 @@
     const hour = Number(String(timeStr || '00:00').split(':')[0]);
     const isAfterHours = Number.isFinite(hour) && (hour >= 22 || hour < 5);
 
-    if(isHoliday) subtotal += subtotal * (Number(fareRules.holidaySurchargePct || 0) / 100);
-    if(isWeekend) subtotal += subtotal * (Number(fareRules.weekendSurchargePct || 0) / 100);
-    if(isAfterHours) subtotal += subtotal * (Number(fareRules.afterHoursSurchargePct || 0) / 100);
+    if(isHoliday) subtotal += subtotal * (Number(policy.holidaySurchargePct ?? fareRules.holidaySurchargePct || 0) / 100);
+    if(isWeekend) subtotal += subtotal * (Number(policy.weekendSurchargePct ?? fareRules.weekendSurchargePct || 0) / 100);
+    if(isAfterHours) subtotal += subtotal * (Number(policy.afterHoursSurchargePct ?? fareRules.afterHoursSurchargePct || 0) / 100);
 
     return Math.max(Number(fareRules.minimumFare || 0), subtotal);
   }
