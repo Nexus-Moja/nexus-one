@@ -24,6 +24,7 @@ const DEFAULT_PLATFORM_SETTINGS={
  pricing:DEFAULT_PRICING,
  fareRules:{
   minimumFare:0,
+  fuelSurchargePerMile:0,
   afterHoursSurchargePct:0,
   weekendSurchargePct:0,
   holidaySurchargePct:10,
@@ -81,6 +82,7 @@ function mergePlatformSettings(raw){
   pricing:mergePricing(src.pricing),
   fareRules:{
    minimumFare:clamp(n(fareSrc.minimumFare,DEFAULT_PLATFORM_SETTINGS.fareRules.minimumFare),0,10000),
+    fuelSurchargePerMile:clamp(n(fareSrc.fuelSurchargePerMile,DEFAULT_PLATFORM_SETTINGS.fareRules.fuelSurchargePerMile),0,25),
    afterHoursSurchargePct:clamp(n(fareSrc.afterHoursSurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.afterHoursSurchargePct),0,100),
    weekendSurchargePct:clamp(n(fareSrc.weekendSurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.weekendSurchargePct),0,100),
    holidaySurchargePct:clamp(n(fareSrc.holidaySurchargePct,DEFAULT_PLATFORM_SETTINGS.fareRules.holidaySurchargePct),0,100),

@@ -15,6 +15,7 @@ VALUES (
     'pricing', '{}'::jsonb,
     'fareRules', jsonb_build_object(
       'minimumFare', 0,
+      'fuelSurchargePerMile', 0,
       'afterHoursSurchargePct', 0,
       'weekendSurchargePct', 0,
       'holidaySurchargePct', 10,

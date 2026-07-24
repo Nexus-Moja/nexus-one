@@ -150,22 +150,25 @@
   </div></div>
   <div class="formRow" style="margin-top:18px">
     <div class="formField"><label for="minimumFare">Minimum fare ($)</label><input id="minimumFare" type="number" min="0" step="0.01" value="0"></div>
+    <div class="formField"><label for="fuelSurchargePerMile">Fuel surcharge ($/mile)</label><input id="fuelSurchargePerMile" type="number" min="0" step="0.01" value="0"></div>
+  </div>
+  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="afterHoursSurchargePct">After-hours surcharge (%)</label><input id="afterHoursSurchargePct" type="number" min="0" max="100" step="0.1" value="0"></div>
-  </div>
-  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="weekendSurchargePct">Weekend surcharge (%)</label><input id="weekendSurchargePct" type="number" min="0" max="100" step="0.1" value="0"></div>
+  </div>
+  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="holidaySurchargePct">Holiday surcharge (%)</label><input id="holidaySurchargePct" type="number" min="0" max="100" step="0.1" value="10"></div>
-  </div>
-  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="cancellationFee">Cancellation fee ($)</label><input id="cancellationFee" type="number" min="0" step="0.01" value="30"></div>
+  </div>
+  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="noShowFee">No-show fee ($)</label><input id="noShowFee" type="number" min="0" step="0.01" value="50"></div>
-  </div>
-  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="freeWaitMinutes">Free wait minutes</label><input id="freeWaitMinutes" type="number" min="0" max="180" step="1" value="15"></div>
-    <div class="formField"><label for="mileageRoundingRule">Mileage rounding rule</label><select id="mileageRoundingRule"><option value="EXACT">Exact</option><option value="TENTH_MILE" selected>Tenth mile</option><option value="WHOLE_MILE">Whole mile</option></select></div>
   </div>
   <div class="formRow" style="margin-top:14px">
+    <div class="formField"><label for="mileageRoundingRule">Mileage rounding rule</label><select id="mileageRoundingRule"><option value="EXACT">Exact</option><option value="TENTH_MILE" selected>Tenth mile</option><option value="WHOLE_MILE">Whole mile</option></select></div>
     <div class="formField"><label for="telemetryRefreshSeconds">Telemetry refresh (seconds)</label><input id="telemetryRefreshSeconds" type="number" min="5" max="120" step="1" value="20"></div>
+  </div>
+  <div class="formRow" style="margin-top:14px">
     <div class="formField"><label for="maxBookingDistanceMiles">Max booking distance (miles)</label><input id="maxBookingDistanceMiles" type="number" min="5" max="500" step="1" value="125"></div>
   </div>
   <div style="margin-top:22px"><button class="button primary" id="saveSettings">Save settings</button><span id="settingsSavedMsg" style="margin-left:12px;color:var(--green);font-weight:700;display:none">Settings saved.</span></div>
@@ -346,6 +349,7 @@ function readSettingsForm(){
     activeServices,
     fareRules:{
       minimumFare:Number(document.getElementById('minimumFare').value||0),
+      fuelSurchargePerMile:Number(document.getElementById('fuelSurchargePerMile').value||0),
       afterHoursSurchargePct:Number(document.getElementById('afterHoursSurchargePct').value||0),
       weekendSurchargePct:Number(document.getElementById('weekendSurchargePct').value||0),
       holidaySurchargePct:Number(document.getElementById('holidaySurchargePct').value||0),
@@ -368,6 +372,7 @@ function applySettingsToForm(settings){
   document.getElementById('orgEmail').value=org.email||'contact@nexusmt.com';
   document.getElementById('orgWebsite').value=org.website||'https://nexusmt.com';
   document.getElementById('minimumFare').value=Number(fare.minimumFare||0);
+  document.getElementById('fuelSurchargePerMile').value=Number(fare.fuelSurchargePerMile||0);
   document.getElementById('afterHoursSurchargePct').value=Number(fare.afterHoursSurchargePct||0);
   document.getElementById('weekendSurchargePct').value=Number(fare.weekendSurchargePct||0);
   document.getElementById('holidaySurchargePct').value=Number(fare.holidaySurchargePct||0);

@@ -33,6 +33,7 @@
 
   const DEFAULT_FARE_RULES = {
     minimumFare: 0,
+    fuelSurchargePerMile: 0,
     afterHoursSurchargePct: 0,
     weekendSurchargePct: 0,
     holidaySurchargePct: 10,
@@ -99,6 +100,7 @@
     const distance = Math.max(0, Number(miles) || 0);
     const billable = Math.max(0, distance - Number(rate.includedMiles || 0));
     let subtotal = Number(rate.base || 0) + billable * Number(rate.perMile || 0);
+    subtotal += distance * Number(fareRules.fuelSurchargePerMile || 0);
 
     const tripDate = new Date(dateStr || new Date());
     const day = tripDate.getDay();
