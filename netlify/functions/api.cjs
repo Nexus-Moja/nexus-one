@@ -343,7 +343,7 @@ async function handler(event){
     const applyLead=Number.isFinite(bookingLeadHours)&&bookingLeadHours>=leadHours;
     const policyKey=resolveServicePolicyKey(r.rows[0].service);
     const servicePolicy=fareRules.servicePolicies?.[policyKey]||{};
-    const serviceCancellationFee=Math.max(0,Number(servicePolicy.cancellationFee??fareRules.cancellationFee||0));
+    const serviceCancellationFee=Math.max(0,Number(servicePolicy.cancellationFee ?? fareRules.cancellationFee ?? 0));
     const cancellationFeeApplied=Boolean(applyWindow&&applyLead&&serviceCancellationFee>0);
     const cancellationFeeAmount=cancellationFeeApplied?serviceCancellationFee:0;
     const ruleSnapshot={policyKey,cancellationWindowHours:windowHours,cancellationLeadHours:leadHours,hoursUntilTrip:Number.isFinite(hoursUntilTrip)?Number(hoursUntilTrip.toFixed(2)):null,bookingLeadHours:Number.isFinite(bookingLeadHours)?Number(bookingLeadHours.toFixed(2)):null,applied:cancellationFeeApplied};
