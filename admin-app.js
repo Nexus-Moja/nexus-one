@@ -123,6 +123,69 @@ document.getElementById('resetPricing').addEventListener('click',async()=>{
   showMsg(msg,'Default pricing restored.','ok');
 });
 
+// Manage trip fare adjustment
+let currentManagedTrip=null;
+
+function setManageTripMsg(text,type){
+  const el=document.getElementById('manageTripMsg');
+  showMsg(el,text,type);
+}
+
+function fillManageTripEditor(booking){
+  currentManagedTrip=booking;
+  document.getElementById('manageTripEditor').style.display='block';
+  document.getElementById('manageTripService').value=booking.service||'--';
+  document.getElementById('manageTripStatus').value=booking.statusLabel||booking.status||'--';
+  document.getElementById('manageTripCurrentFare').value=Number.isFinite(Number(booking.estimatedFare))?Number(booking.estimatedFare).toFixed(2):'--';
+  document.getElementById('manageTripNewFare').value=Number.isFinite(Number(booking.estimatedFare))?Number(booking.estimatedFare).toFixed(2):'';
+  document.getElementById('manageTripRoute').value=`${booking.pickup||'--'} -> ${booking.destination||'--'}`;
+}
+
+document.getElementById('manageTripLookup').addEventListener('click',async()=>{
+  const ref=document.getElementById('manageTripRef').value.trim();
+  if(!ref){setManageTripMsg('Enter a trip reference first.','err');return;}
+  const btn=document.getElementById('manageTripLookup');
+  btn.disabled=true;
+  btn.textContent='Looking up...';
+  try{
+    const r=await fetch(`/api/admin/bookings/${encodeURIComponent(ref)}`,{headers:{authorization:`Bearer ${token()}`},cache:'no-store'});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||'Trip not found');
+    fillManageTripEditor(data.booking);
+    setManageTripMsg(`Loaded ${data.booking.reference}.`,'ok');
+  }catch(e){
+    document.getElementById('manageTripEditor').style.display='none';
+    currentManagedTrip=null;
+    setManageTripMsg(e.message,'err');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Lookup trip';
+  }
+});
+
+document.getElementById('manageTripSaveFare').addEventListener('click',async()=>{
+  if(!currentManagedTrip){setManageTripMsg('Lookup a trip first.','err');return;}
+  if(!canEditSettings()){setManageTripMsg('Only Admin can adjust fares.','err');return;}
+  const fareValue=Number(document.getElementById('manageTripNewFare').value);
+  const note=document.getElementById('manageTripNote').value.trim()||'Fare adjusted from Admin';
+  if(!Number.isFinite(fareValue)||fareValue<0){setManageTripMsg('Enter a valid fare amount.','err');return;}
+  const btn=document.getElementById('manageTripSaveFare');
+  btn.disabled=true;
+  btn.textContent='Saving...';
+  try{
+    const r=await fetch(`/api/admin/bookings/${encodeURIComponent(currentManagedTrip.reference)}`,{method:'PATCH',headers:{authorization:`Bearer ${token()}`,'content-type':'application/json'},body:JSON.stringify({estimatedFare:fareValue,note})});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||'Failed to save fare adjustment');
+    fillManageTripEditor(data.booking);
+    setManageTripMsg(`Fare updated to $${Number(data.booking.estimatedFare||0).toFixed(2)}.`,'ok');
+  }catch(e){
+    setManageTripMsg(e.message,'err');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Save fare adjustment';
+  }
+});
+
 // Audit log
 const ACTION_ICONS={LOGIN:'🔑',CREATED:'➕',UPDATED:'✏️',ACTIVATED:'✅',DEACTIVATED:'🚫',STATUS_ADVANCED:'🔄',DEFAULT:'📋'};
 

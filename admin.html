@@ -122,8 +122,25 @@
 
 <!-- Manage Trip -->
 <section class="sectionTab card" id="manageTripSection" style="margin-top:32px">
-  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">Operations</div><h2>Manage Trip</h2><p>Trip lookup and rider-initiated booking changes are handled in Booking and Dispatch workflows.</p></div></div>
-  <p style="margin:0;color:var(--muted)">The in-page trip lookup panel has been removed from Administration to keep this workspace focused on platform controls.</p>
+  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">Operations</div><h2>Manage Trip</h2><p>Lookup an existing trip and apply a fare adjustment from Admin.</p></div></div>
+  <div class="formRow" style="margin-bottom:14px">
+    <div class="formField"><label for="manageTripRef">Trip reference</label><input id="manageTripRef" type="text" placeholder="NMT-YYYYMMDD-1234"></div>
+    <div class="formField" style="align-self:end"><button class="button" id="manageTripLookup" type="button" style="width:100%">Lookup trip</button></div>
+  </div>
+  <div id="manageTripMsg" hidden></div>
+  <div id="manageTripEditor" style="display:none;margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:14px;background:#f8fbfd">
+    <div class="formRow">
+      <div class="formField"><label>Service</label><input id="manageTripService" type="text" readonly></div>
+      <div class="formField"><label>Status</label><input id="manageTripStatus" type="text" readonly></div>
+    </div>
+    <div class="formRow" style="margin-top:12px">
+      <div class="formField"><label>Current estimated fare ($)</label><input id="manageTripCurrentFare" type="text" readonly></div>
+      <div class="formField"><label for="manageTripNewFare">New estimated fare ($)</label><input id="manageTripNewFare" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="formField" style="margin-top:12px"><label for="manageTripNote">Adjustment note</label><input id="manageTripNote" type="text" placeholder="Reason for fare adjustment"></div>
+    <div class="formField" style="margin-top:12px"><label>Route</label><input id="manageTripRoute" type="text" readonly></div>
+    <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end"><button class="button primary" id="manageTripSaveFare" type="button">Save fare adjustment</button></div>
+  </div>
 </section>
 
 <!-- Organization Settings -->
