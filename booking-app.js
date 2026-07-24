@@ -24,6 +24,8 @@
   let mapsEnabled = false;
   let mapsBrowserKey = '';
   let estimateState = { miles: 0, durationText: '', fare: 0 };
+  let pickupAutocomplete = null;
+  let destinationAutocomplete = null;
 
   function setStatus(message, type){
     statusMsg.textContent = message;
@@ -38,6 +40,14 @@
   function setBusy(button, isBusy, busyText, idleText){
     button.disabled = isBusy;
     button.textContent = isBusy ? busyText : idleText;
+  }
+
+  function debounce(fn, waitMs){
+    let timer = null;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), waitMs);
+    };
   }
 
   function normalizeService(value){
@@ -93,6 +103,76 @@
       document.head.appendChild(script);
     });
     return mapsReadyPromise;
+  }
+
+  function resetEstimateUi(){
+    estimateState = { miles: 0, durationText: '', fare: 0 };
+    estMiles.textContent = '-';
+    estDuration.textContent = '-';
+    estFare.textContent = '-';
+  }
+
+  function wireGoogleAutocomplete(){
+    try{
+      if(!window.google?.maps?.places?.Autocomplete) return false;
+      if(!pickupAutocomplete){
+        pickupAutocomplete = new google.maps.places.Autocomplete($('pickup'), { types:['geocode'] });
+        pickupAutocomplete.addListener('place_changed', () => {
+          const place = pickupAutocomplete.getPlace();
+          if(place?.formatted_address) $('pickup').value = place.formatted_address;
+          resetEstimateUi();
+        });
+      }
+      if(!destinationAutocomplete){
+        destinationAutocomplete = new google.maps.places.Autocomplete($('destination'), { types:['geocode'] });
+        destinationAutocomplete.addListener('place_changed', () => {
+          const place = destinationAutocomplete.getPlace();
+          if(place?.formatted_address) $('destination').value = place.formatted_address;
+          resetEstimateUi();
+        });
+      }
+      return true;
+    }catch{
+      return false;
+    }
+  }
+
+  async function fetchLocationSuggestions(query){
+    const q = String(query || '').trim();
+    if(q.length < 2) return [];
+    try{
+      const r = await fetch(`/api/locations/search?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
+      if(!r.ok) return [];
+      const data = await r.json();
+      return (data.locations || []).map((loc) => {
+        const name = String(loc.name || '').trim();
+        const address = String(loc.address || '').trim();
+        return address ? `${name} - ${address}` : name;
+      }).filter(Boolean).slice(0, 8);
+    }catch{
+      return [];
+    }
+  }
+
+  function bindDatalistAutocomplete(inputId, listId){
+    const input = $(inputId);
+    const list = $(listId);
+    const update = debounce(async () => {
+      const suggestions = await fetchLocationSuggestions(input.value);
+      list.innerHTML = suggestions.map((value) => `<option value="${value.replace(/"/g, '&quot;')}"></option>`).join('');
+    }, 220);
+    input.addEventListener('input', update);
+  }
+
+  async function initAddressAutocomplete(){
+    bindDatalistAutocomplete('pickup', 'pickupSuggestions');
+    bindDatalistAutocomplete('destination', 'destinationSuggestions');
+    if(mapsEnabled && mapsBrowserKey){
+      try{
+        await loadMaps();
+        wireGoogleAutocomplete();
+      }catch{}
+    }
   }
 
   async function estimateRouteAndFare(){
@@ -222,10 +302,8 @@
       const ref = data.booking?.reference || data.booking?.id || 'N/A';
       setStatus(`Booking created. Reference: ${ref}`, 'ok');
       form.reset();
-      estMiles.textContent = '-';
-      estDuration.textContent = '-';
-      estFare.textContent = '-';
-      estimateState = { miles: 0, durationText: '', fare: 0 };
+      resetEstimateUi();
+      selectService('ambulatory');
     }catch(err){
       setStatus(err.message, 'err');
     }finally{
@@ -241,6 +319,7 @@
     $('tripTime').value = `${hh}:${mm}`;
 
     await loadIntegrationConfig();
+    await initAddressAutocomplete();
 
     bindServiceChips();
     selectService($('service').value);
@@ -260,10 +339,7 @@
           estFare.textContent = `$${fare.toFixed(2)}`;
           return;
         }
-        estimateState = { miles: 0, durationText: '', fare: 0 };
-        estMiles.textContent = '-';
-        estDuration.textContent = '-';
-        estFare.textContent = '-';
+        resetEstimateUi();
       });
     });
   }

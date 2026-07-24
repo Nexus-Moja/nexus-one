@@ -164,12 +164,15 @@
         <h2>Where are we picking up and dropping off?</h2>
         <div class="field">
           <label for="pickup">Pickup</label>
-          <input id="pickup" name="pickup" placeholder="Pickup address" autocomplete="street-address" required>
+          <input id="pickup" name="pickup" placeholder="Pickup address" autocomplete="street-address" list="pickupSuggestions" required>
+          <datalist id="pickupSuggestions"></datalist>
         </div>
         <div class="field">
           <label for="destination">Destination</label>
-          <input id="destination" name="destination" placeholder="Destination address" autocomplete="street-address" required>
+          <input id="destination" name="destination" placeholder="Destination address" autocomplete="street-address" list="destinationSuggestions" required>
+          <datalist id="destinationSuggestions"></datalist>
         </div>
+        <p class="subtle" style="margin-top:-2px">Start typing to see address suggestions.</p>
       </section>
 
       <section class="section">
