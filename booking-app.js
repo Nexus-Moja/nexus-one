@@ -140,6 +140,14 @@
   }
 
   function renderRateEditor(service){
+    if(!isAdminUser){
+      rateBase.value = '';
+      rateIncluded.value = '';
+      ratePerMile.value = '';
+      rateWait.value = '';
+      rateSourceLabel.textContent = 'Fare estimate is calculated automatically.';
+      return;
+    }
     const svc = normalizeService(service);
     const r = getPricing(svc);
     rateBase.value = Number(r.base || 0);
