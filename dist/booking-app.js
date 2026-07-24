@@ -83,6 +83,17 @@
   let isAdminUser = false;
   let platformPricing = null;
   let fareRules = { ...DEFAULT_FARE_RULES };
+  const autoEstimate = debounce(async() => {
+    const pickup = $('pickup').value.trim();
+    const destination = $('destination').value.trim();
+    if(!pickup || !destination){
+      resetEstimateUi();
+      return;
+    }
+    try{
+      await estimateRouteAndFare();
+    }catch{}
+  }, 250);
 
   function setStatus(message, type){
     statusMsg.textContent = message;
@@ -502,6 +513,7 @@
       estFare.textContent = `$${fare.toFixed(2)}`;
     }
     renderRateEditor(clean);
+    autoEstimate();
   }
 
   function bindServiceChips(){
@@ -706,15 +718,16 @@
     });
     form.addEventListener('submit', submitBooking);
 
-    ['tripDate','pickup','destination'].forEach((id) => {
-      $(id).addEventListener('change', () => {
-        if(id === 'tripDate' && estimateState.miles > 0){
-          const fare = calculateFare(normalizeService($('service').value), estimateState.miles, $('tripDate').value, $('tripTime').value, { durationMinutes: estimateState.durationMinutes, trafficDurationMinutes: estimateState.trafficDurationMinutes });
-          estimateState.fare = fare;
-          estFare.textContent = `$${fare.toFixed(2)}`;
-          return;
-        }
-        resetEstimateUi();
+    ['tripDate','tripTime','pickup','destination'].forEach((id) => {
+      ['change','input'].forEach((evt) => {
+        $(id).addEventListener(evt, () => {
+          if((id === 'tripDate' || id === 'tripTime') && estimateState.miles > 0){
+            const fare = calculateFare(normalizeService($('service').value), estimateState.miles, $('tripDate').value, $('tripTime').value, { durationMinutes: estimateState.durationMinutes, trafficDurationMinutes: estimateState.trafficDurationMinutes });
+            estimateState.fare = fare;
+            estFare.textContent = `$${fare.toFixed(2)}`;
+          }
+          autoEstimate();
+        });
       });
     });
 
