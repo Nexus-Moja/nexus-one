@@ -245,7 +245,11 @@ function readSettingsForm(){
       freeWaitMinutes:Number(document.getElementById('freeWaitMinutes').value||0),
       mileageRoundingRule:document.getElementById('mileageRoundingRule').value,
       telemetryRefreshSeconds:Number(document.getElementById('telemetryRefreshSeconds').value||20),
-      maxBookingDistanceMiles:Number(document.getElementById('maxBookingDistanceMiles').value||125)
+      maxBookingDistanceMiles:Number(document.getElementById('maxBookingDistanceMiles').value||125),
+      returnMilesThreshold:Number(document.getElementById('returnMilesThreshold').value||10),
+      returnMilesInclusionPct:Number(document.getElementById('returnMilesInclusionPct').value||100),
+      trafficOverageFeePerHour:Number(document.getElementById('trafficOverageFeePerHour').value||0),
+      trafficOverageGraceMinutes:Number(document.getElementById('trafficOverageGraceMinutes').value||0)
     }
   };
 }
@@ -284,6 +288,10 @@ function applySettingsToForm(settings){
   document.getElementById('mileageRoundingRule').value=fare.mileageRoundingRule||'TENTH_MILE';
   document.getElementById('telemetryRefreshSeconds').value=Number(fare.telemetryRefreshSeconds||20);
   document.getElementById('maxBookingDistanceMiles').value=Number(fare.maxBookingDistanceMiles||125);
+  document.getElementById('returnMilesThreshold').value=Number(fare.returnMilesThreshold||10);
+  document.getElementById('returnMilesInclusionPct').value=Number(fare.returnMilesInclusionPct||100);
+  document.getElementById('trafficOverageFeePerHour').value=Number(fare.trafficOverageFeePerHour||0);
+  document.getElementById('trafficOverageGraceMinutes').value=Number(fare.trafficOverageGraceMinutes||0);
   const active=new Set((settings.activeServices||[]).map(x=>String(x).toUpperCase()));
   document.querySelectorAll('#activeServicesGroup input[type="checkbox"]').forEach(i=>{i.checked=active.has(String(i.value).toUpperCase());});
   applyFuelModeUi();

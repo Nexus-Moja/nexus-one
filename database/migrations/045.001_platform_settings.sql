@@ -32,7 +32,11 @@ VALUES (
       'freeWaitMinutes', 15,
       'mileageRoundingRule', 'TENTH_MILE',
       'telemetryRefreshSeconds', 20,
-      'maxBookingDistanceMiles', 125
+      'maxBookingDistanceMiles', 125,
+      'returnMilesThreshold', 10,
+      'returnMilesInclusionPct', 100,
+      'trafficOverageFeePerHour', 0,
+      'trafficOverageGraceMinutes', 0
     ),
     'organization', jsonb_build_object(
       'name', 'Nexus Medical Transit',

@@ -48,13 +48,17 @@
     freeWaitMinutes: 15,
     mileageRoundingRule: 'TENTH_MILE',
     telemetryRefreshSeconds: 20,
-    maxBookingDistanceMiles: 125
+    maxBookingDistanceMiles: 125,
+    returnMilesThreshold: 10,
+    returnMilesInclusionPct: 100,
+    trafficOverageFeePerHour: 0,
+    trafficOverageGraceMinutes: 0
   };
 
   let mapsReadyPromise = null;
   let mapsEnabled = false;
   let mapsBrowserKey = '';
-  let estimateState = { miles: 0, durationText: '', fare: 0 };
+  let estimateState = { miles: 0, durationText: '', durationMinutes: 0, trafficDurationMinutes: 0, fare: 0 };
   let pickupAutocomplete = null;
   let destinationAutocomplete = null;
   let telemetryMap = null;
@@ -101,12 +105,27 @@
     return platformPricing || window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
   }
 
-  function calculateFare(service, miles, dateStr, timeStr){
+  function calculateFare(service, miles, dateStr, timeStr, routeMetrics = {}){
     const rate = getPricing(service);
     const distance = Math.max(0, Number(miles) || 0);
-    const billable = Math.max(0, distance - Number(rate.includedMiles || 0));
+    const includedMiles = Number(rate.includedMiles || 0);
+    const outboundBillable = Math.max(0, distance - includedMiles);
+    const returnThreshold = Math.max(0, Number(fareRules.returnMilesThreshold || 0));
+    const returnPct = Math.max(0, Number(fareRules.returnMilesInclusionPct || 0)) / 100;
+    const returnMiles = distance > returnThreshold ? (distance * returnPct) : 0;
+    const totalChargedMiles = distance + returnMiles;
+    const billable = outboundBillable + returnMiles;
+
     let subtotal = Number(rate.base || 0) + billable * Number(rate.perMile || 0);
-    subtotal += distance * Number(fareRules.fuelSurchargePerMile || 0);
+    subtotal += totalChargedMiles * Number(fareRules.fuelSurchargePerMile || 0);
+
+    const scheduledMinutes = Math.max(0, Number(routeMetrics.durationMinutes || 0));
+    const trafficMinutes = Math.max(0, Number(routeMetrics.trafficDurationMinutes || 0));
+    const graceMinutes = Math.max(0, Number(fareRules.trafficOverageGraceMinutes || 0));
+    const overageMinutes = Math.max(0, trafficMinutes - scheduledMinutes - graceMinutes);
+    if(overageMinutes > 0){
+      subtotal += (overageMinutes / 60) * Math.max(0, Number(fareRules.trafficOverageFeePerHour || 0));
+    }
 
     const tripDate = new Date(dateStr || new Date());
     const day = tripDate.getDay();
@@ -166,7 +185,7 @@
   }
 
   function resetEstimateUi(){
-    estimateState = { miles: 0, durationText: '', fare: 0 };
+    estimateState = { miles: 0, durationText: '', durationMinutes: 0, trafficDurationMinutes: 0, fare: 0 };
     estMiles.textContent = '-';
     estDuration.textContent = '-';
     estFare.textContent = '-';
@@ -333,8 +352,8 @@
     const tripDate = $('tripDate').value;
 
     if(!pickup || !destination){
-      const fare = calculateFare(service, 0, tripDate, $('tripTime').value);
-      estimateState = { miles: 0, durationText: '', fare };
+      const fare = calculateFare(service, 0, tripDate, $('tripTime').value, { durationMinutes: 0, trafficDurationMinutes: 0 });
+      estimateState = { miles: 0, durationText: '', durationMinutes: 0, trafficDurationMinutes: 0, fare };
       estMiles.textContent = '0.0 mi';
       estDuration.textContent = '-';
       estFare.textContent = `$${fare.toFixed(2)}`;
@@ -344,6 +363,8 @@
 
     let miles = 0;
     let durationText = '';
+    let durationMinutes = 0;
+    let trafficDurationMinutes = 0;
 
     try{
       await loadMaps();
@@ -353,15 +374,25 @@
           origin: pickup,
           destination,
           travelMode: google.maps.TravelMode.DRIVING,
+          drivingOptions: {
+            departureTime: new Date(),
+            trafficModel: google.maps.TrafficModel.BEST_GUESS
+          },
           unitSystem: google.maps.UnitSystem.IMPERIAL
         }, (res, status) => status === 'OK' ? resolve(res) : reject(new Error(status)));
       });
       const leg = result.routes?.[0]?.legs?.[0];
       miles = Number(leg?.distance?.value || 0) / 1609.34;
       durationText = String(leg?.duration?.text || '');
+      durationMinutes = Number(leg?.duration?.value || 0) / 60;
+      trafficDurationMinutes = Number(leg?.duration_in_traffic?.value || leg?.duration?.value || 0) / 60;
+      if(trafficDurationMinutes > durationMinutes){
+        const trafficText = String(leg?.duration_in_traffic?.text || '');
+        if(trafficText) durationText = `${durationText} (traffic ${trafficText})`;
+      }
     }catch(err){
-      const fallbackFare = calculateFare(service, 0, tripDate, $('tripTime').value);
-      estimateState = { miles: 0, durationText: '', fare: fallbackFare };
+      const fallbackFare = calculateFare(service, 0, tripDate, $('tripTime').value, { durationMinutes: 0, trafficDurationMinutes: 0 });
+      estimateState = { miles: 0, durationText: '', durationMinutes: 0, trafficDurationMinutes: 0, fare: fallbackFare };
       estMiles.textContent = '0.0 mi';
       estDuration.textContent = '-';
       estFare.textContent = `$${fallbackFare.toFixed(2)}`;
@@ -369,8 +400,8 @@
       return estimateState;
     }
 
-    const fare = calculateFare(service, miles, tripDate, $('tripTime').value);
-    estimateState = { miles, durationText, fare };
+    const fare = calculateFare(service, miles, tripDate, $('tripTime').value, { durationMinutes, trafficDurationMinutes });
+    estimateState = { miles, durationText, durationMinutes, trafficDurationMinutes, fare };
 
     estMiles.textContent = `${miles.toFixed(1)} mi`;
     estDuration.textContent = durationText || '-';
@@ -394,7 +425,7 @@
       chip.setAttribute('aria-pressed', String(active));
     });
     if(estimateState.miles > 0){
-      const fare = calculateFare(clean, estimateState.miles, $('tripDate').value, $('tripTime').value);
+      const fare = calculateFare(clean, estimateState.miles, $('tripDate').value, $('tripTime').value, { durationMinutes: estimateState.durationMinutes, trafficDurationMinutes: estimateState.trafficDurationMinutes });
       estimateState.fare = fare;
       estFare.textContent = `$${fare.toFixed(2)}`;
     }
@@ -606,7 +637,7 @@
     ['tripDate','pickup','destination'].forEach((id) => {
       $(id).addEventListener('change', () => {
         if(id === 'tripDate' && estimateState.miles > 0){
-          const fare = calculateFare(normalizeService($('service').value), estimateState.miles, $('tripDate').value, $('tripTime').value);
+          const fare = calculateFare(normalizeService($('service').value), estimateState.miles, $('tripDate').value, $('tripTime').value, { durationMinutes: estimateState.durationMinutes, trafficDurationMinutes: estimateState.trafficDurationMinutes });
           estimateState.fare = fare;
           estFare.textContent = `$${fare.toFixed(2)}`;
           return;
