@@ -8,16 +8,26 @@
   const estMiles = $('estMiles');
   const estDuration = $('estDuration');
   const estFare = $('estFare');
+  const rateSourceLabel = $('rateSourceLabel');
+  const rateBase = $('rateBase');
+  const rateIncluded = $('rateIncluded');
+  const ratePerMile = $('ratePerMile');
+  const rateWait = $('rateWait');
+  const saveRateBtn = $('saveRateBtn');
+  const resetRateBtn = $('resetRateBtn');
+  const telemetryMapEl = $('telemetryMap');
+  const telemetryStatus = $('telemetryStatus');
+  const telemetryList = $('telemetryList');
 
   const FALLBACK_PRICING = {
-    ambulatory:{base:65,includedMiles:5,perMile:3.25},
-    wheelchair:{base:95,includedMiles:5,perMile:4.75},
-    stretcher:{base:180,includedMiles:5,perMile:7.25},
-    broda:{base:140,includedMiles:5,perMile:6.25},
-    bariatric:{base:220,includedMiles:5,perMile:8.5},
-    bls:{base:260,includedMiles:5,perMile:9.5},
-    als1:{base:340,includedMiles:5,perMile:11},
-    als2:{base:420,includedMiles:5,perMile:12.5}
+    wheelchair:{label:'Wheelchair Transportation',base:95,includedMiles:10,perMile:4.25,waitPer15:25},
+    ambulatory:{label:'Ambulatory Transportation',base:65,includedMiles:5,perMile:3.25,waitPer15:20},
+    broda:{label:'Broda Chair Transportation',base:145,includedMiles:10,perMile:5.25,waitPer15:25},
+    stretcher:{label:'Stretcher Transportation',base:260,includedMiles:10,perMile:7.5,waitPer15:35},
+    bariatric:{label:'Bariatric Transportation',base:385,includedMiles:10,perMile:9.5,waitPer15:45},
+    bls:{label:'BLS Ambulance',base:725,includedMiles:0,perMile:17.5,waitPer15:55},
+    als1:{label:'ALS I Ambulance',base:925,includedMiles:0,perMile:20,waitPer15:65},
+    als2:{label:'ALS II Ambulance',base:1350,includedMiles:0,perMile:23,waitPer15:75}
   };
 
   let mapsReadyPromise = null;
@@ -26,6 +36,9 @@
   let estimateState = { miles: 0, durationText: '', fare: 0 };
   let pickupAutocomplete = null;
   let destinationAutocomplete = null;
+  let telemetryMap = null;
+  let telemetryMarkers = new Map();
+  let telemetryTimer = null;
 
   function setStatus(message, type){
     statusMsg.textContent = message;
@@ -56,8 +69,20 @@
 
   function getPricing(service){
     const svc = normalizeService(service);
-    const fromCore = window.NexusCore?.getPricing?.() || {};
-    return fromCore[svc] || window.NexusCore?.DEFAULT?.[svc] || FALLBACK_PRICING[svc] || FALLBACK_PRICING.ambulatory;
+    const fromCore = window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
+    return fromCore[svc] || FALLBACK_PRICING[svc] || FALLBACK_PRICING.ambulatory;
+  }
+
+  function getAllPricing(){
+    return window.NexusCore?.getPricing?.() || FALLBACK_PRICING;
+  }
+
+  function saveAllPricing(pricing){
+    if(window.NexusCore?.savePricing){
+      window.NexusCore.savePricing(pricing);
+      return;
+    }
+    localStorage.setItem('nexusPricing', JSON.stringify(pricing));
   }
 
   function calculateFare(service, miles, dateStr){
@@ -110,6 +135,54 @@
     estMiles.textContent = '-';
     estDuration.textContent = '-';
     estFare.textContent = '-';
+  }
+
+  function renderRateEditor(service){
+    const svc = normalizeService(service);
+    const r = getPricing(svc);
+    rateBase.value = Number(r.base || 0);
+    rateIncluded.value = Number(r.includedMiles || 0);
+    ratePerMile.value = Number(r.perMile || 0);
+    rateWait.value = Number(r.waitPer15 || 0);
+    const label = r.label || svc.toUpperCase();
+    rateSourceLabel.textContent = `Using ${label}: base $${Number(r.base||0).toFixed(2)}, ${Number(r.includedMiles||0)} included miles, $${Number(r.perMile||0).toFixed(2)}/mile.`;
+  }
+
+  function saveCurrentServiceRate(){
+    const svc = normalizeService($('service').value);
+    const pricing = getAllPricing();
+    const current = pricing[svc] || FALLBACK_PRICING[svc] || FALLBACK_PRICING.ambulatory;
+    pricing[svc] = {
+      ...current,
+      base: Math.max(0, Number(rateBase.value || 0)),
+      includedMiles: Math.max(0, Number(rateIncluded.value || 0)),
+      perMile: Math.max(0, Number(ratePerMile.value || 0)),
+      waitPer15: Math.max(0, Number(rateWait.value || 0))
+    };
+    saveAllPricing(pricing);
+    renderRateEditor(svc);
+    if(estimateState.miles > 0){
+      const fare = calculateFare(svc, estimateState.miles, $('tripDate').value);
+      estimateState.fare = fare;
+      estFare.textContent = `$${fare.toFixed(2)}`;
+    }
+    setStatus('Rate updated for selected service.', 'ok');
+  }
+
+  function resetCurrentServiceRate(){
+    const svc = normalizeService($('service').value);
+    const stored = JSON.parse(localStorage.getItem('nexusPricing') || '{}');
+    if(stored && Object.prototype.hasOwnProperty.call(stored, svc)){
+      delete stored[svc];
+      localStorage.setItem('nexusPricing', JSON.stringify(stored));
+    }
+    renderRateEditor(svc);
+    if(estimateState.miles > 0){
+      const fare = calculateFare(svc, estimateState.miles, $('tripDate').value);
+      estimateState.fare = fare;
+      estFare.textContent = `$${fare.toFixed(2)}`;
+    }
+    setStatus('Rate reset to default for selected service.', 'ok');
   }
 
   function wireGoogleAutocomplete(){
@@ -249,12 +322,95 @@
       estimateState.fare = fare;
       estFare.textContent = `$${fare.toFixed(2)}`;
     }
+    renderRateEditor(clean);
   }
 
   function bindServiceChips(){
     serviceChips.querySelectorAll('.chip').forEach((chip) => {
       chip.addEventListener('click', () => selectService(chip.dataset.service));
     });
+  }
+
+  function telemetryIcon(){
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: '#0a6b99',
+      fillOpacity: 0.9,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+      scale: 7
+    };
+  }
+
+  async function loadTelemetry(){
+    try{
+      const r = await fetch('/api/fleet/live', { cache: 'no-store' });
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      const vehicles = (data.vehicles || []).filter(v => Number.isFinite(v.lat) && Number.isFinite(v.lng));
+
+      telemetryStatus.textContent = `Live: ${vehicles.length} vehicles • updated ${new Date(data.generatedAt || Date.now()).toLocaleTimeString()}`;
+      telemetryList.innerHTML = vehicles.slice(0, 20).map(v => (
+        `<div class="telemetryItem"><div><b>${v.unit || v.id}</b><div>${String(v.status || '').replaceAll('_',' ')}</div></div><div>${Number(v.speed||0).toFixed(0)} mph</div></div>`
+      )).join('') || '<div class="telemetryItem"><div>No active vehicle telemetry</div></div>';
+
+      if(!telemetryMap) return;
+      const activeIds = new Set();
+      vehicles.forEach(v => {
+        const id = String(v.id || v.unit);
+        activeIds.add(id);
+        let marker = telemetryMarkers.get(id);
+        const position = { lat: Number(v.lat), lng: Number(v.lng) };
+        if(!marker){
+          marker = new google.maps.Marker({
+            map: telemetryMap,
+            position,
+            title: `${v.unit || v.id} (${v.status || 'ACTIVE'})`,
+            icon: telemetryIcon()
+          });
+          telemetryMarkers.set(id, marker);
+        }else{
+          marker.setPosition(position);
+          marker.setTitle(`${v.unit || v.id} (${v.status || 'ACTIVE'})`);
+        }
+      });
+
+      telemetryMarkers.forEach((marker, id) => {
+        if(!activeIds.has(id)){
+          marker.setMap(null);
+          telemetryMarkers.delete(id);
+        }
+      });
+
+      if(vehicles.length){
+        const bounds = new google.maps.LatLngBounds();
+        vehicles.slice(0, 25).forEach(v => bounds.extend({ lat:Number(v.lat), lng:Number(v.lng) }));
+        telemetryMap.fitBounds(bounds, 48);
+      }
+    }catch(err){
+      telemetryStatus.textContent = `Telemetry unavailable: ${err.message}`;
+    }
+  }
+
+  async function initTelemetry(){
+    if(!(mapsEnabled && mapsBrowserKey)){
+      telemetryStatus.textContent = 'Live map requires Google Maps configuration.';
+      return;
+    }
+    try{
+      await loadMaps();
+      telemetryMap = new google.maps.Map(telemetryMapEl, {
+        center: { lat: 39.0458, lng: -76.6413 },
+        zoom: 9,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+      await loadTelemetry();
+      telemetryTimer = setInterval(loadTelemetry, 20000);
+    }catch(err){
+      telemetryStatus.textContent = `Live map failed to load: ${err.message}`;
+    }
   }
 
   async function submitBooking(event){
@@ -323,6 +479,10 @@
 
     bindServiceChips();
     selectService($('service').value);
+    renderRateEditor($('service').value);
+    saveRateBtn.addEventListener('click', saveCurrentServiceRate);
+    resetRateBtn.addEventListener('click', resetCurrentServiceRate);
+    initTelemetry();
 
     estimateBtn.addEventListener('click', async() => {
       setBusy(estimateBtn, true, 'Estimating...', 'Estimate Fare');
@@ -341,6 +501,10 @@
         }
         resetEstimateUi();
       });
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if(telemetryTimer) clearInterval(telemetryTimer);
     });
   }
 

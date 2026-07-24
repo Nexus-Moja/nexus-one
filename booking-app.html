@@ -128,6 +128,11 @@
     }
     .msg.ok{display:block;background:#def7ec;color:var(--ok);border:1px solid #b7e6d5}
     .msg.err{display:block;background:#ffe4ec;color:var(--err);border:1px solid #ffc7d6}
+    .rateGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .telemetryMap{height:230px;border:1px solid #c6d5df;border-radius:12px;background:#f2f6f9;overflow:hidden}
+    .telemetryList{margin-top:10px;display:grid;gap:8px;max-height:170px;overflow:auto}
+    .telemetryItem{padding:9px 10px;border:1px solid #d9e5ec;border-radius:10px;background:#fff;display:flex;justify-content:space-between;gap:8px;font-size:13px}
+    .telemetryItem b{font-family:Manrope,sans-serif;font-size:12px;color:#1d4a63}
     .bottomBar{
       position:fixed;
       left:0;
@@ -205,7 +210,41 @@
           <div class="line"><b>ETA</b><span id="estDuration">-</span></div>
           <div class="line total"><b>Fare Estimate</b><span id="estFare">-</span></div>
         </div>
-        <p class="subtle">Estimate updates from route miles when maps are available.</p>
+        <p class="subtle" id="rateSourceLabel">Estimate uses current service rate profile.</p>
+      </section>
+
+      <section class="section">
+        <h2>Rate Settings</h2>
+        <div class="rateGrid">
+          <div class="field">
+            <label for="rateBase">Base ($)</label>
+            <input id="rateBase" type="number" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label for="rateIncluded">Included miles</label>
+            <input id="rateIncluded" type="number" min="0" step="1">
+          </div>
+          <div class="field">
+            <label for="ratePerMile">Per mile ($)</label>
+            <input id="ratePerMile" type="number" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label for="rateWait">Wait / 15 min ($)</label>
+            <input id="rateWait" type="number" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="metaRow" style="margin-top:8px">
+          <button type="button" class="ghost" id="saveRateBtn">Save Rate</button>
+          <button type="button" class="ghost" id="resetRateBtn">Reset Service Rate</button>
+        </div>
+        <p class="subtle">Saved rates are applied immediately to fare estimates on this app.</p>
+      </section>
+
+      <section class="section">
+        <h2>Live Fleet Telemetry</h2>
+        <div id="telemetryMap" class="telemetryMap" role="img" aria-label="Live map of nearby fleet"></div>
+        <p class="subtle" id="telemetryStatus">Loading live telemetry...</p>
+        <div class="telemetryList" id="telemetryList"></div>
       </section>
 
       <section class="section">
@@ -240,6 +279,7 @@
       </div>
     </form>
   </main>
+  <script src="./nexus-core.js"></script>
   <script src="./booking-app.js"></script>
 </body>
 </html>
