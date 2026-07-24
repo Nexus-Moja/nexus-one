@@ -218,7 +218,7 @@ document.getElementById('refreshAudit').addEventListener('click',loadAudit);
 document.getElementById('applyAuditFilter').addEventListener('click',loadAudit);
 
 // Settings
-const SERVICE_POLICY_ORDER=['wheelchair','ambulatory','facility_transfer','broda','stretcher','bariatric','bls','als1','als2'];
+const SERVICE_POLICY_ORDER=['wheelchair','ambulatory','facility_transfer','facility_transfer_critical','broda','stretcher','bariatric','bls','als1','als2'];
 
 function renderServicePolicyRows(settings){
   const rowsEl=document.getElementById('servicePolicyRows');
