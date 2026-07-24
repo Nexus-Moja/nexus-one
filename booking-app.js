@@ -9,6 +9,7 @@
   const estDuration = $('estDuration');
   const estFare = $('estFare');
   const rateSourceLabel = $('rateSourceLabel');
+  const rateSettingsSection = $('rateSettingsSection');
   const rateBase = $('rateBase');
   const rateIncluded = $('rateIncluded');
   const ratePerMile = $('ratePerMile');
@@ -39,6 +40,7 @@
   let telemetryMap = null;
   let telemetryMarkers = new Map();
   let telemetryTimer = null;
+  let isAdminUser = false;
 
   function setStatus(message, type){
     statusMsg.textContent = message;
@@ -149,6 +151,10 @@
   }
 
   function saveCurrentServiceRate(){
+    if(!isAdminUser){
+      setStatus('Only Admin users can update service rates.', 'err');
+      return;
+    }
     const svc = normalizeService($('service').value);
     const pricing = getAllPricing();
     const current = pricing[svc] || FALLBACK_PRICING[svc] || FALLBACK_PRICING.ambulatory;
@@ -170,6 +176,10 @@
   }
 
   function resetCurrentServiceRate(){
+    if(!isAdminUser){
+      setStatus('Only Admin users can reset service rates.', 'err');
+      return;
+    }
     const svc = normalizeService($('service').value);
     const stored = JSON.parse(localStorage.getItem('nexusPricing') || '{}');
     if(stored && Object.prototype.hasOwnProperty.call(stored, svc)){
@@ -467,6 +477,37 @@
     }
   }
 
+  async function resolveAdminAccess(){
+    const token = sessionStorage.getItem('nexusAccessToken');
+    if(!token){
+      isAdminUser = false;
+      return;
+    }
+    try{
+      const r = await fetch('/api/auth/me', {
+        headers: { authorization: `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if(!r.ok){
+        isAdminUser = false;
+        return;
+      }
+      const data = await r.json();
+      isAdminUser = String(data?.user?.role || '').toUpperCase() === 'ADMIN';
+    }catch{
+      isAdminUser = false;
+    }
+  }
+
+  function applyRateVisibility(){
+    if(rateSettingsSection){
+      rateSettingsSection.hidden = !isAdminUser;
+    }
+    if(!isAdminUser){
+      rateSourceLabel.textContent = 'Fare estimate is calculated automatically.';
+    }
+  }
+
   async function init(){
     const now = new Date();
     const hh = String(Math.max(8, now.getHours())).padStart(2, '0');
@@ -476,12 +517,16 @@
 
     await loadIntegrationConfig();
     await initAddressAutocomplete();
+    await resolveAdminAccess();
+    applyRateVisibility();
 
     bindServiceChips();
     selectService($('service').value);
-    renderRateEditor($('service').value);
-    saveRateBtn.addEventListener('click', saveCurrentServiceRate);
-    resetRateBtn.addEventListener('click', resetCurrentServiceRate);
+    if(isAdminUser){
+      renderRateEditor($('service').value);
+      saveRateBtn.addEventListener('click', saveCurrentServiceRate);
+      resetRateBtn.addEventListener('click', resetCurrentServiceRate);
+    }
     initTelemetry();
 
     estimateBtn.addEventListener('click', async() => {
