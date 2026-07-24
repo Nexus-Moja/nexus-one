@@ -7,31 +7,18 @@ function toNum(v,fallback=0){
   return Number.isFinite(n)?n:fallback;
 }
 
-function deriveSeriesFacet(seriesId){
-  const text=String(seriesId||'PET.EMM_EPM0_PTE_SUS_DPG.W').trim();
-  const parts=text.split('.');
-  if(parts.length>=2){
-    if(parts[0].toUpperCase()==='PET'&&parts[parts.length-1].toUpperCase()==='W'){
-      return parts.slice(1,-1).join('_');
-    }
-  }
-  return text.replaceAll('.','_').replace(/_W$/i,'');
-}
-
-async function fetchEiaWeeklyPrice(seriesId){
-  const facet=deriveSeriesFacet(seriesId);
+async function fetchEiaWeeklyPrice(){
   const qs=new URLSearchParams({
     frequency:'weekly',
     'data[0]':'value',
-    'facets[series][]':facet,
+    'facets[duoarea][]':'NUS',
+    'facets[product][]':'EPM0',
     'sort[0][column]':'period',
     'sort[0][direction]':'desc',
     offset:'0',
     length:'1'
   });
-  if(process.env.EIA_API_KEY){
-    qs.set('api_key',process.env.EIA_API_KEY);
-  }
+  qs.set('api_key',process.env.EIA_API_KEY||'DEMO_KEY');
   const url=`https://api.eia.gov/v2/petroleum/pri/gnd/data/?${qs.toString()}`;
   const r=await fetch(url,{headers:{accept:'application/json'}});
   if(!r.ok)throw new Error(`EIA request failed (${r.status})`);
@@ -57,7 +44,7 @@ exports.handler=async()=>{
     let source='EIA';
     let sourceUrl='';
     try{
-      const eia=await fetchEiaWeeklyPrice(fareRules.fuelIndexSeriesId);
+      const eia=await fetchEiaWeeklyPrice();
       indexPrice=eia.pricePerGallon;
       source='EIA';
       sourceUrl=eia.sourceUrl;
@@ -66,8 +53,11 @@ exports.handler=async()=>{
       if(Number.isFinite(fallback)&&fallback>0){
         indexPrice=fallback;
         source='ENV_FALLBACK';
+      }else if(toNum(fareRules.fuelIndexPricePerGallon,0)>0){
+        indexPrice=toNum(fareRules.fuelIndexPricePerGallon,0);
+        source='LAST_KNOWN';
       }else{
-        throw err;
+        return {statusCode:200,body:JSON.stringify({updated:false,reason:err.message})};
       }
     }
 
