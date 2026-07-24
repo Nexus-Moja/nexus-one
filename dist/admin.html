@@ -60,7 +60,7 @@
   <script src="/trustedsite.js" defer></script>
   <script src="/i18n.js" defer></script>
 <script src="./auth-guard.js"></script><script src="./nexus-data.js"></script>
-<script src="./universal-booking.js" defer></script></head><body>
+</head><body>
 <a class="skip" href="#main">Skip to main content</a>
 <header class="top globalTop"><div class="shell nav globalNav"><a class="globalBrand" href="/" aria-label="Nexus Medical Transit home"><img class="logo" src="./nexus-logo.png" alt="Nexus Medical Transit"></a><nav id="adminNav" class="links globalLinks" aria-label="Primary navigation"><a href="/">Home</a><a href="/#services">Services</a><a href="/#experience">Experience</a><a href="/#coverage">Coverage</a><a href="/#facilities">Facilities</a><a href="/#safety-and-quality">Assurance</a><a href="/livecare.html">Livecare</a><a aria-current="page" href="/admin.html">Admin</a></nav><div class="globalActions"><label class="nexusLanguageControl headerLanguageGlobal"><span class="sr">Language</span><select data-nexus-language aria-label="Select language"><option value="en-US">EN-US</option><option value="en-GB">EN-UK</option><option value="fr">FR</option><option value="es">ES</option></select></label><a class="globalPhone" href="tel:+18887604990"><small>Call Nexus</small><strong>(888) 760-4990</strong></a><a class="navCta" href="/?book=1">Book a Ride <span aria-hidden="true">→</span></a></div><button class="mobileNavToggle" type="button" aria-expanded="false" aria-controls="adminNav" aria-label="Open navigation"><span></span><span></span><span></span></button></div></header>
 
@@ -71,8 +71,9 @@
   <div class="adminShortcuts">
     <a class="adminShortcut primary" href="#userSection">Manage users</a>
     <a class="adminShortcut" href="#pricingSection">Pricing config</a>
-    <a class="adminShortcut" href="#auditSection">Audit log</a>
+    <a class="adminShortcut" href="#manageTripSection">Manage trip</a>
     <a class="adminShortcut" href="#settingsSection">Settings</a>
+    <a class="adminShortcut" href="#auditSection">Audit log</a>
   </div>
 </div>
 <aside class="adminStatPanel" aria-label="Platform statistics">
@@ -114,25 +115,20 @@
 
 <!-- Pricing Manager -->
 <section class="sectionTab card" id="pricingSection" style="margin-top:32px">
-  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">Configuration Center</div><h2>NIPE pricing manager</h2><p>Edit rates once and apply across Booking, Dispatch and Billing.</p></div><div style="display:flex;gap:10px;align-items:center"><button class="button" id="resetPricing">Restore defaults</button><button class="button primary" id="savePricing">Save configuration</button></div></div>
+  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">Configuration Center</div><h2>NIPE Pricing Manager</h2><p>Edit rates once and apply across Booking, Dispatch and Billing.</p></div><div style="display:flex;gap:10px;align-items:center"><button class="button" id="resetPricing">Restore defaults</button><button class="button primary" id="savePricing">Save configuration</button></div></div>
   <div id="pricingSavedMsg" hidden></div>
   <div class="tableWrap"><table class="table configTable" aria-label="Pricing configuration"><thead><tr><th>Service</th><th>Base fare ($)</th><th>Included miles</th><th>Per mile ($)</th><th>Wait / 15 min ($)</th></tr></thead><tbody id="pricingRows"></tbody></table></div>
 </section>
 
-<!-- Audit Log -->
-<section class="sectionTab" id="auditSection" style="margin-top:32px">
-  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">Compliance & Security</div><h2>Audit log</h2><p>Review all system changes and user actions.</p></div><button class="button" id="refreshAudit">Refresh</button></div>
-  <div class="auditFilter">
-    <input type="date" id="auditSince" aria-label="Filter from date">
-    <select id="auditType" style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font:inherit"><option value="">All actions</option><option value="LOGIN">Logins</option><option value="CREATED">Created</option><option value="UPDATED">Updated</option><option value="ACTIVATED">Activated</option><option value="DEACTIVATED">Deactivated</option></select>
-    <button class="button" id="applyAuditFilter">Filter</button>
-  </div>
-  <div id="auditList" style="display:grid;gap:10px"><p style="color:var(--muted)">Loading audit records…</p></div>
+<!-- Manage Trip -->
+<section class="sectionTab card" id="manageTripSection" style="margin-top:32px">
+  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">Operations</div><h2>Manage Trip</h2><p>Trip lookup and rider-initiated booking changes are handled in Booking and Dispatch workflows.</p></div></div>
+  <p style="margin:0;color:var(--muted)">The in-page trip lookup panel has been removed from Administration to keep this workspace focused on platform controls.</p>
 </section>
 
 <!-- Organization Settings -->
 <section class="sectionTab card" id="settingsSection" style="margin-top:32px;margin-bottom:40px">
-  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">System</div><h2>Organization settings</h2><p>Platform-wide configuration, branding and contact details.</p></div></div>
+  <div class="sectionTitle"><div><div class="eyebrow" style="color:var(--blue)">System</div><h2>Organization Settings</h2><p>Platform-wide configuration, branding and contact details.</p></div></div>
   <div class="formRow">
     <div class="formField"><label for="orgName">Organization name</label><input id="orgName" type="text" value="Nexus Medical Transit"></div>
     <div class="formField"><label for="orgPhone">Support phone</label><input id="orgPhone" type="tel" value="(888) 760-4990"></div>
@@ -188,6 +184,24 @@
     <div class="formField"><label for="maxBookingDistanceMiles">Max booking distance (miles)</label><input id="maxBookingDistanceMiles" type="number" min="5" max="500" step="1" value="125"></div>
   </div>
   <div style="margin-top:22px"><button class="button primary" id="saveSettings">Save settings</button><span id="settingsSavedMsg" style="margin-left:12px;color:var(--green);font-weight:700;display:none">Settings saved.</span></div>
+</section>
+
+<!-- Audit Log -->
+<section class="sectionTab" id="auditSection" style="margin-top:32px;margin-bottom:40px">
+  <details id="auditDetails">
+    <summary style="list-style:none;cursor:pointer">
+      <div class="sectionTitle" style="margin-bottom:0"><div><div class="eyebrow" style="color:var(--blue)">Compliance & Security</div><h2>Audit Log</h2><p>Review all system changes and user actions.</p></div></div>
+    </summary>
+    <div style="margin-top:16px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="button" id="refreshAudit">Refresh</button></div>
+      <div class="auditFilter">
+        <input type="date" id="auditSince" aria-label="Filter from date">
+        <select id="auditType" style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font:inherit"><option value="">All actions</option><option value="LOGIN">Logins</option><option value="CREATED">Created</option><option value="UPDATED">Updated</option><option value="ACTIVATED">Activated</option><option value="DEACTIVATED">Deactivated</option></select>
+        <button class="button" id="applyAuditFilter">Filter</button>
+      </div>
+      <div id="auditList" style="display:grid;gap:10px"><p style="color:var(--muted)">Loading audit records…</p></div>
+    </div>
+  </details>
 </section>
 
 </main>
