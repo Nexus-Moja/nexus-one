@@ -140,7 +140,10 @@
     .msg.err{display:block;background:#ffe4ec;color:var(--err);border:1px solid #ffc7d6}
     .rateGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .telemetryMap{height:230px;border:1px solid #c6d5df;border-radius:12px;background:#f2f6f9;overflow:hidden}
+    .telemetryControls{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
+    .telemetryControls label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#18445e;cursor:pointer}
     .telemetryList{margin-top:10px;display:grid;gap:8px;max-height:170px;overflow:auto}
+    .telemetryList.dimmed{opacity:.45;filter:grayscale(1)}
     .telemetryItem{padding:9px 10px;border:1px solid #d9e5ec;border-radius:10px;background:#fff;display:flex;justify-content:space-between;gap:8px;font-size:13px}
     .telemetryItem b{font-family:Manrope,sans-serif;font-size:12px;color:#1d4a63}
     .bottomBar{
@@ -253,8 +256,12 @@
       </section>
 
       <section class="section">
-        <h2>Live Fleet Telemetry</h2>
+        <h2>Live Route + Fleet Telemetry</h2>
         <div id="telemetryMap" class="telemetryMap" role="img" aria-label="Live map of nearby fleet"></div>
+        <div class="telemetryControls">
+          <label><input type="checkbox" id="focusMyRouteOnly"> Focus on my route only</label>
+          <small class="subtle" style="margin:0">Blur other network vehicles</small>
+        </div>
         <p class="subtle" id="telemetryStatus">Loading live telemetry...</p>
         <div class="telemetryList" id="telemetryList"></div>
       </section>

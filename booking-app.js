@@ -19,6 +19,7 @@
   const telemetryMapEl = $('telemetryMap');
   const telemetryStatus = $('telemetryStatus');
   const telemetryList = $('telemetryList');
+  const focusMyRouteOnly = $('focusMyRouteOnly');
 
   const FALLBACK_PRICING = {
     wheelchair:{label:'Wheelchair Transportation',base:95,includedMiles:10,perMile:4.25,waitPer15:25},
@@ -80,6 +81,10 @@
   let telemetryMap = null;
   let telemetryMarkers = new Map();
   let telemetryTimer = null;
+  let customerRoutePolyline = null;
+  let customerPickupMarker = null;
+  let customerDestinationMarker = null;
+  let customerRouteBounds = null;
   let isAdminUser = false;
   let platformPricing = null;
   let fareRules = { ...DEFAULT_FARE_RULES };
@@ -272,6 +277,117 @@
     estMiles.textContent = '-';
     estDuration.textContent = '-';
     estFare.textContent = '-';
+    clearCustomerRoute();
+  }
+
+  function clearCustomerRoute(){
+    if(customerRoutePolyline) customerRoutePolyline.setMap(null);
+    if(customerPickupMarker) customerPickupMarker.setMap(null);
+    if(customerDestinationMarker) customerDestinationMarker.setMap(null);
+    customerRoutePolyline = null;
+    customerPickupMarker = null;
+    customerDestinationMarker = null;
+    customerRouteBounds = null;
+    applyFocusMode();
+  }
+
+  function buildRouteBounds(result){
+    if(result?.routes?.[0]?.bounds) return result.routes[0].bounds;
+    const bounds = new google.maps.LatLngBounds();
+    (result?.routes?.[0]?.overview_path || []).forEach((pt) => bounds.extend(pt));
+    return bounds;
+  }
+
+  function applyFocusMode(){
+    const focused = !!(focusMyRouteOnly?.checked && customerRouteBounds);
+    telemetryMarkers.forEach((marker) => marker.setOpacity(focused ? 0.2 : 0.95));
+    if(telemetryList) telemetryList.classList.toggle('dimmed', focused);
+    if(customerRoutePolyline){
+      customerRoutePolyline.setOptions({
+        strokeOpacity: focused ? 1 : 0.9,
+        strokeWeight: focused ? 7 : 5
+      });
+    }
+  }
+
+  function fitCombinedViewport(vehicles = []){
+    if(!telemetryMap) return;
+    const focused = !!(focusMyRouteOnly?.checked && customerRouteBounds);
+    if(focused && customerRouteBounds){
+      telemetryMap.fitBounds(customerRouteBounds, 56);
+      return;
+    }
+    const bounds = new google.maps.LatLngBounds();
+    let hasBounds = false;
+    if(customerRouteBounds){
+      bounds.extend(customerRouteBounds.getNorthEast());
+      bounds.extend(customerRouteBounds.getSouthWest());
+      hasBounds = true;
+    }
+    vehicles.slice(0, 25).forEach((v) => {
+      bounds.extend({ lat:Number(v.lat), lng:Number(v.lng) });
+      hasBounds = true;
+    });
+    if(hasBounds) telemetryMap.fitBounds(bounds, 48);
+  }
+
+  function renderCustomerRoute(result, pickupLabel, destinationLabel){
+    if(!telemetryMap || !result?.routes?.[0]) return;
+    if(customerRoutePolyline) customerRoutePolyline.setMap(null);
+    if(customerPickupMarker) customerPickupMarker.setMap(null);
+    if(customerDestinationMarker) customerDestinationMarker.setMap(null);
+
+    customerRoutePolyline = new google.maps.Polyline({
+      map: telemetryMap,
+      path: result.routes[0].overview_path || [],
+      geodesic: true,
+      strokeColor: '#0b7a5a',
+      strokeOpacity: 0.9,
+      strokeWeight: 5,
+      zIndex: 500
+    });
+
+    const leg = result.routes[0].legs?.[0];
+    const start = leg?.start_location;
+    const end = leg?.end_location;
+    if(start){
+      customerPickupMarker = new google.maps.Marker({
+        map: telemetryMap,
+        position: start,
+        title: `Pickup: ${pickupLabel}`,
+        label: { text: 'P', color: '#ffffff', fontWeight: '700' },
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#0b7a5a',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+          scale: 9
+        },
+        zIndex: 700
+      });
+    }
+    if(end){
+      customerDestinationMarker = new google.maps.Marker({
+        map: telemetryMap,
+        position: end,
+        title: `Destination: ${destinationLabel}`,
+        label: { text: 'D', color: '#ffffff', fontWeight: '700' },
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#0c4a6e',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+          scale: 9
+        },
+        zIndex: 700
+      });
+    }
+
+    customerRouteBounds = buildRouteBounds(result);
+    applyFocusMode();
+    fitCombinedViewport();
   }
 
   function renderRateEditor(service){
@@ -473,6 +589,7 @@
         const trafficText = String(leg?.duration_in_traffic?.text || '');
         if(trafficText) durationText = `${durationText} (traffic ${trafficText})`;
       }
+      renderCustomerRoute(result, pickup, destination);
     }catch(err){
       const fallbackFare = calculateFare(service, 0, tripDate, $('tripTime').value, { durationMinutes: 0, trafficDurationMinutes: 0 });
       estimateState = { miles: 0, durationText: '', durationMinutes: 0, trafficDurationMinutes: 0, fare: fallbackFare };
@@ -572,12 +689,8 @@
           telemetryMarkers.delete(id);
         }
       });
-
-      if(vehicles.length){
-        const bounds = new google.maps.LatLngBounds();
-        vehicles.slice(0, 25).forEach(v => bounds.extend({ lat:Number(v.lat), lng:Number(v.lng) }));
-        telemetryMap.fitBounds(bounds, 48);
-      }
+      applyFocusMode();
+      fitCombinedViewport(vehicles);
     }catch(err){
       telemetryStatus.textContent = `Telemetry unavailable: ${err.message}`;
     }
@@ -599,6 +712,12 @@
       });
       await loadTelemetry();
       telemetryTimer = setInterval(loadTelemetry, Math.max(5000, Number(fareRules.telemetryRefreshSeconds || 20) * 1000));
+      if(focusMyRouteOnly){
+        focusMyRouteOnly.addEventListener('change', () => {
+          applyFocusMode();
+          fitCombinedViewport();
+        });
+      }
     }catch(err){
       telemetryStatus.textContent = `Live map failed to load: ${err.message}`;
     }
